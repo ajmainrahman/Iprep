@@ -1,0 +1,276 @@
+Replit AI Prompt — IELTS Journey Tracker Website
+
+Build me a fully functional, beautiful IELTS Journey Tracker single-page web application using HTML, CSS, and vanilla JavaScript (no frameworks needed). The design should be colourful, modern, and motivating — not boring or clinical. Here are the complete requirements:
+
+🎨 Design & Colour Palette
+Use this exact colour palette throughout:
+
+Navy: #1B2A4A — headers, navbar, dark sections
+Teal: #2EC4B6 — primary accent, buttons, highlights
+Coral: #FF6B6B — warnings, reading module, important alerts
+Yellow: #FFD166 — achievements, listening module, stars
+Purple: #7B5EA7 — speaking module, tips
+Green: #06D6A0 — writing module, correct answers, success
+Light background: #F7F9FC
+Card background: #FFFFFF
+Dark text: #1F2937
+Grey text: #6B7280
+Border: #E5E7EB
+
+Font: Use Google Fonts — Inter for body text, Poppins for headings.
+The overall feel should be: friendly, modern, colourful, encouraging — like a study app a student would actually enjoy using.
+
+🏗️ Page Structure
+The page has a sticky top navbar and 6 main sections accessible by smooth scroll or tab navigation:
+
+Dashboard
+Score Tracker
+Study Log
+Question Type Practice Tracker
+Vocabulary Bank
+Mindset Corner
+
+
+📊 Section 1 — Dashboard
+The first thing the user sees. Contains:
+Hero area:
+
+Large greeting: "Welcome back! Keep going 💪"
+Today's date displayed automatically
+A motivational quote that changes every day (hardcode at least 10 quotes, rotate by day of year)
+
+4 Score Cards displayed in a horizontal row (stack to 2x2 on mobile):
+Each card shows:
+
+Module name (Reading, Writing, Speaking, Listening)
+Current band score (editable)
+Target band score
+A coloured progress bar showing % progress toward target
+Module colour from the palette (Reading=Coral, Writing=Green, Speaking=Purple, Listening=Yellow)
+
+Overall band score card:
+
+Calculated average of all 4 modules
+Large display number
+Progress ring/circle showing progress toward overall target
+
+Days remaining countdown:
+
+User sets their exam date
+Countdown shows days, a progress bar of days elapsed vs total days
+Changes colour as exam approaches (green → yellow → coral)
+
+Today's task card:
+
+Shows what the user should study today based on the 40-day routine
+Week 1–2: Foundation (question type drills)
+Week 3–4: Mixed Practice (timed passages)
+Week 5–6: Mock Tests (full timed tests)
+Week 7: Final Polish (light review)
+
+
+📈 Section 2 — Score Tracker
+A history log of all practice test scores. Contains:
+Score entry form:
+
+Date picker (defaults to today)
+Module selector (Reading / Writing / Speaking / Listening / Full Mock)
+Score input (for Reading: score out of 40 AND band equivalent)
+Notes field (optional)
+"Add Score" button
+
+Score history table:
+
+Columns: Date | Module | Score | Band | Notes | Delete
+Colour-coded rows by module
+Sorted by date descending
+
+Progress chart:
+
+A line chart (use Chart.js via CDN) showing band score over time
+Separate coloured line per module
+Dots on each data point
+Smooth curves
+
+Best scores summary:
+
+Small cards showing personal best for each module
+
+
+📅 Section 3 — Study Log
+Daily study session tracker. Contains:
+Log entry form:
+
+Date (today by default)
+Module studied
+Time spent (minutes)
+Activity type dropdown: Question Type Drill / Full Passage / Mock Test / Vocabulary / Speaking Practice / Writing Practice / Listening Practice
+What went well (text)
+What to improve (text)
+"Save Session" button
+
+Study streak tracker:
+
+Shows current streak (consecutive days studied)
+Calendar heatmap style — show last 40 days as coloured squares (grey = no study, teal = studied, coral = studied intensively >45 min)
+Total hours studied counter
+
+Weekly summary:
+
+Bar chart showing minutes studied per day this week
+Total time this week vs target (target = 30 min/day = 210 min/week)
+
+
+🎯 Section 4 — Question Type Practice Tracker
+Track performance on each of the 7 IELTS Reading question types. Contains:
+7 Question Type cards (one per type), each showing:
+
+Question type name with icon
+Colour coded (use palette colours)
+Total attempts
+Average score (e.g. 4.2/6)
+Best score
+A small horizontal progress bar showing average accuracy %
+"Log Practice" button
+
+The 7 types are:
+
+🔍 True / False / Not Given (Coral)
+💬 Yes / No / Not Given (Purple)
+✏️ Summary / Gap Fill (Teal)
+📑 Matching Headings (Green)
+🔗 Matching Information (Yellow)
+✅ Multiple Choice (Navy)
+🔤 Sentence Completion (Orange #F97316)
+
+Log Practice modal:
+When user clicks "Log Practice" on any card, a modal opens with:
+
+Question type (pre-filled)
+Date
+Score (e.g. 4 out of 6)
+Total questions
+Notes / what went wrong
+Save button
+
+Overall Reading accuracy chart:
+
+Radar/spider chart (Chart.js) showing accuracy % across all 7 question types
+Helps user visually identify weak areas
+
+
+📚 Section 5 — Vocabulary Bank
+A personal vocabulary tracker. Contains:
+5 Topic tabs: Environment | Technology | Health | Society | History
+Within each tab:
+
+Pre-loaded starter words (10 per topic from below)
+Each word shown as a flashcard-style entry with:
+
+Word (bold)
+Part of speech badge (noun/verb/adj)
+Definition
+Example sentence
+"Known ✓" toggle button — when clicked, card turns green and word is marked learned
+"Remove" button
+
+
+
+Pre-loaded words per topic:
+Environment: biodiversity, carbon footprint, deforestation, emissions, ecosystem, renewable energy, sustainable, climate change, contamination, conservation
+Technology: artificial intelligence, automation, algorithm, innovation, cybersecurity, digital divide, obsolete, infrastructure, surveillance, biotechnology
+Health: epidemic, chronic, sedentary, mortality rate, nutrition, immunity, obesity, pandemic, preventable, well-being
+Society: urbanisation, inequality, demographic, migration, cohesion, discrimination, indigenous, stereotype, social mobility, globalisation
+History: civilisation, colonialism, dynasty, excavation, imperialism, archaeological, chronological, decline, revolution, artefact
+Add word form:
+
+Word input
+Part of speech selector
+Definition input
+Example sentence input
+Topic selector
+Add button
+
+Vocabulary stats bar at the top:
+
+Total words: X
+Words learned: X
+Words remaining: X
+Progress bar (teal)
+
+
+💪 Section 6 — Mindset Corner
+A motivational and wellbeing section. Contains:
+Daily affirmation card:
+
+Rotates through 10 affirmations by day
+Large, colourful display
+"I needed this today 🙌" button that saves it to favourites
+
+Fear & boredom tips — 5 colourful cards, each with an emoji, title, and tip:
+
+😴 Feeling bored? — Switch the topic! Try a different subject area.
+😰 Feeling nervous? — You can get 8–10 wrong and still reach 6.5.
+😤 Low practice score? — Every wrong answer is one you won't repeat on exam day.
+⏰ Running out of time? — Practise with a timer every session until it feels normal.
+🤔 Can't find the answer? — Move on after 90 seconds. Come back later.
+
+Progress celebration:
+
+When the user logs a new personal best score for any module, show a confetti animation and a congratulations message
+
+Quick tips carousel:
+
+Swipeable/clickable cards with one IELTS tip each
+At least 12 tips covering all modules
+Arrow navigation
+
+
+💾 Data Persistence
+
+Use localStorage to save ALL user data (scores, study log, vocabulary progress, exam date, settings)
+Data must persist across page refreshes
+Include an Export Data button that downloads all data as a JSON file
+Include a Reset All Data button (with confirmation dialog) for starting fresh
+
+
+📱 Responsive Design
+
+Fully responsive — works on mobile, tablet, and desktop
+On mobile: single column layout, bottom navigation bar instead of top navbar
+Cards stack vertically on small screens
+Charts resize correctly on window resize
+
+
+⚙️ Settings Panel
+Accessible via a gear icon in the navbar:
+
+Set exam date
+Set target band scores per module (default: Reading 6.5, Writing 6.5, Speaking 6.0, Listening 6.5)
+Set daily study goal (default: 30 minutes)
+Set name (used in greeting)
+Dark mode toggle
+
+
+🛠️ Technical Requirements
+
+Pure HTML, CSS, JavaScript — no React, no Vue, no build tools
+Use Chart.js via CDN for all charts
+Use Google Fonts (Inter + Poppins) via CDN
+All icons as emoji or Unicode — no icon libraries needed
+All data in localStorage — no backend, no database
+Single index.html file with embedded CSS and JS (or separate files if Replit handles that better)
+Smooth CSS transitions on all interactive elements (hover, click, modal open/close)
+Confetti effect on personal best — implement with pure CSS/JS particles, no library needed
+
+
+🎯 Final Notes for Replit AI
+
+Make the UI feel like a premium study app — generous padding, rounded corners (12–16px), soft shadows on cards
+Every section should have a colourful section header using the navy/teal/coral palette
+Empty states should be friendly and encouraging (e.g. "No scores yet — add your first one! 🎉")
+All buttons should have hover effects and smooth transitions
+The page should feel complete and polished from the first load — pre-populate the vocabulary section with all 50 starter words immediately
+
+
+That's the full specification. Please build the complete working website now.
