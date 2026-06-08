@@ -5,11 +5,12 @@ import { StudyLog } from '@/pages/StudyLog';
 import { PracticeTracker } from '@/pages/PracticeTracker';
 import { VocabularyBank } from '@/pages/VocabularyBank';
 import { MindsetCorner } from '@/pages/MindsetCorner';
+import { HigherStudyPrep } from '@/pages/HigherStudyPrep';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Confetti } from '@/components/Confetti';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { BookOpen, BarChart3, LayoutDashboard, Target, Book, Brain } from 'lucide-react';
+import { BookOpen, BarChart3, LayoutDashboard, Target, Book, Brain, GraduationCap } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
@@ -19,12 +20,13 @@ function MainApp() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'scores', label: 'Score Tracker', icon: BarChart3 },
-    { id: 'study', label: 'Study Log', icon: BookOpen },
-    { id: 'practice', label: 'Practice Tracker', icon: Target },
-    { id: 'vocab', label: 'Vocab Bank', icon: Book },
-    { id: 'mindset', label: 'Mindset', icon: Brain },
+    { id: 'dashboard',    label: 'Dashboard',        icon: LayoutDashboard },
+    { id: 'scores',       label: 'Score Tracker',    icon: BarChart3 },
+    { id: 'study',        label: 'Study Log',        icon: BookOpen },
+    { id: 'practice',     label: 'Practice Tracker', icon: Target },
+    { id: 'vocab',        label: 'Vocab Bank',       icon: Book },
+    { id: 'higher-study', label: 'Higher Study',     icon: GraduationCap },
+    { id: 'mindset',      label: 'Mindset',          icon: Brain },
   ];
 
   const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || 'Dashboard';
@@ -79,12 +81,13 @@ function MainApp() {
 
         <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
           <div className="max-w-6xl mx-auto">
-            {activeTab === 'dashboard' && <Dashboard />}
-            {activeTab === 'scores' && <ScoreTracker triggerConfetti={() => { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 3000); }} />}
-            {activeTab === 'study' && <StudyLog />}
-            {activeTab === 'practice' && <PracticeTracker />}
-            {activeTab === 'vocab' && <VocabularyBank />}
-            {activeTab === 'mindset' && <MindsetCorner />}
+            {activeTab === 'dashboard'    && <Dashboard />}
+            {activeTab === 'scores'       && <ScoreTracker triggerConfetti={() => { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 3000); }} />}
+            {activeTab === 'study'        && <StudyLog />}
+            {activeTab === 'practice'     && <PracticeTracker />}
+            {activeTab === 'vocab'        && <VocabularyBank />}
+            {activeTab === 'higher-study' && <HigherStudyPrep />}
+            {activeTab === 'mindset'      && <MindsetCorner />}
           </div>
         </main>
       </div>

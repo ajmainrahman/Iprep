@@ -4,3 +4,6 @@ export * from "./study-sessions";
 export * from "./practice-logs";
 export * from "./vocab-words";
 export * from "./affirmations";
+export * from "./higher-study-applications";
+export * from "./other-test-scores";
+export * from "./scholarships";

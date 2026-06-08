@@ -6,6 +6,9 @@ import studySessionsRouter from "./study-sessions";
 import practiceLogsRouter from "./practice-logs";
 import vocabRouter from "./vocab";
 import affirmationsRouter from "./affirmations";
+import higherStudyApplicationsRouter from "./higher-study-applications";
+import otherTestScoresRouter from "./other-test-scores";
+import scholarshipsRouter from "./scholarships";
 
 const router: IRouter = Router();
 
@@ -16,5 +19,8 @@ router.use(studySessionsRouter);
 router.use(practiceLogsRouter);
 router.use(vocabRouter);
 router.use(affirmationsRouter);
+router.use(higherStudyApplicationsRouter);
+router.use(otherTestScoresRouter);
+router.use(scholarshipsRouter);
 
 export default router;
