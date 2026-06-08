@@ -1,6 +1,5 @@
 artifacts/api-server
 lib/db
 lib/api-zod
-lib/api-client-react
 scripts
 api
