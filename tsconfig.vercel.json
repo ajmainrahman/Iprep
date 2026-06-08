@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "artifacts/ielts-tracker/src/**/*"
+  ],
+  "exclude": [
+    "artifacts/api-server",
+    "api",
+    "lib/db",
+    "lib/api-zod",
+    "scripts",
+    "node_modules"
+  ]
+}
