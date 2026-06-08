@@ -4,8 +4,14 @@
   "buildCommand": "pnpm --filter @workspace/ielts-tracker run build",
   "outputDirectory": "artifacts/ielts-tracker/dist",
   "framework": null,
-  "ignoreCommand": "exit 1",
+  "functions": {
+    "api/index.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index.ts" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }
