@@ -3,6 +3,7 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/ielts-tracker run build",
   "outputDirectory": "artifacts/ielts-tracker/dist",
+  "framework": null,
   "rewrites": [
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
