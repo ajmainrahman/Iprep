@@ -54,4 +54,8 @@ export const api = {
   addScholarship: (body: Record<string, unknown>) => post('/api/higher-study/scholarships', body),
   updateScholarship: (id: number, body: Record<string, unknown>) => put(`/api/higher-study/scholarships/${id}`, body),
   deleteScholarship: (id: number) => del(`/api/higher-study/scholarships/${id}`),
+
+  getTemplates: () => fetch('/api/higher-study/templates').then(r => r.json()),
+  addTemplate: (body: Record<string, unknown>) => post('/api/higher-study/templates', body),
+  deleteTemplate: (id: number) => del(`/api/higher-study/templates/${id}`),
 };

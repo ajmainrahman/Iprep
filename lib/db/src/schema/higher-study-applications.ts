@@ -21,6 +21,7 @@ export const higherStudyApplicationsTable = pgTable("higher_study_applications",
   reqGre: boolean("req_gre").default(false),
   reqToefl: boolean("req_toefl").default(false),
   reqPortfolio: boolean("req_portfolio").default(false),
+  requirementsJson: text("requirements_json"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

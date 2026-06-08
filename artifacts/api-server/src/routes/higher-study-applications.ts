@@ -28,6 +28,7 @@ const bodySchema = z.object({
   reqGre: z.boolean().optional(),
   reqToefl: z.boolean().optional(),
   reqPortfolio: z.boolean().optional(),
+  requirementsJson: z.string().nullable().optional(),
 });
 
 router.post("/higher-study/applications", async (req, res): Promise<void> => {

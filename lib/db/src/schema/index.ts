@@ -7,3 +7,4 @@ export * from "./affirmations";
 export * from "./higher-study-applications";
 export * from "./other-test-scores";
 export * from "./scholarships";
+export * from "./checklist-templates";

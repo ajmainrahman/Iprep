@@ -9,6 +9,7 @@ import affirmationsRouter from "./affirmations";
 import higherStudyApplicationsRouter from "./higher-study-applications";
 import otherTestScoresRouter from "./other-test-scores";
 import scholarshipsRouter from "./scholarships";
+import checklistTemplatesRouter from "./checklist-templates";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(affirmationsRouter);
 router.use(higherStudyApplicationsRouter);
 router.use(otherTestScoresRouter);
 router.use(scholarshipsRouter);
+router.use(checklistTemplatesRouter);
 
 export default router;

@@ -57,15 +57,17 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --color-navy: #1B2A4A;
-  --color-teal: #2EC4B6;
-  --color-coral: #FF6B6B;
+  /* Brand colours */
+  --color-navy:   #1E1B4B;
+  --color-teal:   #2EC4B6;
+  --color-indigo: #6366F1;
+  --color-coral:  #FF6B6B;
   --color-yellow: #FFD166;
   --color-purple: #7B5EA7;
-  --color-green: #06D6A0;
+  --color-green:  #06D6A0;
   --color-orange: #F97316;
 
-  --font-sans: 'Inter', sans-serif;
+  --font-sans:    'Inter', sans-serif;
   --font-heading: 'Poppins', sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -74,97 +76,117 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* LIGHT MODE */
+/* ── LIGHT MODE ────────────────────────────────────────────────────────── */
 :root {
-  --background: 216 33% 98%;
-  --foreground: 220 39% 17%;
-  
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  --background: 220 25% 97%;
+  --foreground: 230 30% 12%;
+
+  --border: 220 15% 90%;
+  --input: 220 15% 90%;
   --ring: 174 62% 47%;
-  
+
   --card: 0 0% 100%;
-  --card-foreground: 220 39% 17%;
-  --card-border: 220 13% 91%;
+  --card-foreground: 230 30% 12%;
+  --card-border: 220 15% 90%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 220 39% 17%;
-  --popover-border: 220 13% 91%;
+  --popover-foreground: 230 30% 12%;
+  --popover-border: 220 15% 90%;
 
   --primary: 174 62% 47%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 223 47% 20%;
+  --secondary: 244 47% 20%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 216 33% 98%;
+  --muted: 220 25% 95%;
   --muted-foreground: 220 9% 46%;
 
   --accent: 174 62% 47%;
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 100% 71%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
   --chart-1: 0 100% 71%;
   --chart-2: 164 94% 43%;
   --chart-3: 264 30% 51%;
   --chart-4: 42 100% 70%;
-  --chart-5: 223 47% 20%;
+  --chart-5: 244 47% 20%;
 
-  --sidebar: 223 47% 20%; /* Navy background for sidebar */
+  /* Study mode sidebar (teal/navy) */
+  --sidebar: 230 47% 15%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 223 47% 15%;
+  --sidebar-border: 230 47% 20%;
   --sidebar-primary: 174 62% 47%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 223 47% 25%;
+  --sidebar-accent: 230 47% 22%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 174 62% 47%;
 
-  --radius: 1rem;
+  --radius: 0.875rem;
 }
 
+/* ── DARK MODE ─────────────────────────────────────────────────────────── */
 .dark {
-  --background: 223 47% 10%;
-  --foreground: 216 33% 98%;
+  --background: 230 30% 10%;
+  --foreground: 220 25% 96%;
 
-  --border: 223 47% 20%;
-  --input: 223 47% 25%;
+  --border: 230 30% 22%;
+  --input: 230 30% 25%;
   --ring: 174 62% 47%;
-  
-  --card: 223 47% 15%;
-  --card-foreground: 216 33% 98%;
-  --card-border: 223 47% 20%;
 
-  --popover: 223 47% 15%;
-  --popover-foreground: 216 33% 98%;
-  --popover-border: 223 47% 20%;
+  --card: 230 30% 14%;
+  --card-foreground: 220 25% 96%;
+  --card-border: 230 30% 22%;
+
+  --popover: 230 30% 14%;
+  --popover-foreground: 220 25% 96%;
+  --popover-border: 230 30% 22%;
 
   --primary: 174 62% 47%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 223 47% 30%;
-  --secondary-foreground: 216 33% 98%;
+  --secondary: 244 47% 30%;
+  --secondary-foreground: 220 25% 96%;
 
-  --muted: 223 47% 20%;
+  --muted: 230 30% 20%;
   --muted-foreground: 220 9% 66%;
 
   --accent: 174 62% 47%;
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 100% 71%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 223 47% 12%;
-  --sidebar-foreground: 216 33% 98%;
-  --sidebar-border: 223 47% 20%;
+  --sidebar: 230 30% 11%;
+  --sidebar-foreground: 220 25% 96%;
+  --sidebar-border: 230 30% 20%;
   --sidebar-primary: 174 62% 47%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 223 47% 20%;
+  --sidebar-accent: 230 30% 18%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 174 62% 47%;
 }
 
+/* ── FLY MODE (indigo sidebar override) ──────────────────────────────── */
+.fly-mode {
+  --sidebar: 244 47% 15%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 244 47% 21%;
+  --sidebar-primary: 239 84% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 244 47% 22%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 239 84% 67%;
+}
+.fly-mode.dark {
+  --sidebar: 244 47% 11%;
+  --sidebar-border: 244 47% 18%;
+  --sidebar-accent: 244 47% 17%;
+}
+
+/* ── BASE LAYER ────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border;

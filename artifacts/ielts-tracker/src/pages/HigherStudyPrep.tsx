@@ -1,149 +1,232 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { fmtDate, daysUntil } from '@/lib/utils/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   GraduationCap, Trophy, BookMarked, Plus, Trash2, Edit2, X, Check,
-  CalendarDays, Globe, FileText, Award, TrendingUp, Clock,
-  ChevronDown, ChevronUp, Target
+  CalendarDays, Globe, FileText, TrendingUp, ChevronDown, ChevronUp,
+  Target, ClipboardList, ChevronRight, Layers
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+/* ── Types ────────────────────────────────────────────────────────────────── */
 type AppStatus = 'researching' | 'applied' | 'interview' | 'admitted' | 'rejected' | 'waitlisted' | 'deferred';
 type ScholarshipStatus = 'planning' | 'applied' | 'awarded' | 'rejected';
+type ReqItem = { label: string; done: boolean };
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
-  researching: { label: 'Researching',  color: 'text-gray-600',   bg: 'bg-gray-100 dark:bg-gray-800' },
-  applied:     { label: 'Applied',      color: 'text-blue-600',   bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  interview:   { label: 'Interview',    color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  admitted:    { label: 'Admitted 🎉',  color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/30' },
-  rejected:    { label: 'Rejected',     color: 'text-red-600',    bg: 'bg-red-100 dark:bg-red-900/30' },
-  waitlisted:  { label: 'Waitlisted',   color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-  deferred:    { label: 'Deferred',     color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  researching: { label: 'Researching',  color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  applied:     { label: 'Applied',      color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  interview:   { label: 'Interview',    color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  admitted:    { label: 'Admitted 🎉',  color: 'text-green-600',   bg: 'bg-green-100 dark:bg-green-900/30' },
+  rejected:    { label: 'Rejected',     color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
+  waitlisted:  { label: 'Waitlisted',   color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  deferred:    { label: 'Deferred',     color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
 };
 
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string }> = {
-  planning: { label: 'Planning',  color: 'text-gray-600' },
-  applied:  { label: 'Applied',   color: 'text-blue-600' },
+  planning: { label: 'Planning',   color: 'text-slate-500' },
+  applied:  { label: 'Applied',    color: 'text-blue-600' },
   awarded:  { label: 'Awarded 🏆', color: 'text-green-600' },
-  rejected: { label: 'Rejected',  color: 'text-red-600' },
+  rejected: { label: 'Rejected',   color: 'text-red-600' },
 };
 
 const TEST_SECTIONS: Record<string, string[]> = {
-  GRE:       ['Verbal', 'Quantitative', 'Analytical Writing'],
-  GMAT:      ['Verbal', 'Quantitative', 'Integrated Reasoning', 'Analytical Writing'],
-  TOEFL:     ['Reading', 'Listening', 'Speaking', 'Writing'],
-  SAT:       ['Math', 'Evidence-Based Reading & Writing'],
-  Duolingo:  ['Overall'],
-  Other:     ['Section 1', 'Section 2'],
+  GRE:      ['Verbal', 'Quantitative', 'Analytical Writing'],
+  GMAT:     ['Verbal', 'Quantitative', 'Integrated Reasoning', 'Analytical Writing'],
+  TOEFL:    ['Reading', 'Listening', 'Speaking', 'Writing'],
+  SAT:      ['Math', 'Evidence-Based Reading & Writing'],
+  Duolingo: ['Overall'],
+  Other:    ['Section 1', 'Section 2'],
 };
 
-type Tab = 'overview' | 'applications' | 'tests' | 'scholarships';
+/* ── Default checklist templates ────────────────────────────────────────── */
+export const DEFAULT_TEMPLATES = [
+  {
+    id: 'standard-ms',
+    name: 'Standard MS 🎓',
+    degreeType: 'MS',
+    items: [
+      'Statement of Purpose (SOP)',
+      'Letter of Recommendation 1',
+      'Letter of Recommendation 2',
+      'Letter of Recommendation 3',
+      'Academic Transcripts',
+      'CV / Resume',
+      'GRE Score Report',
+      'TOEFL / IELTS Certificate',
+    ],
+  },
+  {
+    id: 'erasmus',
+    name: 'Erasmus Programme 🌍',
+    degreeType: 'Erasmus',
+    items: [
+      'Motivation Letter',
+      'Letter of Recommendation 1',
+      'Letter of Recommendation 2',
+      'Academic Transcripts',
+      'Language Certificate (IELTS/TOEFL/DELF)',
+      'CV / Resume',
+      'Learning Agreement',
+      'Passport / ID Copy',
+      'Transcript of Records',
+    ],
+  },
+  {
+    id: 'phd',
+    name: 'PhD Programme 🔬',
+    degreeType: 'PhD',
+    items: [
+      'Research Proposal',
+      'Statement of Purpose',
+      'Letter of Recommendation 1',
+      'Letter of Recommendation 2',
+      'Letter of Recommendation 3',
+      'Academic Transcripts',
+      'CV / Resume',
+      'Writing Sample',
+      'GRE Score Report',
+    ],
+  },
+  {
+    id: 'mba',
+    name: 'MBA 💼',
+    degreeType: 'MBA',
+    items: [
+      'Personal Essays / SOP',
+      'Letter of Recommendation 1',
+      'Letter of Recommendation 2',
+      'Academic Transcripts',
+      'CV / Resume',
+      'GMAT Score Report',
+      'TOEFL / IELTS Certificate',
+      'Interview Prep Notes',
+    ],
+  },
+  {
+    id: 'nordic',
+    name: 'Nordic / Scandinavian 🇸🇪',
+    degreeType: 'Nordic',
+    items: [
+      'Motivation Letter',
+      'Letter of Recommendation 1',
+      'Letter of Recommendation 2',
+      'Academic Transcripts',
+      'IELTS / TOEFL Certificate',
+      'CV / Resume',
+      "Bachelor's Degree Certificate",
+      'Passport Copy',
+      'Portfolio (if applicable)',
+    ],
+  },
+];
 
-export function HigherStudyPrep() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+/* ── Helpers ──────────────────────────────────────────────────────────────── */
+function safeParseReqs(json: string | null | undefined): ReqItem[] {
+  try {
+    if (!json) return [];
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((x): x is ReqItem => x && typeof x.label === 'string');
+  } catch { return []; }
+}
+
+/* ── Main export ─────────────────────────────────────────────────────────── */
+export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange: (t: string) => void }) {
   return (
-    <div className="space-y-6">
-      <div className="flex gap-2 flex-wrap border-b pb-2">
-        {([
-          ['overview', 'Overview', TrendingUp],
-          ['applications', 'Applications', GraduationCap],
-          ['tests', 'Test Scores', BookMarked],
-          ['scholarships', 'Scholarships', Trophy],
-        ] as [Tab, string, React.ElementType][]).map(([id, label, Icon]) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === id
-                ? 'bg-navy text-white dark:bg-teal'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'overview'      && <OverviewTab setActiveTab={setActiveTab} />}
-      {activeTab === 'applications'  && <ApplicationsTab />}
-      {activeTab === 'tests'         && <TestScoresTab />}
-      {activeTab === 'scholarships'  && <ScholarshipsTab />}
-    </div>
+    <>
+      {tab === 'overview'     && <OverviewTab onTabChange={onTabChange} />}
+      {tab === 'applications' && <ApplicationsTab />}
+      {tab === 'tests'        && <TestScoresTab />}
+      {tab === 'scholarships' && <ScholarshipsTab />}
+      {tab === 'templates'    && <ChecklistTemplates />}
+    </>
   );
 }
 
-function OverviewTab({ setActiveTab }: { setActiveTab: (t: Tab) => void }) {
-  const { data: apps = [] }   = useQuery({ queryKey: ['applications'],  queryFn: api.getApplications });
-  const { data: tests = [] }  = useQuery({ queryKey: ['other-tests'],   queryFn: api.getOtherTestScores });
-  const { data: schols = [] } = useQuery({ queryKey: ['scholarships'],  queryFn: api.getScholarships });
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERVIEW TAB
+═══════════════════════════════════════════════════════════════════════════ */
+function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
+  const { data: apps = [] }   = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: tests = [] }  = useQuery({ queryKey: ['other-tests'],  queryFn: api.getOtherTestScores });
+  const { data: schols = [] } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
 
   const byStatus = (apps as { status: string }[]).reduce<Record<string, number>>((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1;
     return acc;
   }, {});
 
-  const upcomingDeadlines = [...(apps as { universityName: string; deadline?: string | null; status: string }[]).filter(a => a.deadline)]
+  const upcoming = [...(apps as { universityName: string; deadline?: string | null; status: string }[])
+    .filter(a => a.deadline)]
     .sort((a, b) => (a.deadline! > b.deadline! ? 1 : -1))
-    .slice(0, 5);
+    .slice(0, 6);
 
   const admittedCount = byStatus['admitted'] || 0;
   const appliedCount  = (byStatus['applied'] || 0) + (byStatus['interview'] || 0);
 
   return (
     <div className="space-y-6">
+      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Universities',  value: (apps as unknown[]).length,    color: 'text-navy dark:text-teal', tab: 'applications' as Tab },
-          { label: 'Applied',       value: appliedCount,                  color: 'text-blue-600',            tab: 'applications' as Tab },
-          { label: 'Admitted',      value: admittedCount,                 color: 'text-green-600',           tab: 'applications' as Tab },
-          { label: 'Scholarships',  value: (schols as unknown[]).length,  color: 'text-yellow-600',          tab: 'scholarships' as Tab },
-        ].map(({ label, value, color, tab }) => (
-          <Card key={label} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab(tab)}>
+          { label: 'Universities',  value: (apps as unknown[]).length,   color: 'text-navy dark:text-indigo',  tab: 'applications', emoji: '🎓' },
+          { label: 'Applied',       value: appliedCount,                 color: 'text-blue-600',               tab: 'applications', emoji: '📨' },
+          { label: 'Admitted',      value: admittedCount,                color: 'text-green-600',              tab: 'applications', emoji: '✅' },
+          { label: 'Scholarships',  value: (schols as unknown[]).length, color: 'text-yellow-600',             tab: 'scholarships', emoji: '🏆' },
+        ].map(({ label, value, color, tab, emoji }) => (
+          <Card
+            key={label}
+            className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5"
+            onClick={() => onTabChange(tab)}
+          >
             <CardContent className="p-4 text-center">
+              <div className="text-2xl mb-1">{emoji}</div>
               <p className={`text-3xl font-bold font-heading ${color}`}>{value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{label}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Upcoming deadlines */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-teal" />
-              Upcoming Deadlines
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-teal" /> Upcoming Deadlines
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {upcomingDeadlines.length === 0 ? (
+            {upcoming.length === 0 ? (
               <p className="text-sm text-muted-foreground">No deadlines yet. Add applications to track them.</p>
             ) : (
-              <ul className="space-y-3">
-                {upcomingDeadlines.map((a, i) => {
+              <ul className="space-y-2.5">
+                {upcoming.map((a, i) => {
                   const meta = APP_STATUS_META[a.status as AppStatus] || APP_STATUS_META.researching;
-                  const daysLeft = a.deadline
-                    ? Math.ceil((new Date(a.deadline).getTime() - Date.now()) / 86400000)
-                    : null;
+                  const days = daysUntil(a.deadline);
                   return (
                     <li key={i} className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{a.universityName}</p>
-                        <p className="text-xs text-muted-foreground">{a.deadline}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{a.universityName}</p>
+                        <p className="text-xs text-muted-foreground">{fmtDate(a.deadline)}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {daysLeft !== null && (
-                          <span className={`text-xs font-semibold ${daysLeft <= 7 ? 'text-red-500' : daysLeft <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                            {daysLeft < 0 ? 'Past' : `${daysLeft}d`}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {days !== null && (
+                          <span className={`text-xs font-semibold ${
+                            days < 0 ? 'text-muted-foreground' :
+                            days <= 7 ? 'text-red-500' :
+                            days <= 30 ? 'text-orange-500' : 'text-muted-foreground'
+                          }`}>
+                            {days < 0 ? 'Past' : days === 0 ? 'Today!' : `${days}d`}
                           </span>
                         )}
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>
@@ -158,31 +241,35 @@ function OverviewTab({ setActiveTab }: { setActiveTab: (t: Tab) => void }) {
           </CardContent>
         </Card>
 
+        {/* Pipeline */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Target className="w-4 h-4 text-teal" />
-              Application Pipeline
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Target className="w-4 h-4 text-teal" /> Application Pipeline
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(apps as unknown[]).length === 0 ? (
               <p className="text-sm text-muted-foreground">Add universities to see your pipeline.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {Object.entries(APP_STATUS_META).map(([status, meta]) => {
                   const count = byStatus[status] || 0;
-                  if (count === 0) return null;
+                  if (!count) return null;
                   return (
                     <div key={status} className="flex items-center gap-3">
-                      <span className={`text-xs w-24 font-medium ${meta.color}`}>{meta.label}</span>
-                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                      <span className={`text-xs w-24 font-medium shrink-0 ${meta.color}`}>{meta.label}</span>
+                      <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                         <div
-                          className={`h-2 rounded-full ${meta.bg.replace('bg-', 'bg-').replace(' dark:bg-.*', '')}`}
-                          style={{ width: `${(count / (apps as unknown[]).length) * 100}%`, background: 'currentColor', opacity: 0.7 }}
+                          className="h-1.5 rounded-full transition-all"
+                          style={{
+                            width: `${(count / (apps as unknown[]).length) * 100}%`,
+                            background: 'currentColor',
+                            opacity: 0.6,
+                          }}
                         />
                       </div>
-                      <span className="text-xs font-bold w-4 text-right">{count}</span>
+                      <span className="text-xs font-bold w-4 text-right shrink-0">{count}</span>
                     </div>
                   );
                 })}
@@ -192,12 +279,12 @@ function OverviewTab({ setActiveTab }: { setActiveTab: (t: Tab) => void }) {
         </Card>
       </div>
 
+      {/* Test scores snapshot */}
       {(tests as unknown[]).length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BookMarked className="w-4 h-4 text-teal" />
-              Latest Test Scores
+            <CardTitle className="text-sm flex items-center gap-2">
+              <BookMarked className="w-4 h-4 text-teal" /> Latest Test Scores
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -205,13 +292,12 @@ function OverviewTab({ setActiveTab }: { setActiveTab: (t: Tab) => void }) {
               {(tests as { id: number; testName: string; totalScore?: number | null; attemptDate: string }[])
                 .slice(0, 6)
                 .map(t => (
-                  <div key={t.id} className="border rounded-lg px-4 py-2 text-center min-w-[90px]">
-                    <p className="text-xs text-muted-foreground font-medium">{t.testName}</p>
-                    <p className="text-xl font-bold text-navy dark:text-teal">{t.totalScore ?? '–'}</p>
-                    <p className="text-xs text-muted-foreground">{t.attemptDate}</p>
+                  <div key={t.id} className="border rounded-xl px-4 py-3 text-center min-w-[90px]">
+                    <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide">{t.testName}</p>
+                    <p className="text-2xl font-bold text-navy dark:text-teal mt-0.5">{t.totalScore ?? '–'}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{fmtDate(t.attemptDate)}</p>
                   </div>
-                ))
-              }
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -220,85 +306,179 @@ function OverviewTab({ setActiveTab }: { setActiveTab: (t: Tab) => void }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   APPLICATIONS TAB
+═══════════════════════════════════════════════════════════════════════════ */
 function ApplicationsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: apps = [], isLoading } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: customTemplates = [] }  = useQuery({ queryKey: ['templates'],    queryFn: api.getTemplates });
 
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [showForm,    setShowForm]    = useState(false);
+  const [editId,      setEditId]      = useState<number | null>(null);
+  const [expandedId,  setExpandedId]  = useState<number | null>(null);
+  const [showTplPicker, setShowTplPicker] = useState(false);
+  const [newItemDraft,  setNewItemDraft]  = useState('');
 
-  const emptyForm = {
+  const emptyBase = {
     universityName: '', country: '', program: '', degreeType: 'MS',
     status: 'researching', deadline: '', appliedDate: '', notes: '',
-    reqSop: false, reqLor1: false, reqLor2: false, reqLor3: false,
-    reqTranscripts: false, reqCv: false, reqGre: false, reqToefl: false, reqPortfolio: false,
   };
-  const [form, setForm] = useState(emptyForm);
+  const [formBase,    setFormBase]    = useState(emptyBase);
+  const [requirements, setRequirements] = useState<ReqItem[]>([]);
 
   const addMutation = useMutation({
-    mutationFn: (data: typeof emptyForm) => api.addApplication(data as unknown as Record<string, unknown>),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['applications'] }); setShowForm(false); setForm(emptyForm); toast({ title: 'University added!' }); },
+    mutationFn: (data: Record<string, unknown>) => api.addApplication(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      setShowForm(false);
+      setFormBase(emptyBase);
+      setRequirements([]);
+      toast({ title: '🎓 University added!' });
+    },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<typeof emptyForm> }) => api.updateApplication(id, data as unknown as Record<string, unknown>),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['applications'] }); setEditId(null); toast({ title: 'Updated!' }); },
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateApplication(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      setEditId(null);
+      setShowForm(false);
+    },
   });
   const deleteMutation = useMutation({
     mutationFn: api.deleteApplication,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['applications'] }); toast({ title: 'Removed' }); },
   });
 
-  function startEdit(app: typeof emptyForm & { id: number }) {
-    setForm({ ...emptyForm, ...app });
+  function startEdit(app: Record<string, unknown> & { id: number }) {
+    setFormBase({
+      universityName: String(app.universityName || ''),
+      country:        String(app.country || ''),
+      program:        String(app.program || ''),
+      degreeType:     String(app.degreeType || 'MS'),
+      status:         String(app.status || 'researching'),
+      deadline:       String(app.deadline || ''),
+      appliedDate:    String(app.appliedDate || ''),
+      notes:          String(app.notes || ''),
+    });
+    setRequirements(safeParseReqs(app.requirementsJson as string));
     setEditId(app.id);
     setShowForm(true);
+    setExpandedId(null);
   }
 
-  const REQS = [
-    { key: 'reqSop', label: 'SOP' }, { key: 'reqLor1', label: 'LOR 1' },
-    { key: 'reqLor2', label: 'LOR 2' }, { key: 'reqLor3', label: 'LOR 3' },
-    { key: 'reqTranscripts', label: 'Transcripts' }, { key: 'reqCv', label: 'CV/Resume' },
-    { key: 'reqGre', label: 'GRE' }, { key: 'reqToefl', label: 'TOEFL/IELTS' },
-    { key: 'reqPortfolio', label: 'Portfolio' },
-  ] as { key: keyof typeof emptyForm; label: string }[];
-
-  function completedReqs(app: Record<string, unknown>) {
-    return REQS.filter(r => app[r.key] === true).length;
+  function applyTemplate(items: string[]) {
+    setRequirements(items.map(label => ({ label, done: false })));
+    setShowTplPicker(false);
   }
+
+  function addReqItem() {
+    setRequirements(p => [...p, { label: '', done: false }]);
+  }
+
+  function removeReqItem(i: number) {
+    setRequirements(p => p.filter((_, idx) => idx !== i));
+  }
+
+  function updateReqLabel(i: number, label: string) {
+    setRequirements(p => p.map((r, idx) => idx === i ? { ...r, label } : r));
+  }
+
+  function saveForm() {
+    const reqs = requirements.filter(r => r.label.trim() !== '');
+    const payload = {
+      ...formBase,
+      deadline:    formBase.deadline || null,
+      appliedDate: formBase.appliedDate || null,
+      requirementsJson: reqs.length ? JSON.stringify(reqs) : null,
+    };
+    if (editId) updateMutation.mutate({ id: editId, data: payload });
+    else addMutation.mutate(payload);
+  }
+
+  function toggleReqInApp(app: Record<string, unknown> & { id: number }, idx: number) {
+    const reqs = safeParseReqs(app.requirementsJson as string);
+    if (!reqs[idx]) return;
+    reqs[idx] = { ...reqs[idx], done: !reqs[idx].done };
+    updateMutation.mutate({ id: app.id, data: { requirementsJson: JSON.stringify(reqs) } });
+  }
+
+  function removeReqFromApp(app: Record<string, unknown> & { id: number }, idx: number) {
+    const reqs = safeParseReqs(app.requirementsJson as string).filter((_, i) => i !== idx);
+    updateMutation.mutate({ id: app.id, data: { requirementsJson: JSON.stringify(reqs) } });
+  }
+
+  function addReqToApp(app: Record<string, unknown> & { id: number }, label: string) {
+    if (!label.trim()) return;
+    const reqs = [...safeParseReqs(app.requirementsJson as string), { label: label.trim(), done: false }];
+    updateMutation.mutate({ id: app.id, data: { requirementsJson: JSON.stringify(reqs) } });
+    setNewItemDraft('');
+  }
+
+  const allTemplates = [
+    ...DEFAULT_TEMPLATES,
+    ...(customTemplates as { id: number; name: string; items: string }[]).map(t => ({
+      id: String(t.id),
+      name: t.name,
+      degreeType: '',
+      items: (() => { try { return JSON.parse(t.items) as string[]; } catch { return []; } })(),
+    })),
+  ];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{(apps as unknown[]).length} {(apps as unknown[]).length === 1 ? 'university' : 'universities'} tracked</p>
-        <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }} className="bg-navy hover:bg-navy/90 dark:bg-teal dark:hover:bg-teal/90 text-white">
+        <p className="text-sm text-muted-foreground">
+          {(apps as unknown[]).length} {(apps as unknown[]).length === 1 ? 'university' : 'universities'} tracked
+        </p>
+        <Button
+          size="sm"
+          onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }}
+          className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
+        >
           <Plus className="w-4 h-4 mr-1" /> Add University
         </Button>
       </div>
 
+      {/* ── Add / Edit Form ── */}
       {showForm && (
-        <Card className="border-2 border-teal/30">
+        <Card className="border-2 border-indigo/25 dark:border-indigo/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{editId ? 'Edit Application' : 'New University Application'}</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <GraduationCap className="w-4 h-4 text-indigo" />
+              {editId ? 'Edit Application' : 'New University Application'}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>University Name *</Label>
-                <Input placeholder="e.g. MIT" value={form.universityName} onChange={e => setForm(p => ({ ...p, universityName: e.target.value }))} />
+                <Input
+                  placeholder="e.g. University of Copenhagen"
+                  value={formBase.universityName}
+                  onChange={e => setFormBase(p => ({ ...p, universityName: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Country *</Label>
-                <Input placeholder="e.g. USA" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+                <Input
+                  placeholder="e.g. Denmark 🇩🇰"
+                  value={formBase.country}
+                  onChange={e => setFormBase(p => ({ ...p, country: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Program *</Label>
-                <Input placeholder="e.g. Computer Science" value={form.program} onChange={e => setForm(p => ({ ...p, program: e.target.value }))} />
+                <Input
+                  placeholder="e.g. Computer Science"
+                  value={formBase.program}
+                  onChange={e => setFormBase(p => ({ ...p, program: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Degree Type</Label>
-                <Select value={form.degreeType} onValueChange={v => setForm(p => ({ ...p, degreeType: v }))}>
+                <Select value={formBase.degreeType} onValueChange={v => setFormBase(p => ({ ...p, degreeType: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['MS', 'MBA', 'PhD', 'MEng', 'MA', 'MFA', 'LLM', 'MPH', 'MPA', 'Undergraduate', 'Other'].map(d => (
@@ -309,7 +489,7 @@ function ApplicationsTab() {
               </div>
               <div className="space-y-1">
                 <Label>Status</Label>
-                <Select value={form.status} onValueChange={v => setForm(p => ({ ...p, status: v }))}>
+                <Select value={formBase.status} onValueChange={v => setFormBase(p => ({ ...p, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(APP_STATUS_META).map(([k, v]) => (
@@ -320,49 +500,118 @@ function ApplicationsTab() {
               </div>
               <div className="space-y-1">
                 <Label>Application Deadline</Label>
-                <Input type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={formBase.deadline}
+                  onChange={e => setFormBase(p => ({ ...p, deadline: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Date Applied</Label>
-                <Input type="date" value={form.appliedDate} onChange={e => setForm(p => ({ ...p, appliedDate: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={formBase.appliedDate}
+                  onChange={e => setFormBase(p => ({ ...p, appliedDate: e.target.value }))}
+                />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Requirements Checklist</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {REQS.map(r => (
-                  <div key={r.key} className="flex items-center gap-2">
-                    <Checkbox
-                      id={r.key}
-                      checked={!!form[r.key]}
-                      onCheckedChange={v => setForm(p => ({ ...p, [r.key]: !!v }))}
-                    />
-                    <Label htmlFor={r.key} className="text-sm cursor-pointer">{r.label}</Label>
+            {/* Dynamic requirements */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">📋 Requirements Checklist</Label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7 gap-1"
+                      onClick={() => setShowTplPicker(p => !p)}
+                    >
+                      <Layers className="w-3 h-3" />
+                      Use Template
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                    {showTplPicker && (
+                      <div className="absolute right-0 top-full mt-1 z-50 bg-card border rounded-xl shadow-lg p-2 min-w-[220px] space-y-0.5">
+                        {allTemplates.map(t => (
+                          <button
+                            key={t.id}
+                            onClick={() => applyTemplate(t.items)}
+                            className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <span className="font-medium">{t.name}</span>
+                            <span className="text-muted-foreground ml-1">({t.items.length} items)</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7 gap-1"
+                    onClick={addReqItem}
+                  >
+                    <Plus className="w-3 h-3" /> Add Item
+                  </Button>
+                </div>
               </div>
+
+              {requirements.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No items yet — use a template or add items manually.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {requirements.map((req, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo/50 shrink-0" />
+                      <Input
+                        value={req.label}
+                        onChange={e => updateReqLabel(i, e.target.value)}
+                        placeholder="Requirement name…"
+                        className="flex-1 h-8 text-sm"
+                      />
+                      <button
+                        onClick={() => removeReqItem(i)}
+                        className="shrink-0 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
               <Label>Notes</Label>
-              <Textarea rows={2} placeholder="Funding info, contact, ranking…" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
+              <Textarea
+                rows={2}
+                placeholder="Funding info, contact person, ranking, link…"
+                value={formBase.notes}
+                onChange={e => setFormBase(p => ({ ...p, notes: e.target.value }))}
+              />
             </div>
 
             <div className="flex gap-2">
               <Button
                 size="sm"
-                disabled={!form.universityName || !form.country || !form.program}
-                onClick={() => {
-                  if (editId) updateMutation.mutate({ id: editId, data: form });
-                  else addMutation.mutate(form);
-                }}
-                className="bg-navy hover:bg-navy/90 dark:bg-teal text-white"
+                disabled={!formBase.universityName || !formBase.country || !formBase.program}
+                onClick={saveForm}
+                className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
               >
                 <Check className="w-4 h-4 mr-1" />
-                {editId ? 'Update' : 'Save'}
+                {editId ? 'Update' : 'Save Application'}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setEditId(null); }}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setShowForm(false); setEditId(null); setShowTplPicker(false); }}
+              >
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
@@ -370,90 +619,167 @@ function ApplicationsTab() {
         </Card>
       )}
 
+      {/* ── Application list ── */}
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <p className="text-muted-foreground text-sm py-8 text-center">Loading…</p>
       ) : (apps as unknown[]).length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No applications yet</p>
+        <div className="text-center py-14 text-muted-foreground">
+          <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-25" />
+          <p className="font-semibold">No applications yet</p>
           <p className="text-sm mt-1">Add your first target university to start tracking.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {(apps as (typeof emptyForm & { id: number })[]).map(app => {
-            const meta = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
-            const done = completedReqs(app as unknown as Record<string, unknown>);
-            const total = REQS.filter(r => (app as unknown as Record<string, unknown>)[r.key] === true || true).length;
+          {(apps as (Record<string, unknown> & { id: number })[]).map(app => {
+            const meta     = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
+            const reqs     = safeParseReqs(app.requirementsJson as string);
+            const doneCount = reqs.filter(r => r.done).length;
             const isExpanded = expandedId === app.id;
+
             return (
-              <Card key={app.id} className="overflow-hidden">
+              <Card key={app.id} className="overflow-hidden transition-shadow hover:shadow-md">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-navy dark:text-white truncate">{app.universityName}</h3>
+                        <h3 className="font-semibold text-navy dark:text-white truncate">
+                          {String(app.universityName)}
+                        </h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>
                           {meta.label}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {app.degreeType} in {app.program} · <Globe className="w-3 h-3 inline" /> {app.country}
+                        {String(app.degreeType)} in {String(app.program)} ·{' '}
+                        <Globe className="w-3 h-3 inline" /> {String(app.country)}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
-                        {app.deadline && <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Deadline: {app.deadline}</span>}
-                        {app.appliedDate && <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-500" /> Applied: {app.appliedDate}</span>}
-                        <span className="flex items-center gap-1">
-                          <FileText className="w-3 h-3" />
-                          {done}/{REQS.length} docs marked
-                        </span>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
+                        {app.deadline && (
+                          <span className="flex items-center gap-1">
+                            <CalendarDays className="w-3 h-3" />
+                            Deadline: {fmtDate(app.deadline as string)}
+                            {(() => {
+                              const d = daysUntil(app.deadline as string);
+                              if (d === null || d < 0) return null;
+                              return (
+                                <span className={`font-semibold ${d <= 7 ? 'text-red-500' : d <= 30 ? 'text-orange-500' : ''}`}>
+                                  {' '}({d === 0 ? 'Today!' : `${d}d`})
+                                </span>
+                              );
+                            })()}
+                          </span>
+                        )}
+                        {app.appliedDate && (
+                          <span className="flex items-center gap-1">
+                            <Check className="w-3 h-3 text-green-500" />
+                            Applied: {fmtDate(app.appliedDate as string)}
+                          </span>
+                        )}
+                        {reqs.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            {doneCount}/{reqs.length} docs done
+                          </span>
+                        )}
                       </div>
                     </div>
+
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : app.id)}
-                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground"
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
-                      <button onClick={() => startEdit(app)} className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground">
+                      <button
+                        onClick={() => startEdit(app)}
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => deleteMutation.mutate(app.id)}
-                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
+                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
+                  {/* Progress bar */}
+                  {reqs.length > 0 && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="h-1.5 rounded-full bg-green-500 transition-all duration-500"
+                          style={{ width: `${(doneCount / reqs.length) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{doneCount}/{reqs.length}</span>
+                    </div>
+                  )}
+
+                  {/* Expanded content */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t space-y-3">
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      {/* Requirements with add/remove */}
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Requirements</p>
-                        <div className="flex flex-wrap gap-2">
-                          {REQS.map(r => {
-                            const checked = !!(app as unknown as Record<string, unknown>)[r.key];
-                            return (
-                              <button
-                                key={r.key}
-                                onClick={() => updateMutation.mutate({ id: app.id, data: { [r.key]: !checked } })}
-                                className={`text-xs px-2.5 py-1 rounded-full border transition-colors font-medium ${
-                                  checked
-                                    ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
-                                    : 'bg-muted border-border text-muted-foreground'
-                                }`}
-                              >
-                                {checked ? '✓ ' : ''}{r.label}
-                              </button>
-                            );
-                          })}
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+                          Requirements Checklist
+                        </p>
+                        {reqs.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">No requirements added yet.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {reqs.map((r, idx) => (
+                              <div key={idx} className="group relative inline-flex items-center">
+                                <button
+                                  onClick={() => toggleReqInApp(app, idx)}
+                                  className={`text-xs px-3 py-1 rounded-full border transition-all font-medium pr-5 ${
+                                    r.done
+                                      ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
+                                      : 'bg-muted border-border text-muted-foreground hover:border-indigo/40'
+                                  }`}
+                                >
+                                  {r.done ? '✓ ' : ''}{r.label}
+                                </button>
+                                <button
+                                  onClick={() => removeReqFromApp(app, idx)}
+                                  className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
+                                >
+                                  <X className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Add item inline */}
+                        <div className="flex gap-2 mt-3">
+                          <Input
+                            placeholder="+ Add requirement…"
+                            className="flex-1 h-7 text-xs"
+                            value={expandedId === app.id ? newItemDraft : ''}
+                            onChange={e => setNewItemDraft(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') addReqToApp(app, newItemDraft);
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2"
+                            onClick={() => addReqToApp(app, newItemDraft)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
+
                       {app.notes && (
                         <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">Notes</p>
-                          <p className="text-sm text-foreground/80 whitespace-pre-line">{app.notes}</p>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
+                          <p className="text-sm text-foreground/80 whitespace-pre-line">{String(app.notes)}</p>
                         </div>
                       )}
                     </div>
@@ -468,108 +794,125 @@ function ApplicationsTab() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEST SCORES TAB
+═══════════════════════════════════════════════════════════════════════════ */
 function TestScoresTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: scores = [], isLoading } = useQuery({ queryKey: ['other-tests'], queryFn: api.getOtherTestScores });
+
   const [showForm, setShowForm] = useState(false);
-  const [testName, setTestName] = useState('GRE');
+  const [testName,   setTestName]   = useState('GRE');
   const [customTest, setCustomTest] = useState('');
-  const [date, setDate] = useState('');
+  const [date,  setDate]  = useState('');
   const [total, setTotal] = useState('');
   const [sections, setSections] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState('');
 
-  const activeSections = TEST_SECTIONS[testName] || TEST_SECTIONS['Other'];
+  const currentSections = TEST_SECTIONS[testName] ?? TEST_SECTIONS['Other'];
 
   const addMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => api.addOtherTestScore(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['other-tests'] });
-      setShowForm(false); setDate(''); setTotal(''); setSections({}); setNotes('');
-      toast({ title: 'Score added!' });
+      setShowForm(false);
+      setDate(''); setTotal(''); setSections({}); setNotes('');
+      toast({ title: '📊 Score recorded!' });
     },
   });
   const deleteMutation = useMutation({
     mutationFn: api.deleteOtherTestScore,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['other-tests'] }); toast({ title: 'Removed' }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['other-tests'] }); toast({ title: 'Score removed' }); },
   });
 
-  function handleSave() {
-    const name = testName === 'Other' ? customTest : testName;
+  function saveScore() {
+    const name = testName === 'Other' ? customTest.trim() : testName;
     if (!name || !date) return;
     addMutation.mutate({
-      testName: name, attemptDate: date,
-      totalScore: total ? parseFloat(total) : null,
-      sectionsJson: JSON.stringify(sections),
+      testName: name,
+      attemptDate: date,
+      totalScore: total ? Number(total) : null,
+      scoresJson: JSON.stringify(sections),
       notes: notes || null,
     });
   }
 
-  const TEST_NAMES = ['GRE', 'GMAT', 'TOEFL', 'SAT', 'Duolingo', 'Other'];
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{(scores as unknown[]).length} test attempt{(scores as unknown[]).length !== 1 ? 's' : ''} recorded</p>
-        <Button size="sm" onClick={() => setShowForm(true)} className="bg-navy hover:bg-navy/90 dark:bg-teal text-white">
-          <Plus className="w-4 h-4 mr-1" /> Log Score
+        <p className="text-sm text-muted-foreground">
+          {(scores as unknown[]).length} test score{(scores as unknown[]).length !== 1 ? 's' : ''} recorded
+        </p>
+        <Button
+          size="sm"
+          onClick={() => setShowForm(p => !p)}
+          className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Add Score
         </Button>
       </div>
 
       {showForm && (
-        <Card className="border-2 border-teal/30">
+        <Card className="border-2 border-indigo/25">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Log Test Score</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BookMarked className="w-4 h-4 text-indigo" />
+              Record Test Score
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Test</Label>
                 <Select value={testName} onValueChange={v => { setTestName(v); setSections({}); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {TEST_NAMES.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                    {Object.keys(TEST_SECTIONS).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               {testName === 'Other' && (
                 <div className="space-y-1">
-                  <Label>Test Name</Label>
-                  <Input placeholder="e.g. PTE" value={customTest} onChange={e => setCustomTest(e.target.value)} />
+                  <Label>Custom Test Name</Label>
+                  <Input value={customTest} onChange={e => setCustomTest(e.target.value)} placeholder="e.g. Cambridge C1" />
                 </div>
               )}
               <div className="space-y-1">
-                <Label>Attempt Date</Label>
+                <Label>Date</Label>
                 <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label>Total Score</Label>
-                <Input type="number" placeholder="e.g. 330" value={total} onChange={e => setTotal(e.target.value)} />
+                <Input type="number" value={total} onChange={e => setTotal(e.target.value)} placeholder="Overall score" />
               </div>
             </div>
-            <div>
-              <Label className="mb-2 block">Section Scores</Label>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {activeSections.map(sec => (
-                  <div key={sec} className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">{sec}</Label>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase">Section Scores</Label>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {currentSections.map(s => (
+                  <div key={s} className="space-y-1">
+                    <Label className="text-xs">{s}</Label>
                     <Input
                       type="number"
                       placeholder="Score"
-                      value={sections[sec] || ''}
-                      onChange={e => setSections(p => ({ ...p, [sec]: e.target.value }))}
+                      value={sections[s] ?? ''}
+                      onChange={e => setSections(p => ({ ...p, [s]: e.target.value }))}
                     />
                   </div>
                 ))}
               </div>
             </div>
+
             <div className="space-y-1">
               <Label>Notes</Label>
-              <Textarea rows={2} placeholder="Target university requirements, next steps…" value={notes} onChange={e => setNotes(e.target.value)} />
+              <Textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Prep strategy, retake plans…" />
             </div>
+
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleSave} disabled={!date || (!testName && !customTest)} className="bg-navy hover:bg-navy/90 dark:bg-teal text-white">
+              <Button size="sm" disabled={!date} onClick={saveScore} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
                 <Check className="w-4 h-4 mr-1" /> Save
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>
@@ -581,52 +924,48 @@ function TestScoresTab() {
       )}
 
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (scores as unknown[]).length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <BookMarked className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No test scores yet</p>
-          <p className="text-sm mt-1">Log your GRE, GMAT, TOEFL, or other standardised test results.</p>
+        <div className="text-center py-14 text-muted-foreground">
+          <BookMarked className="w-12 h-12 mx-auto mb-3 opacity-25" />
+          <p className="font-semibold">No test scores yet</p>
+          <p className="text-sm mt-1">Record your GRE, GMAT, TOEFL or other test scores.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {(scores as { id: number; testName: string; totalScore?: number | null; attemptDate: string; sectionsJson?: string | null; notes?: string | null }[]).map(s => {
-            let parsedSections: Record<string, string> = {};
-            try { parsedSections = s.sectionsJson ? JSON.parse(s.sectionsJson) : {}; } catch { /**/ }
-            const sectionEntries = Object.entries(parsedSections).filter(([, v]) => v);
+          {(scores as {
+            id: number; testName: string; totalScore?: number | null;
+            attemptDate: string; scoresJson?: string | null; notes?: string | null;
+          }[]).map(s => {
+            let sectionData: Record<string, string> = {};
+            try { if (s.scoresJson) sectionData = JSON.parse(s.scoresJson); } catch { /* ignore */ }
+
             return (
-              <Card key={s.id}>
+              <Card key={s.id} className="relative group overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between mb-2">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-navy dark:text-teal text-lg">{s.testName}</span>
-                        {s.totalScore != null && (
-                          <span className="text-2xl font-bold">{s.totalScore}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3" /> {s.attemptDate}
-                      </p>
+                      <p className="font-bold text-lg text-navy dark:text-teal">{s.totalScore ?? '–'}</p>
+                      <p className="text-sm font-semibold">{s.testName}</p>
+                      <p className="text-xs text-muted-foreground">{fmtDate(s.attemptDate)}</p>
                     </div>
                     <button
                       onClick={() => deleteMutation.mutate(s.id)}
-                      className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  {sectionEntries.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {sectionEntries.map(([sec, val]) => (
-                        <div key={sec} className="bg-muted rounded-lg px-2.5 py-1 text-center">
-                          <p className="text-[10px] text-muted-foreground">{sec}</p>
-                          <p className="text-sm font-semibold">{val}</p>
-                        </div>
+                  {Object.entries(sectionData).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {Object.entries(sectionData).filter(([, v]) => v).map(([k, v]) => (
+                        <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {k}: <strong>{v}</strong>
+                        </span>
                       ))}
                     </div>
                   )}
-                  {s.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">{s.notes}</p>}
+                  {s.notes && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{s.notes}</p>}
                 </CardContent>
               </Card>
             );
@@ -637,107 +976,126 @@ function TestScoresTab() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCHOLARSHIPS TAB
+═══════════════════════════════════════════════════════════════════════════ */
 function ScholarshipsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { data: schols = [], isLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: scholarships = [], isLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
-  const empty = {
-    name: '', provider: '', amount: '', currency: 'USD',
-    fundingType: 'full', deadline: '', status: 'planning', notes: '',
+  const emptyForm = {
+    name: '', provider: '', country: '', fundingType: 'Full Scholarship',
+    amount: '', currency: 'USD', deadline: '', status: 'planning', notes: '',
   };
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState(emptyForm);
 
   const addMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => api.addScholarship(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scholarships'] });
-      setShowForm(false); setForm(empty); setEditId(null);
-      toast({ title: 'Scholarship added!' });
+      setShowForm(false); setForm(emptyForm);
+      toast({ title: '🏆 Scholarship added!' });
     },
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateScholarship(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scholarships'] }); setShowForm(false); setEditId(null); toast({ title: 'Updated!' }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['scholarships'] });
+      setEditId(null); setShowForm(false);
+    },
   });
   const deleteMutation = useMutation({
     mutationFn: api.deleteScholarship,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scholarships'] }); toast({ title: 'Removed' }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scholarships'] }); },
   });
 
-  function startEdit(s: typeof empty & { id: number }) {
-    setForm({ ...empty, ...s, amount: s.amount?.toString() || '' });
+  function startEdit(s: Record<string, unknown> & { id: number }) {
+    setForm({
+      name:         String(s.name || ''),
+      provider:     String(s.provider || ''),
+      country:      String(s.country || ''),
+      fundingType:  String(s.fundingType || 'Full Scholarship'),
+      amount:       String(s.amount || ''),
+      currency:     String(s.currency || 'USD'),
+      deadline:     String(s.deadline || ''),
+      status:       String(s.status || 'planning'),
+      notes:        String(s.notes || ''),
+    });
     setEditId(s.id);
     setShowForm(true);
   }
 
-  function handleSave() {
-    const payload = { ...form, amount: form.amount ? parseFloat(form.amount) : null };
-    if (editId) updateMutation.mutate({ id: editId, data: payload as unknown as Record<string, unknown> });
-    else addMutation.mutate(payload as unknown as Record<string, unknown>);
+  function saveForm() {
+    const payload = { ...form, deadline: form.deadline || null, amount: form.amount ? Number(form.amount) : null };
+    if (editId) updateMutation.mutate({ id: editId, data: payload });
+    else addMutation.mutate(payload);
   }
-
-  const FUNDING_TYPES = ['full', 'partial', 'tuition_waiver', 'stipend_only', 'travel_grant', 'other'];
-  const FUNDING_LABELS: Record<string, string> = {
-    full: 'Full Funding', partial: 'Partial', tuition_waiver: 'Tuition Waiver',
-    stipend_only: 'Stipend Only', travel_grant: 'Travel Grant', other: 'Other',
-  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{(schols as unknown[]).length} scholarship{(schols as unknown[]).length !== 1 ? 's' : ''} tracked</p>
-        <Button size="sm" onClick={() => { setForm(empty); setEditId(null); setShowForm(true); }} className="bg-navy hover:bg-navy/90 dark:bg-teal text-white">
+        <p className="text-sm text-muted-foreground">
+          {(scholarships as unknown[]).length} scholarship{(scholarships as unknown[]).length !== 1 ? 's' : ''} tracked
+        </p>
+        <Button
+          size="sm"
+          onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}
+          className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
+        >
           <Plus className="w-4 h-4 mr-1" /> Add Scholarship
         </Button>
       </div>
 
       {showForm && (
-        <Card className="border-2 border-teal/30">
+        <Card className="border-2 border-indigo/25">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{editId ? 'Edit Scholarship' : 'New Scholarship'}</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-yellow-500" />
+              {editId ? 'Edit Scholarship' : 'New Scholarship'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Scholarship Name *</Label>
-                <Input placeholder="e.g. Fulbright Scholarship" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                <Input placeholder="e.g. Erasmus+ Scholarship" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div className="space-y-1">
-                <Label>Provider / University</Label>
-                <Input placeholder="e.g. US State Dept / Harvard" value={form.provider} onChange={e => setForm(p => ({ ...p, provider: e.target.value }))} />
+                <Label>Provider / Organisation</Label>
+                <Input placeholder="e.g. European Commission" value={form.provider} onChange={e => setForm(p => ({ ...p, provider: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Country</Label>
+                <Input placeholder="e.g. Finland 🇫🇮" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Funding Type</Label>
                 <Select value={form.fundingType} onValueChange={v => setForm(p => ({ ...p, fundingType: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {FUNDING_TYPES.map(t => <SelectItem key={t} value={t}>{FUNDING_LABELS[t]}</SelectItem>)}
+                    {['Full Scholarship', 'Partial Scholarship', 'Tuition Waiver', 'Stipend', 'Travel Grant', 'Research Funding', 'Other'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2">
-                <div className="space-y-1 flex-1">
-                  <Label>Amount</Label>
-                  <Input type="number" placeholder="0" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
-                </div>
-                <div className="space-y-1 w-24">
-                  <Label>Currency</Label>
+              <div className="space-y-1">
+                <Label>Amount</Label>
+                <div className="flex gap-2">
+                  <Input type="number" placeholder="0" className="flex-1" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
                   <Select value={form.currency} onValueChange={v => setForm(p => ({ ...p, currency: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {['USD', 'GBP', 'EUR', 'AUD', 'CAD', 'SGD', 'BDT', 'INR', 'Other'].map(c => (
+                      {['USD', 'EUR', 'GBP', 'NOK', 'SEK', 'DKK', 'BDT', 'Other'].map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div className="space-y-1">
-                <Label>Deadline</Label>
-                <Input type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Status</Label>
@@ -750,13 +1108,17 @@ function ScholarshipsTab() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1">
+                <Label>Deadline</Label>
+                <Input type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
+              </div>
             </div>
             <div className="space-y-1">
               <Label>Notes</Label>
-              <Textarea rows={2} placeholder="Eligibility requirements, links, contacts…" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
+              <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleSave} disabled={!form.name} className="bg-navy hover:bg-navy/90 dark:bg-teal text-white">
+              <Button size="sm" disabled={!form.name} onClick={saveForm} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
                 <Check className="w-4 h-4 mr-1" /> {editId ? 'Update' : 'Save'}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setEditId(null); }}>
@@ -768,49 +1130,59 @@ function ScholarshipsTab() {
       )}
 
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
-      ) : (schols as unknown[]).length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No scholarships yet</p>
-          <p className="text-sm mt-1">Track Fulbright, Commonwealth, university grants, and more.</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : (scholarships as unknown[]).length === 0 ? (
+        <div className="text-center py-14 text-muted-foreground">
+          <Trophy className="w-12 h-12 mx-auto mb-3 opacity-25" />
+          <p className="font-semibold">No scholarships yet</p>
+          <p className="text-sm mt-1">Track Erasmus+, Nordic grants and other funding opportunities.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {(schols as (typeof empty & { id: number; amount?: number | null })[]).map(s => {
+          {(scholarships as (Record<string, unknown> & { id: number })[]).map(s => {
             const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
             return (
-              <Card key={s.id}>
+              <Card key={s.id} className="group hover:shadow-md transition-all hover:-translate-y-0.5">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-navy dark:text-white truncate">{s.name}</h3>
-                        <span className={`text-xs font-semibold ${meta.color}`}>{meta.label}</span>
+                        <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
+                        <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{s.provider}</p>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Award className="w-3 h-3" />
-                          {FUNDING_LABELS[s.fundingType] || s.fundingType}
-                          {s.amount != null ? ` · ${s.currency} ${s.amount.toLocaleString()}` : ''}
-                        </span>
-                        {s.deadline && <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> {s.deadline}</span>}
-                      </div>
-                      {s.notes && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{s.notes}</p>}
+                      {s.provider && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => startEdit(s as typeof empty & { id: number; amount?: number | null })} className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground">
-                        <Edit2 className="w-4 h-4" />
+                    <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => startEdit(s)} className="p-1 rounded hover:bg-muted text-muted-foreground">
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        onClick={() => deleteMutation.mutate(s.id)}
-                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                      <button onClick={() => deleteMutation.mutate(s.id)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
+
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{String(s.fundingType)}</span>
+                    {s.country && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">🌍 {String(s.country)}</span>}
+                    {s.amount && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 font-semibold">
+                        {Number(s.amount).toLocaleString()} {String(s.currency)}
+                      </span>
+                    )}
+                  </div>
+
+                  {s.deadline && (
+                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                      <CalendarDays className="w-3 h-3" />
+                      Deadline: {fmtDate(s.deadline as string)}
+                      {(() => {
+                        const d = daysUntil(s.deadline as string);
+                        if (d === null || d < 0) return null;
+                        return <span className={`font-semibold ml-1 ${d <= 14 ? 'text-red-500' : 'text-muted-foreground'}`}>({d}d)</span>;
+                      })()}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -821,7 +1193,222 @@ function ScholarshipsTab() {
   );
 }
 
-const FUNDING_LABELS: Record<string, string> = {
-  full: 'Full Funding', partial: 'Partial', tuition_waiver: 'Tuition Waiver',
-  stipend_only: 'Stipend Only', travel_grant: 'Travel Grant', other: 'Other',
-};
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHECKLIST TEMPLATES TAB
+═══════════════════════════════════════════════════════════════════════════ */
+function ChecklistTemplates() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const { data: custom = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
+
+  const [showForm,    setShowForm]    = useState(false);
+  const [formName,    setFormName]    = useState('');
+  const [formDegree,  setFormDegree]  = useState('');
+  const [formItems,   setFormItems]   = useState<string[]>(['']);
+  const [expandedId,  setExpandedId]  = useState<string | null>(null);
+
+  const addMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => api.addTemplate(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['templates'] });
+      setShowForm(false); setFormName(''); setFormDegree(''); setFormItems(['']);
+      toast({ title: '📋 Template saved!' });
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: api.deleteTemplate,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['templates'] }); },
+  });
+
+  function addFormItem() {
+    setFormItems(p => [...p, '']);
+  }
+  function removeFormItem(i: number) {
+    setFormItems(p => p.filter((_, idx) => idx !== i));
+  }
+  function updateFormItem(i: number, val: string) {
+    setFormItems(p => p.map((x, idx) => idx === i ? val : x));
+  }
+  function saveTemplate() {
+    const items = formItems.filter(x => x.trim());
+    if (!formName.trim() || !items.length) return;
+    addMutation.mutate({ name: formName, degreeType: formDegree || null, items: JSON.stringify(items) });
+  }
+
+  const customParsed = (custom as { id: number; name: string; degreeType?: string | null; items: string }[])
+    .map(t => ({
+      ...t,
+      itemsParsed: (() => { try { return JSON.parse(t.items) as string[]; } catch { return []; } })(),
+    }));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-bold text-lg">Document Checklist Templates</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Pre-built and custom templates. Apply them when adding a new university application to auto-fill the requirements list.
+          </p>
+        </div>
+        <Button size="sm" onClick={() => setShowForm(p => !p)} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white shrink-0">
+          <Plus className="w-4 h-4 mr-1" /> Custom Template
+        </Button>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <Card className="border-2 border-indigo/25">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-indigo" />
+              New Custom Template
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Template Name *</Label>
+                <Input placeholder="e.g. My University Checklist" value={formName} onChange={e => setFormName(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Degree Type (optional)</Label>
+                <Input placeholder="e.g. MS, Erasmus, PhD" value={formDegree} onChange={e => setFormDegree(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Checklist Items *</Label>
+                <Button type="button" size="sm" variant="outline" className="text-xs h-7" onClick={addFormItem}>
+                  <Plus className="w-3 h-3 mr-1" /> Add Item
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                {formItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo/40 shrink-0" />
+                    <Input
+                      value={item}
+                      onChange={e => updateFormItem(i, e.target.value)}
+                      placeholder={`Item ${i + 1}…`}
+                      className="flex-1 h-8 text-sm"
+                    />
+                    {formItems.length > 1 && (
+                      <button onClick={() => removeFormItem(i)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                disabled={!formName.trim() || !formItems.some(x => x.trim())}
+                onClick={saveTemplate}
+                className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
+              >
+                <Check className="w-4 h-4 mr-1" /> Save Template
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>
+                <X className="w-4 h-4 mr-1" /> Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Default templates */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Default Templates
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {DEFAULT_TEMPLATES.map(tmpl => {
+            const isOpen = expandedId === tmpl.id;
+            return (
+              <Card key={tmpl.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <button
+                  className="w-full text-left p-4"
+                  onClick={() => setExpandedId(isOpen ? null : tmpl.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm">{tmpl.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{tmpl.degreeType} · {tmpl.items.length} items</p>
+                    </div>
+                    {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                  {isOpen && (
+                    <ul className="mt-3 space-y-1.5">
+                      {tmpl.items.map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-xs text-foreground/75">
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </button>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Custom templates */}
+      {customParsed.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            My Custom Templates
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {customParsed.map(tmpl => {
+              const isOpen = expandedId === String(tmpl.id);
+              return (
+                <Card key={tmpl.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <button
+                        className="flex-1 text-left"
+                        onClick={() => setExpandedId(isOpen ? null : String(tmpl.id))}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-sm">{tmpl.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {tmpl.degreeType || 'Custom'} · {tmpl.itemsParsed.length} items
+                            </p>
+                          </div>
+                          {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                        {isOpen && (
+                          <ul className="mt-3 space-y-1.5">
+                            {tmpl.itemsParsed.map((item, i) => (
+                              <li key={i} className="flex items-center gap-2 text-xs text-foreground/75">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo/60 shrink-0" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(tmpl.id)}
+                        className="ml-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-all shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

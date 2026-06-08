@@ -1,0 +1,3 @@
+- [FlyStudy architecture](flystudy-arch.md) — dual-mode app (home/fly/study); mode state in App.tsx; no router needed
+- [Dynamic requirements design](requirements-json.md) — requirements stored as JSON in `requirementsJson` TEXT col; old boolean cols kept but ignored in UI
+- [Date formatting rule](date-formatting.md) — always use fmtDate/daysUntil from src/lib/utils/date.ts; never raw Date constructor on YYYY-MM-DD strings
