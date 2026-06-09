@@ -47,138 +47,164 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
 /* ─── LANDING PAGE ──────────────────────────────────────────────────────── */
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-10 sm:py-14"
-      style={{ background: 'linear-gradient(145deg, #f0f4ff 0%, #e8f5f2 50%, #f5f0ff 100%)' }}
-    >
-      {/* Ambient glow orbs */}
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#fafbff' }}>
+
+      {/* Decorative background shapes */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
-          style={{ background: 'radial-gradient(circle, #c7d2fe, transparent 70%)' }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
-          style={{ background: 'radial-gradient(circle, #99f6e4, transparent 70%)' }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full blur-3xl opacity-20"
-          style={{ background: 'radial-gradient(ellipse, #ddd6fe, transparent 65%)' }}
-        />
+        <div className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full opacity-40"
+          style={{ background: 'radial-gradient(circle, #e0e7ff 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-40"
+          style={{ background: 'radial-gradient(circle, #ccfbf1 0%, transparent 70%)' }} />
+        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6366f1" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
       </div>
 
-      {/* Logo + tagline */}
-      <header className="relative z-10 text-center mb-10 sm:mb-12 w-full max-w-2xl">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <span className="text-4xl sm:text-5xl">✈️</span>
-          <h1
-            className="text-4xl sm:text-5xl font-bold tracking-tight leading-none"
-            style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
-          >
-            FlyStudy
-          </h1>
+      {/* Top nav bar */}
+      <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">✈️</span>
+          <span className="font-bold text-base tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
+            Within a Few Weeks
+          </span>
         </div>
-        <p
-          className="text-xs sm:text-sm tracking-[0.18em] uppercase mt-2"
-          style={{ color: '#6b7280' }}
-        >
-          Your passport to higher education
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-medium px-3 py-1 rounded-full"
+            style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+            🟢 Live
+          </span>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-5 sm:px-8 pt-10 pb-4 text-center">
+
+        {/* Eyebrow badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-semibold tracking-wide"
+          style={{ background: '#ede9fe', color: '#6d28d9', border: '1px solid #ddd6fe' }}>
+          <span>🎯</span> Your IELTS &amp; Higher Study Platform
+        </div>
+
+        {/* Main headline */}
+        <h1 className="font-black leading-[1.05] mb-5 max-w-2xl"
+          style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.4rem, 7vw, 4.5rem)' }}>
+          <span style={{
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 40%, #0d9488 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            Within a Few Weeks
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: '#6b7280' }}>
+          Track IELTS scores, log study sessions, prep for Erasmus applications — 
+          everything you need to get there, in one place.
         </p>
 
-        {/* Erasmus country flags only */}
-        <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 flex-wrap">
-          {['🇩🇰', '🇫🇮', '🇳🇴', '🇸🇪'].map((flag) => (
-            <span key={flag} className="text-2xl sm:text-3xl">{flag}</span>
+        {/* Feature pills */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          {['📈 Score Tracking', '📖 Study Log', '🔤 Vocab Bank', '🎓 Uni Applications', '🏆 Scholarships', '🧘 Mindset'].map(f => (
+            <span key={f} className="text-xs font-medium px-3 py-1.5 rounded-full"
+              style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e5e7eb' }}>
+              {f}
+            </span>
           ))}
-          <div
-            className="ml-1 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+        </div>
+
+        {/* Cards */}
+        <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
+
+          {/* Fly card */}
+          <button
+            onClick={onFly}
+            className="group relative text-left rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
             style={{
-              background: 'rgba(99,102,241,0.12)',
-              color: '#4f46e5',
-              border: '1px solid rgba(99,102,241,0.25)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f5f3ff 100%)',
+              border: '1.5px solid #e0e7ff',
+              boxShadow: '0 4px 24px rgba(99,102,241,0.08)',
             }}
           >
-            ✦ Erasmus Ready
-          </div>
-        </div>
-      </header>
+            {/* Coloured accent bar at top */}
+            <div className="absolute top-0 left-6 right-6 h-[3px] rounded-b-full"
+              style={{ background: 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
 
-      {/* Hero cards */}
-      <main className="relative z-10 w-full max-w-2xl flex flex-col sm:flex-row gap-4 sm:gap-5">
-        {/* Fly */}
-        <button
-          onClick={onFly}
-          className="flex-1 group relative overflow-hidden rounded-2xl sm:rounded-3xl p-7 sm:p-9 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-md hover:shadow-xl"
-          style={{
-            background: 'rgba(255,255,255,0.85)',
-            border: '1px solid rgba(99,102,241,0.2)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <div
-            className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.07), rgba(139,92,246,0.05))' }}
-          />
-          <div className="relative z-10">
-            <div className="text-4xl sm:text-5xl mb-5">✈️</div>
-            <h2
-              className="text-2xl sm:text-3xl font-bold mb-2 leading-snug"
-              style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
-            >
-              Fly
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)' }}>
+              ✈️
+            </div>
+
+            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
+              Fly — Higher Study
             </h2>
-            <p className="text-sm leading-relaxed mb-6" style={{ color: '#4b5563' }}>
-              Track university applications, scholarships &amp; standardised tests. Built for Erasmus, Nordic and global programmes.
+            <p className="text-sm leading-relaxed mb-5" style={{ color: '#6b7280' }}>
+              University applications, scholarships, standardised test scores &amp; Erasmus-ready document templates.
             </p>
-            <span
-              className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{ color: '#4f46e5' }}
-            >
-              Start tracking
-              <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-            </span>
-          </div>
-        </button>
 
-        {/* Study Journey */}
-        <button
-          onClick={onStudy}
-          className="flex-1 group relative overflow-hidden rounded-2xl sm:rounded-3xl p-7 sm:p-9 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-md hover:shadow-xl"
-          style={{
-            background: 'rgba(255,255,255,0.85)',
-            border: '1px solid rgba(20,184,166,0.2)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <div
-            className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.07), rgba(16,185,129,0.05))' }}
-          />
-          <div className="relative z-10">
-            <div className="text-4xl sm:text-5xl mb-5">📚</div>
-            <h2
-              className="text-2xl sm:text-3xl font-bold mb-2 leading-snug"
-              style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
-            >
+            <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: '#4f46e5' }}>
+              Start tracking
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Study Journey card */}
+          <button
+            onClick={onStudy}
+            className="group relative text-left rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(145deg, #ffffff 0%, #f0fdfa 100%)',
+              border: '1.5px solid #ccfbf1',
+              boxShadow: '0 4px 24px rgba(13,148,136,0.08)',
+            }}
+          >
+            {/* Coloured accent bar at top */}
+            <div className="absolute top-0 left-6 right-6 h-[3px] rounded-b-full"
+              style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #ccfbf1, #a7f3d0)' }}>
+              📚
+            </div>
+
+            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
               Study Journey
             </h2>
-            <p className="text-sm leading-relaxed mb-6" style={{ color: '#4b5563' }}>
-              Master IELTS with smart score tracking, structured practice, a 1,000-word vocab bank &amp; daily mindset coaching.
+            <p className="text-sm leading-relaxed mb-5" style={{ color: '#6b7280' }}>
+              Smart IELTS score tracking, structured practice logs, 1,000-word vocab bank &amp; daily mindset coaching.
             </p>
-            <span
-              className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{ color: '#0d9488' }}
-            >
+
+            <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: '#0d9488' }}>
               Begin journey
-              <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-            </span>
-          </div>
-        </button>
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </button>
+        </div>
+
+        {/* Trust row */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs" style={{ color: '#9ca3af' }}>
+          <span className="flex items-center gap-1.5"><span>🔒</span> Data saved to your database</span>
+          <span className="hidden sm:block w-px h-3 bg-gray-200" />
+          <span className="flex items-center gap-1.5"><span>🇩🇰</span><span>🇫🇮</span><span>🇳🇴</span><span>🇸🇪</span> Erasmus countries</span>
+          <span className="hidden sm:block w-px h-3 bg-gray-200" />
+          <span className="flex items-center gap-1.5"><span>⚡</span> Always free</span>
+        </div>
       </main>
 
-      <footer className="relative z-10 mt-10 sm:mt-12 text-center">
-        <p className="text-[11px] tracking-[0.2em] uppercase" style={{ color: '#9ca3af' }}>
-          Erasmus · Nordics · Europe · Beyond
+      {/* Footer */}
+      <footer className="relative z-10 text-center py-5">
+        <p className="text-[11px] tracking-[0.15em] uppercase" style={{ color: '#d1d5db' }}>
+          Within a Few Weeks · Erasmus · Europe · Beyond
         </p>
       </footer>
     </div>
@@ -250,30 +276,22 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner"
-              style={{
-                background: 'rgba(99,102,241,0.22)',
-                border: '1px solid rgba(99,102,241,0.35)',
-              }}
+              style={{ background: 'rgba(99,102,241,0.22)', border: '1px solid rgba(99,102,241,0.35)' }}
             >
               ✈️
             </div>
             <div>
-              <p className="font-bold text-[17px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              <p className="font-bold text-[15px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                 Fly
               </p>
-              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Higher Study Prep</p>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Higher Study Prep</p>
             </div>
           </div>
         }
         bottomWidget={
-          <div
-            className="p-4 rounded-2xl"
-            style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}
-          >
-            <p className="text-[10px] uppercase tracking-widest mb-2.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
-              Erasmus Countries
-            </p>
-            <div className="flex gap-2 text-xl">🇩🇰 🇫🇮 🇳🇴 🇸🇪</div>
+          <div className="p-3 rounded-2xl" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.32)' }}>Erasmus</p>
+            <div className="flex gap-1.5 text-lg">🇩🇰 🇫🇮 🇳🇴 🇸🇪</div>
           </div>
         }
       />
@@ -287,7 +305,7 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
                 <h1 className="font-bold text-[17px] leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   {pageTitle}
                 </h1>
-                <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · FlyStudy</p>
+                <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · Within a Few Weeks</p>
               </div>
             </div>
             <SettingsPanel />
@@ -301,17 +319,12 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-1.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
         {FLY_TABS.map(t => {
           const isActive = tab === t.id;
           return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${
-                isActive ? 'text-indigo-500' : 'text-muted-foreground'
-              }`}
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-indigo-500' : 'text-muted-foreground'}`}
             >
               <span className="text-[15px] mb-0.5">{t.emoji}</span>
               <span className="text-[8px] leading-tight font-medium">{t.label.split(' ')[0]}</span>
@@ -349,21 +362,16 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
               📚
             </div>
             <div>
-              <p className="font-bold text-[17px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              <p className="font-bold text-[15px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                 Study
               </p>
-              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>IELTS Journey</p>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>IELTS Journey</p>
             </div>
           </div>
         }
         bottomWidget={
-          <div
-            className="p-4 rounded-2xl text-center"
-            style={{ background: 'rgba(46,196,182,0.1)', border: '1px solid rgba(46,196,182,0.2)' }}
-          >
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>
-              IELTS Target
-            </p>
+          <div className="p-3 rounded-2xl text-center" style={{ background: 'rgba(46,196,182,0.1)', border: '1px solid rgba(46,196,182,0.2)' }}>
+            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>IELTS Target</p>
             <p className="text-2xl font-bold text-teal">7.0+</p>
           </div>
         }
@@ -378,7 +386,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
                 <h1 className="font-bold text-[17px] leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   {pageTitle}
                 </h1>
-                <p className="text-[11px] text-muted-foreground hidden sm:block">IELTS Journey · FlyStudy</p>
+                <p className="text-[11px] text-muted-foreground hidden sm:block">IELTS Journey · Within a Few Weeks</p>
               </div>
             </div>
             <SettingsPanel />
@@ -397,17 +405,12 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-1.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
         {STUDY_TABS.map(t => {
           const isActive = tab === t.id;
           return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${
-                isActive ? 'text-teal' : 'text-muted-foreground'
-              }`}
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-teal' : 'text-muted-foreground'}`}
             >
               <span className="text-[15px] mb-0.5">{t.emoji}</span>
               <span className="text-[8px] leading-tight font-medium">{t.label.split(' ')[0]}</span>
