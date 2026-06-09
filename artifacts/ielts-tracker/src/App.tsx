@@ -10,7 +10,8 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { Confetti } from '@/components/Confetti';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,8 +45,52 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'mindset',   label: 'Mindset',          emoji: '🧘' },
 ];
 
+/* ─── COUNTDOWN HELPERS ─────────────────────────────────────────────────── */
+function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
+  return Math.ceil(diff / 86_400_000);
+}
+
+function CountdownBadge({
+  label, days, color,
+}: { label: string; days: number; color: 'indigo' | 'teal' | 'amber' }) {
+  const palettes = {
+    indigo: { bg: '#ede9fe', border: '#ddd6fe', text: '#4f46e5' },
+    teal:   { bg: '#ccfbf1', border: '#99f6e4', text: '#0d9488' },
+    amber:  { bg: '#fef3c7', border: '#fde68a', text: '#d97706' },
+  };
+  const p = palettes[color];
+  const display =
+    days === 0 ? 'Today!' :
+    days > 0   ? `${days} day${days === 1 ? '' : 's'}` :
+                 `${Math.abs(days)}d ago`;
+  const urgent = days >= 0 && days <= 7;
+  return (
+    <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px]"
+      style={{ background: p.bg, border: `1.5px solid ${p.border}` }}>
+      <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: p.text }}>{label}</span>
+      <span className="text-2xl font-black leading-none" style={{ color: p.text }}>
+        {urgent && days >= 0 ? '⚡ ' : ''}{display}
+      </span>
+    </div>
+  );
+}
+
 /* ─── LANDING PAGE ──────────────────────────────────────────────────────── */
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
+  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
+  const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+
+  const examDays = daysUntil((settings as any)?.examDate);
+
+  const nextDeadline = (applications as any[])
+    .map((a: any) => ({ name: a.universityName, days: daysUntil(a.deadline) }))
+    .filter(a => a.days !== null && a.days >= 0)
+    .sort((a, b) => (a.days as number) - (b.days as number))[0] ?? null;
+
+  const hasCountdowns = examDays !== null || nextDeadline !== null;
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#fafbff' }}>
 
@@ -109,6 +154,26 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             Within a Few Weeks
           </span>
         </h1>
+
+        {/* Countdown timers */}
+        {hasCountdowns && (
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {examDays !== null && (
+              <CountdownBadge
+                label="IELTS Exam"
+                days={examDays}
+                color={examDays <= 7 ? 'amber' : 'indigo'}
+              />
+            )}
+            {nextDeadline && (
+              <CountdownBadge
+                label={`Apply · ${(nextDeadline.name as string).slice(0, 18)}${(nextDeadline.name as string).length > 18 ? '…' : ''}`}
+                days={nextDeadline.days as number}
+                color={(nextDeadline.days as number) <= 7 ? 'amber' : 'teal'}
+              />
+            )}
+          </div>
+        )}
 
         {/* Cards */}
         <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
@@ -281,11 +346,21 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-card border-b border-border sticky top-0 z-40">
-          <div className="px-5 sm:px-8 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl md:hidden">✈️</span>
-              <div>
-                <h1 className="font-bold text-[17px] leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <div className="px-4 sm:px-8 h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Mobile back button */}
+              <button
+                onClick={onBack}
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-xl shrink-0 transition-colors hover:bg-accent"
+                aria-label="Back to home"
+              >
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xl hidden xs:inline md:hidden">✈️</span>
+              <div className="min-w-0">
+                <h1 className="font-bold text-[17px] leading-tight truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   {pageTitle}
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · Within a Few Weeks</p>
@@ -362,11 +437,21 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-card border-b border-border sticky top-0 z-40">
-          <div className="px-4 sm:px-8 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl md:hidden">📚</span>
-              <div>
-                <h1 className="font-bold text-[17px] leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <div className="px-4 sm:px-8 h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Mobile back button */}
+              <button
+                onClick={onBack}
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-xl shrink-0 transition-colors hover:bg-accent"
+                aria-label="Back to home"
+              >
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xl hidden xs:inline md:hidden">📚</span>
+              <div className="min-w-0">
+                <h1 className="font-bold text-[17px] leading-tight truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   {pageTitle}
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden sm:block">IELTS Journey · Within a Few Weeks</p>

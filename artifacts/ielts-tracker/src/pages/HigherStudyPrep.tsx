@@ -39,6 +39,7 @@ const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string 
 };
 
 const TEST_SECTIONS: Record<string, string[]> = {
+  IELTS:    ['Listening', 'Reading', 'Writing', 'Speaking'],
   GRE:      ['Verbal', 'Quantitative', 'Analytical Writing'],
   GMAT:     ['Verbal', 'Quantitative', 'Integrated Reasoning', 'Analytical Writing'],
   TOEFL:    ['Reading', 'Listening', 'Speaking', 'Writing'],
