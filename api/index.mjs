@@ -3,6 +3,8 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { pgTable, serial, text, real, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 // ── SCHEMA (inlined to avoid ESM/CJS conflict) ────────────────
 const scoresTable = pgTable("scores", {
@@ -123,6 +125,26 @@ const checklistTemplatesTable = pgTable("checklist_templates", {
 });
 
 // ── DB CONNECTION ─────────────────────────────────────────────
+const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+function verifyToken(req) {
+  const auth = req.headers.authorization || req.headers.Authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  try {
+    const token = auth.slice(7);
+    if (!token || token === "null" || token === "undefined") return null;
+    return jwt.verify(token, process.env.JWT_SECRET || "wfw-secret-fallback");
+  } catch {
+    return null;
+  }
+}
+
 function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
   const sql = neon(process.env.DATABASE_URL);
@@ -147,6 +169,49 @@ export default async function handler(req, res) {
   const body = req.body;
 
   try {
+    // ── AUTH ──────────────────────────────────────────────────
+    if (url === "/api/auth/register" && method === "POST") {
+      const parsed = z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        password: z.string().min(6),
+      }).safeParse(body);
+      if (!parsed.success) return res.status(400).json({ error: "Invalid input. Password must be at least 6 characters." });
+      const { name, email, password } = parsed.data;
+      const db = getDb();
+      const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+      if (existing.length > 0) return res.status(409).json({ error: "Email already registered. Please sign in." });
+      const passwordHash = await bcrypt.hash(password, 10);
+      const [user] = await db.insert(usersTable).values({ name, email, passwordHash }).returning();
+      const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || "wfw-secret-fallback", { expiresIn: "7d" });
+      return res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    }
+
+    if (url === "/api/auth/login" && method === "POST") {
+      const parsed = z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      }).safeParse(body);
+      if (!parsed.success) return res.status(400).json({ error: "Invalid email or password." });
+      const { email, password } = parsed.data;
+      const db = getDb();
+      const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+      if (!user) return res.status(401).json({ error: "Invalid email or password." });
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) return res.status(401).json({ error: "Invalid email or password." });
+      const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || "wfw-secret-fallback", { expiresIn: "7d" });
+      return res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    }
+
+    if (url === "/api/auth/me" && method === "GET") {
+      const decoded = verifyToken(req);
+      if (!decoded) return res.status(401).json({ error: "Unauthorized" });
+      const db = getDb();
+      const [user] = await db.select().from(usersTable).where(eq(usersTable.id, decoded.userId));
+      if (!user) return res.status(404).json({ error: "User not found" });
+      return res.json({ id: user.id, name: user.name, email: user.email });
+    }
+
     // ── HEALTH ────────────────────────────────────────────────
     if (url === "/api/health") return res.json({ status: "ok" });
 
