@@ -1,14 +1,23 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { pgTable, serial, text, real, integer, boolean, timestamp } from "drizzle-orm/pg-core";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-// ── SCHEMA (inlined to avoid ESM/CJS conflict) ────────────────
+// ── SCHEMA ────────────────────────────────────────────────────
+const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 const scoresTable = pgTable("scores", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   date: text("date").notNull(),
   module: text("module").notNull(),
   score: real("score"),
@@ -19,6 +28,7 @@ const scoresTable = pgTable("scores", {
 
 const settingsTable = pgTable("settings", {
   id: text("id").primaryKey().default("default"),
+  userId: integer("user_id"),
   name: text("name").notNull().default("Student"),
   examDate: text("exam_date"),
   targetReading: real("target_reading").notNull().default(6.5),
@@ -32,6 +42,7 @@ const settingsTable = pgTable("settings", {
 
 const studySessionsTable = pgTable("study_sessions", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   date: text("date").notNull(),
   module: text("module").notNull(),
   minutes: integer("minutes").notNull(),
@@ -43,6 +54,7 @@ const studySessionsTable = pgTable("study_sessions", {
 
 const practiceLogsTable = pgTable("practice_logs", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   date: text("date").notNull(),
   module: text("module").notNull(),
   subType: text("sub_type").notNull(),
@@ -54,6 +66,7 @@ const practiceLogsTable = pgTable("practice_logs", {
 
 const vocabWordsTable = pgTable("vocab_words", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   word: text("word").notNull(),
   pos: text("pos").notNull(),
   definition: text("definition").notNull(),
@@ -65,6 +78,7 @@ const vocabWordsTable = pgTable("vocab_words", {
 
 const favouriteAffirmationsTable = pgTable("favourite_affirmations", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   affirmation: text("affirmation").notNull(),
   savedAt: text("saved_at").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -72,6 +86,7 @@ const favouriteAffirmationsTable = pgTable("favourite_affirmations", {
 
 const higherStudyApplicationsTable = pgTable("higher_study_applications", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   universityName: text("university_name").notNull(),
   country: text("country").notNull(),
   program: text("program").notNull(),
@@ -95,6 +110,7 @@ const higherStudyApplicationsTable = pgTable("higher_study_applications", {
 
 const otherTestScoresTable = pgTable("other_test_scores", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   testName: text("test_name").notNull(),
   attemptDate: text("attempt_date").notNull(),
   totalScore: real("total_score"),
@@ -105,6 +121,7 @@ const otherTestScoresTable = pgTable("other_test_scores", {
 
 const scholarshipsTable = pgTable("scholarships", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   name: text("name").notNull(),
   provider: text("provider").notNull(),
   amount: real("amount"),
@@ -118,20 +135,19 @@ const scholarshipsTable = pgTable("scholarships", {
 
 const checklistTemplatesTable = pgTable("checklist_templates", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   name: text("name").notNull(),
   degreeType: text("degree_type"),
   items: text("items").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// ── DB CONNECTION ─────────────────────────────────────────────
-const usersTable = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+// ── HELPERS ───────────────────────────────────────────────────
+function getDb() {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
+  const sql = neon(process.env.DATABASE_URL);
+  return drizzle(sql);
+}
 
 function verifyToken(req) {
   const auth = req.headers.authorization || req.headers.Authorization;
@@ -145,12 +161,6 @@ function verifyToken(req) {
   }
 }
 
-function getDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  const sql = neon(process.env.DATABASE_URL);
-  return drizzle(sql);
-}
-
 function parseId(str) {
   const n = parseInt(str, 10);
   return isNaN(n) ? null : n;
@@ -160,16 +170,18 @@ function parseId(str) {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const db = getDb();
   const url = req.url?.split("?")[0] ?? "";
   const method = req.method ?? "GET";
   const body = req.body;
 
   try {
-    // ── AUTH ──────────────────────────────────────────────────
+    // ── HEALTH ────────────────────────────────────────────────
+    if (url === "/api/health") return res.json({ status: "ok" });
+
+    // ── AUTH ROUTES (no token needed) ─────────────────────────
     if (url === "/api/auth/register" && method === "POST") {
       const parsed = z.object({
         name: z.string().min(1),
@@ -212,38 +224,45 @@ export default async function handler(req, res) {
       return res.json({ id: user.id, name: user.name, email: user.email });
     }
 
-    // ── HEALTH ────────────────────────────────────────────────
-    if (url === "/api/health") return res.json({ status: "ok" });
+    // ── ALL ROUTES BELOW REQUIRE AUTH ─────────────────────────
+    const decoded = verifyToken(req);
+    if (!decoded) return res.status(401).json({ error: "Unauthorized" });
+    const userId = decoded.userId;
+    const db = getDb();
 
     // ── SETTINGS ──────────────────────────────────────────────
     if (url === "/api/settings" && method === "GET") {
-      const [s] = await db.select().from(settingsTable).where(eq(settingsTable.id, "default"));
+      const [s] = await db.select().from(settingsTable).where(eq(settingsTable.userId, userId));
       if (!s) {
-        const [created] = await db.insert(settingsTable).values({ id: "default" }).returning();
+        const [created] = await db.insert(settingsTable).values({ id: `user_${userId}`, userId }).returning();
         return res.json(created);
       }
       return res.json(s);
     }
     if (url === "/api/settings" && method === "PUT") {
       const parsed = z.object({
-        name: z.string().optional(), examDate: z.string().nullable().optional(),
-        targetReading: z.number().optional(), targetListening: z.number().optional(),
-        targetWriting: z.number().optional(), targetSpeaking: z.number().optional(),
-        dailyGoalMinutes: z.number().int().optional(), darkMode: z.string().optional(),
+        name: z.string().optional(),
+        examDate: z.string().nullable().optional(),
+        targetReading: z.number().optional(),
+        targetListening: z.number().optional(),
+        targetWriting: z.number().optional(),
+        targetSpeaking: z.number().optional(),
+        dailyGoalMinutes: z.number().int().optional(),
+        darkMode: z.string().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [existing] = await db.select().from(settingsTable).where(eq(settingsTable.id, "default"));
+      const [existing] = await db.select().from(settingsTable).where(eq(settingsTable.userId, userId));
       if (!existing) {
-        const [created] = await db.insert(settingsTable).values({ id: "default", ...parsed.data }).returning();
+        const [created] = await db.insert(settingsTable).values({ id: `user_${userId}`, userId, ...parsed.data }).returning();
         return res.json(created);
       }
-      const [updated] = await db.update(settingsTable).set(parsed.data).where(eq(settingsTable.id, "default")).returning();
+      const [updated] = await db.update(settingsTable).set(parsed.data).where(eq(settingsTable.userId, userId)).returning();
       return res.json(updated);
     }
 
     // ── SCORES ────────────────────────────────────────────────
     if (url === "/api/scores" && method === "GET")
-      return res.json(await db.select().from(scoresTable).orderBy(desc(scoresTable.createdAt)));
+      return res.json(await db.select().from(scoresTable).where(eq(scoresTable.userId, userId)).orderBy(desc(scoresTable.createdAt)));
     if (url === "/api/scores" && method === "POST") {
       const parsed = z.object({
         date: z.string(), module: z.string(),
@@ -251,20 +270,20 @@ export default async function handler(req, res) {
         notes: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(scoresTable).values(parsed.data).returning();
+      const [row] = await db.insert(scoresTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/scores\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(scoresTable).where(eq(scoresTable.id, id)).returning();
+      const [deleted] = await db.delete(scoresTable).where(and(eq(scoresTable.id, id), eq(scoresTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── STUDY SESSIONS ────────────────────────────────────────
     if (url === "/api/study-sessions" && method === "GET")
-      return res.json(await db.select().from(studySessionsTable).orderBy(desc(studySessionsTable.createdAt)));
+      return res.json(await db.select().from(studySessionsTable).where(eq(studySessionsTable.userId, userId)).orderBy(desc(studySessionsTable.createdAt)));
     if (url === "/api/study-sessions" && method === "POST") {
       const parsed = z.object({
         date: z.string(), module: z.string(), minutes: z.number().int(),
@@ -272,20 +291,20 @@ export default async function handler(req, res) {
         improve: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(studySessionsTable).values(parsed.data).returning();
+      const [row] = await db.insert(studySessionsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/study-sessions\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(studySessionsTable).where(eq(studySessionsTable.id, id)).returning();
+      const [deleted] = await db.delete(studySessionsTable).where(and(eq(studySessionsTable.id, id), eq(studySessionsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── PRACTICE LOGS ─────────────────────────────────────────
     if (url === "/api/practice-logs" && method === "GET")
-      return res.json(await db.select().from(practiceLogsTable).orderBy(desc(practiceLogsTable.createdAt)));
+      return res.json(await db.select().from(practiceLogsTable).where(eq(practiceLogsTable.userId, userId)).orderBy(desc(practiceLogsTable.createdAt)));
     if (url === "/api/practice-logs" && method === "POST") {
       const parsed = z.object({
         date: z.string(), module: z.string(), subType: z.string(),
@@ -293,27 +312,27 @@ export default async function handler(req, res) {
         notes: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(practiceLogsTable).values(parsed.data).returning();
+      const [row] = await db.insert(practiceLogsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/practice-logs\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(practiceLogsTable).where(eq(practiceLogsTable.id, id)).returning();
+      const [deleted] = await db.delete(practiceLogsTable).where(and(eq(practiceLogsTable.id, id), eq(practiceLogsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── VOCAB ─────────────────────────────────────────────────
     if (url === "/api/vocab" && method === "GET")
-      return res.json(await db.select().from(vocabWordsTable).orderBy(desc(vocabWordsTable.createdAt)));
+      return res.json(await db.select().from(vocabWordsTable).where(eq(vocabWordsTable.userId, userId)).orderBy(desc(vocabWordsTable.createdAt)));
     if (url === "/api/vocab" && method === "POST") {
       const parsed = z.object({
         word: z.string(), pos: z.string(), definition: z.string(),
         example: z.string(), topic: z.string(), known: z.string().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(vocabWordsTable).values(parsed.data).returning();
+      const [row] = await db.insert(vocabWordsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url === "/api/vocab/bulk" && method === "POST") {
@@ -322,47 +341,47 @@ export default async function handler(req, res) {
         example: z.string(), topic: z.string(), known: z.string().optional(),
       }))}).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const inserted = await db.insert(vocabWordsTable).values(parsed.data.words).returning();
+      const inserted = await db.insert(vocabWordsTable).values(parsed.data.words.map(w => ({ ...w, userId }))).returning();
       return res.status(201).json(inserted);
     }
     if (url.match(/^\/api\/vocab\/\d+\/toggle$/) && method === "PATCH") {
       const id = parseId(url.split("/")[3]);
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [existing] = await db.select().from(vocabWordsTable).where(eq(vocabWordsTable.id, id));
+      const [existing] = await db.select().from(vocabWordsTable).where(and(eq(vocabWordsTable.id, id), eq(vocabWordsTable.userId, userId)));
       if (!existing) return res.status(404).json({ error: "Not found" });
       const [updated] = await db.update(vocabWordsTable)
         .set({ known: existing.known === "true" ? "false" : "true" })
-        .where(eq(vocabWordsTable.id, id)).returning();
+        .where(and(eq(vocabWordsTable.id, id), eq(vocabWordsTable.userId, userId))).returning();
       return res.json(updated);
     }
     if (url.match(/^\/api\/vocab\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(vocabWordsTable).where(eq(vocabWordsTable.id, id)).returning();
+      const [deleted] = await db.delete(vocabWordsTable).where(and(eq(vocabWordsTable.id, id), eq(vocabWordsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── AFFIRMATIONS ──────────────────────────────────────────
     if (url === "/api/affirmations" && method === "GET")
-      return res.json(await db.select().from(favouriteAffirmationsTable).orderBy(desc(favouriteAffirmationsTable.createdAt)));
+      return res.json(await db.select().from(favouriteAffirmationsTable).where(eq(favouriteAffirmationsTable.userId, userId)).orderBy(desc(favouriteAffirmationsTable.createdAt)));
     if (url === "/api/affirmations" && method === "POST") {
       const parsed = z.object({ affirmation: z.string(), savedAt: z.string() }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(favouriteAffirmationsTable).values(parsed.data).returning();
+      const [row] = await db.insert(favouriteAffirmationsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/affirmations\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(favouriteAffirmationsTable).where(eq(favouriteAffirmationsTable.id, id)).returning();
+      const [deleted] = await db.delete(favouriteAffirmationsTable).where(and(eq(favouriteAffirmationsTable.id, id), eq(favouriteAffirmationsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── HIGHER STUDY APPLICATIONS ─────────────────────────────
     if (url === "/api/higher-study/applications" && method === "GET")
-      return res.json(await db.select().from(higherStudyApplicationsTable).orderBy(desc(higherStudyApplicationsTable.createdAt)));
+      return res.json(await db.select().from(higherStudyApplicationsTable).where(eq(higherStudyApplicationsTable.userId, userId)).orderBy(desc(higherStudyApplicationsTable.createdAt)));
     if (url === "/api/higher-study/applications" && method === "POST") {
       const parsed = z.object({
         universityName: z.string(), country: z.string(),
@@ -376,7 +395,7 @@ export default async function handler(req, res) {
         reqPortfolio: z.boolean().optional(), requirementsJson: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(higherStudyApplicationsTable).values(parsed.data).returning();
+      const [row] = await db.insert(higherStudyApplicationsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/applications\/\d+$/) && method === "PUT") {
@@ -390,21 +409,21 @@ export default async function handler(req, res) {
         requirementsJson: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.update(higherStudyApplicationsTable).set(parsed.data).where(eq(higherStudyApplicationsTable.id, id)).returning();
+      const [row] = await db.update(higherStudyApplicationsTable).set(parsed.data).where(and(eq(higherStudyApplicationsTable.id, id), eq(higherStudyApplicationsTable.userId, userId))).returning();
       if (!row) return res.status(404).json({ error: "Not found" });
       return res.json(row);
     }
     if (url.match(/^\/api\/higher-study\/applications\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(higherStudyApplicationsTable).where(eq(higherStudyApplicationsTable.id, id)).returning();
+      const [deleted] = await db.delete(higherStudyApplicationsTable).where(and(eq(higherStudyApplicationsTable.id, id), eq(higherStudyApplicationsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── OTHER TEST SCORES ─────────────────────────────────────
     if (url === "/api/higher-study/test-scores" && method === "GET")
-      return res.json(await db.select().from(otherTestScoresTable).orderBy(desc(otherTestScoresTable.createdAt)));
+      return res.json(await db.select().from(otherTestScoresTable).where(eq(otherTestScoresTable.userId, userId)).orderBy(desc(otherTestScoresTable.createdAt)));
     if (url === "/api/higher-study/test-scores" && method === "POST") {
       const parsed = z.object({
         testName: z.string(), attemptDate: z.string(),
@@ -412,20 +431,20 @@ export default async function handler(req, res) {
         sectionsJson: z.string().nullable().optional(), notes: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(otherTestScoresTable).values(parsed.data).returning();
+      const [row] = await db.insert(otherTestScoresTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/test-scores\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(otherTestScoresTable).where(eq(otherTestScoresTable.id, id)).returning();
+      const [deleted] = await db.delete(otherTestScoresTable).where(and(eq(otherTestScoresTable.id, id), eq(otherTestScoresTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── SCHOLARSHIPS ──────────────────────────────────────────
     if (url === "/api/higher-study/scholarships" && method === "GET")
-      return res.json(await db.select().from(scholarshipsTable).orderBy(desc(scholarshipsTable.createdAt)));
+      return res.json(await db.select().from(scholarshipsTable).where(eq(scholarshipsTable.userId, userId)).orderBy(desc(scholarshipsTable.createdAt)));
     if (url === "/api/higher-study/scholarships" && method === "POST") {
       const parsed = z.object({
         name: z.string(), provider: z.string(),
@@ -434,7 +453,7 @@ export default async function handler(req, res) {
         status: z.string().optional(), notes: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(scholarshipsTable).values(parsed.data).returning();
+      const [row] = await db.insert(scholarshipsTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/scholarships\/\d+$/) && method === "PUT") {
@@ -447,33 +466,33 @@ export default async function handler(req, res) {
         status: z.string().optional(), notes: z.string().nullable().optional(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.update(scholarshipsTable).set(parsed.data).where(eq(scholarshipsTable.id, id)).returning();
+      const [row] = await db.update(scholarshipsTable).set(parsed.data).where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, userId))).returning();
       if (!row) return res.status(404).json({ error: "Not found" });
       return res.json(row);
     }
     if (url.match(/^\/api\/higher-study\/scholarships\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(scholarshipsTable).where(eq(scholarshipsTable.id, id)).returning();
+      const [deleted] = await db.delete(scholarshipsTable).where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
     // ── CHECKLIST TEMPLATES ───────────────────────────────────
     if (url === "/api/higher-study/templates" && method === "GET")
-      return res.json(await db.select().from(checklistTemplatesTable).orderBy(desc(checklistTemplatesTable.createdAt)));
+      return res.json(await db.select().from(checklistTemplatesTable).where(eq(checklistTemplatesTable.userId, userId)).orderBy(desc(checklistTemplatesTable.createdAt)));
     if (url === "/api/higher-study/templates" && method === "POST") {
       const parsed = z.object({
         name: z.string(), degreeType: z.string().nullable().optional(), items: z.string(),
       }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-      const [row] = await db.insert(checklistTemplatesTable).values(parsed.data).returning();
+      const [row] = await db.insert(checklistTemplatesTable).values({ ...parsed.data, userId }).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/templates\/\d+$/) && method === "DELETE") {
       const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
-      const [deleted] = await db.delete(checklistTemplatesTable).where(eq(checklistTemplatesTable.id, id)).returning();
+      const [deleted] = await db.delete(checklistTemplatesTable).where(and(eq(checklistTemplatesTable.id, id), eq(checklistTemplatesTable.userId, userId))).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
