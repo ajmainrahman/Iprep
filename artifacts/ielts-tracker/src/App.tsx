@@ -66,17 +66,24 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </div>
 
       {/* Top nav bar */}
-      <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">✈️</span>
+      <nav className="relative z-10 flex items-center px-6 sm:px-10 pt-6 pb-2">
+        <div className="flex items-center gap-3">
+          {/* Logo mark */}
+          <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+            <defs>
+              <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#4f46e5"/>
+                <stop offset="55%" stopColor="#7c3aed"/>
+                <stop offset="100%" stopColor="#0d9488"/>
+              </linearGradient>
+            </defs>
+            <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
+            <path d="M46 12 L18 29 L25 32 L21 47 L28 40 L33 43 L54 20 Z" fill="white" opacity="0.95"/>
+            <circle cx="17" cy="49" r="2.5" fill="white" opacity="0.4"/>
+            <circle cx="11" cy="54" r="1.5" fill="white" opacity="0.25"/>
+          </svg>
           <span className="font-bold text-base tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
             Within a Few Weeks
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium px-3 py-1 rounded-full"
-            style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
-            🟢 Live
           </span>
         </div>
       </nav>
@@ -102,22 +109,6 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             Within a Few Weeks
           </span>
         </h1>
-
-        {/* Subtitle */}
-        <p className="text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: '#6b7280' }}>
-          Track IELTS scores, log study sessions, prep for Erasmus applications — 
-          everything you need to get there, in one place.
-        </p>
-
-        {/* Feature pills */}
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {['📈 Score Tracking', '📖 Study Log', '🔤 Vocab Bank', '🎓 Uni Applications', '🏆 Scholarships', '🧘 Mindset'].map(f => (
-            <span key={f} className="text-xs font-medium px-3 py-1.5 rounded-full"
-              style={{ background: '#f8fafc', color: '#374151', border: '1px solid #e5e7eb' }}>
-              {f}
-            </span>
-          ))}
-        </div>
 
         {/* Cards */}
         <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
@@ -191,14 +182,6 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           </button>
         </div>
 
-        {/* Trust row */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs" style={{ color: '#9ca3af' }}>
-          <span className="flex items-center gap-1.5"><span>🔒</span> Data saved to your database</span>
-          <span className="hidden sm:block w-px h-3 bg-gray-200" />
-          <span className="flex items-center gap-1.5"><span>🇩🇰</span><span>🇫🇮</span><span>🇳🇴</span><span>🇸🇪</span> Erasmus countries</span>
-          <span className="hidden sm:block w-px h-3 bg-gray-200" />
-          <span className="flex items-center gap-1.5"><span>⚡</span> Always free</span>
-        </div>
       </main>
 
       {/* Footer */}
