@@ -12,7 +12,16 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 5,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates';
@@ -39,64 +48,54 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-12"
-      style={{ background: 'linear-gradient(135deg, #06091a 0%, #0e1245 38%, #051a14 72%, #080c1e 100%)' }}
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-10 sm:py-14"
+      style={{ background: 'linear-gradient(145deg, #f0f4ff 0%, #e8f5f2 50%, #f5f0ff 100%)' }}
     >
       {/* Ambient glow orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-3xl opacity-[0.18]"
-          style={{ background: 'radial-gradient(circle, #6366f1, transparent 70%)' }}
+          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
+          style={{ background: 'radial-gradient(circle, #c7d2fe, transparent 70%)' }}
         />
         <div
-          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full blur-3xl opacity-[0.18]"
-          style={{ background: 'radial-gradient(circle, #14b8a6, transparent 70%)' }}
+          className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
+          style={{ background: 'radial-gradient(circle, #99f6e4, transparent 70%)' }}
         />
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[400px] rounded-full blur-3xl opacity-[0.06]"
-          style={{ background: 'radial-gradient(ellipse, #818cf8, transparent 65%)' }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full blur-3xl opacity-20"
+          style={{ background: 'radial-gradient(ellipse, #ddd6fe, transparent 65%)' }}
         />
       </div>
 
       {/* Logo + tagline */}
-      <header className="relative z-10 text-center mb-14">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <span className="text-5xl sm:text-6xl">✈️</span>
+      <header className="relative z-10 text-center mb-10 sm:mb-12 w-full max-w-2xl">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <span className="text-4xl sm:text-5xl">✈️</span>
           <h1
-            className="text-5xl sm:text-6xl font-bold tracking-tight leading-none"
-            style={{ fontFamily: "'Poppins', sans-serif", color: '#fff' }}
+            className="text-4xl sm:text-5xl font-bold tracking-tight leading-none"
+            style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
           >
             FlyStudy
           </h1>
         </div>
         <p
-          className="text-sm sm:text-base tracking-[0.2em] uppercase mt-2"
-          style={{ color: 'rgba(255,255,255,0.32)' }}
+          className="text-xs sm:text-sm tracking-[0.18em] uppercase mt-2"
+          style={{ color: '#6b7280' }}
         >
           Your passport to higher education
         </p>
 
-        {/* Erasmus countries */}
-        <div className="flex items-center justify-center gap-5 sm:gap-7 mt-8 flex-wrap">
-          {[
-            { flag: '🇩🇰', name: 'Denmark' },
-            { flag: '🇫🇮', name: 'Finland' },
-            { flag: '🇳🇴', name: 'Norway' },
-            { flag: '🇸🇪', name: 'Sweden' },
-          ].map(({ flag, name }) => (
-            <div key={name} className="flex flex-col items-center gap-1">
-              <span className="text-3xl">{flag}</span>
-              <span className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                {name}
-              </span>
-            </div>
+        {/* Erasmus country flags only */}
+        <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 flex-wrap">
+          {['🇩🇰', '🇫🇮', '🇳🇴', '🇸🇪'].map((flag) => (
+            <span key={flag} className="text-2xl sm:text-3xl">{flag}</span>
           ))}
           <div
-            className="ml-1 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide"
+            className="ml-1 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
             style={{
-              background: 'rgba(99,102,241,0.15)',
-              color: '#a5b4fc',
-              border: '1px solid rgba(99,102,241,0.3)',
+              background: 'rgba(99,102,241,0.12)',
+              color: '#4f46e5',
+              border: '1px solid rgba(99,102,241,0.25)',
             }}
           >
             ✦ Erasmus Ready
@@ -105,35 +104,35 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </header>
 
       {/* Hero cards */}
-      <main className="relative z-10 w-full max-w-2xl flex flex-col sm:flex-row gap-5">
+      <main className="relative z-10 w-full max-w-2xl flex flex-col sm:flex-row gap-4 sm:gap-5">
         {/* Fly */}
         <button
           onClick={onFly}
-          className="flex-1 group relative overflow-hidden rounded-3xl p-9 sm:p-10 text-left transition-all duration-300 hover:scale-[1.03] active:scale-[0.99]"
+          className="flex-1 group relative overflow-hidden rounded-2xl sm:rounded-3xl p-7 sm:p-9 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-md hover:shadow-xl"
           style={{
-            background: 'rgba(99,102,241,0.07)',
-            border: '1px solid rgba(99,102,241,0.28)',
-            boxShadow: '0 0 60px rgba(99,102,241,0.06)',
+            background: 'rgba(255,255,255,0.85)',
+            border: '1px solid rgba(99,102,241,0.2)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
-            className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12))' }}
+            className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.07), rgba(139,92,246,0.05))' }}
           />
           <div className="relative z-10">
-            <div className="text-5xl mb-6">✈️</div>
+            <div className="text-4xl sm:text-5xl mb-5">✈️</div>
             <h2
-              className="text-3xl font-bold mb-2.5 leading-snug"
-              style={{ fontFamily: "'Poppins', sans-serif", color: '#fff' }}
+              className="text-2xl sm:text-3xl font-bold mb-2 leading-snug"
+              style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
             >
               Fly
             </h2>
-            <p className="text-[13px] leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.52)' }}>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: '#4b5563' }}>
               Track university applications, scholarships &amp; standardised tests. Built for Erasmus, Nordic and global programmes.
             </p>
             <span
               className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{ color: '#a5b4fc' }}
+              style={{ color: '#4f46e5' }}
             >
               Start tracking
               <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
@@ -144,31 +143,31 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         {/* Study Journey */}
         <button
           onClick={onStudy}
-          className="flex-1 group relative overflow-hidden rounded-3xl p-9 sm:p-10 text-left transition-all duration-300 hover:scale-[1.03] active:scale-[0.99]"
+          className="flex-1 group relative overflow-hidden rounded-2xl sm:rounded-3xl p-7 sm:p-9 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-md hover:shadow-xl"
           style={{
-            background: 'rgba(20,184,166,0.07)',
-            border: '1px solid rgba(20,184,166,0.28)',
-            boxShadow: '0 0 60px rgba(20,184,166,0.06)',
+            background: 'rgba(255,255,255,0.85)',
+            border: '1px solid rgba(20,184,166,0.2)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           <div
-            className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.18), rgba(16,185,129,0.12))' }}
+            className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.07), rgba(16,185,129,0.05))' }}
           />
           <div className="relative z-10">
-            <div className="text-5xl mb-6">📚</div>
+            <div className="text-4xl sm:text-5xl mb-5">📚</div>
             <h2
-              className="text-3xl font-bold mb-2.5 leading-snug"
-              style={{ fontFamily: "'Poppins', sans-serif", color: '#fff' }}
+              className="text-2xl sm:text-3xl font-bold mb-2 leading-snug"
+              style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}
             >
               Study Journey
             </h2>
-            <p className="text-[13px] leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.52)' }}>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: '#4b5563' }}>
               Master IELTS with smart score tracking, structured practice, a 1,000-word vocab bank &amp; daily mindset coaching.
             </p>
             <span
               className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{ color: '#5eead4' }}
+              style={{ color: '#0d9488' }}
             >
               Begin journey
               <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
@@ -177,8 +176,8 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         </button>
       </main>
 
-      <footer className="relative z-10 mt-14 text-center">
-        <p className="text-[11px] tracking-[0.25em] uppercase" style={{ color: 'rgba(255,255,255,0.14)' }}>
+      <footer className="relative z-10 mt-10 sm:mt-12 text-center">
+        <p className="text-[11px] tracking-[0.2em] uppercase" style={{ color: '#9ca3af' }}>
           Erasmus · Nordics · Europe · Beyond
         </p>
       </footer>
