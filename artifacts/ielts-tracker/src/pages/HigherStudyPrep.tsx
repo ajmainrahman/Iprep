@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import {
   GraduationCap, Trophy, BookMarked, Plus, Trash2, Edit2, X, Check,
   CalendarDays, Globe, FileText, TrendingUp, ChevronDown, ChevronUp,
-  Target, ClipboardList, ChevronRight, Layers
+  Target, ClipboardList, ChevronRight, Layers, List, GitBranch
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -321,6 +321,7 @@ function ApplicationsTab() {
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
   const [showTplPicker, setShowTplPicker] = useState(false);
   const [newItemDraft,  setNewItemDraft]  = useState('');
+  const [viewMode,    setViewMode]    = useState<'list' | 'timeline'>('list');
 
   const emptyBase = {
     universityName: '', country: '', program: '', degreeType: 'MS',
@@ -429,17 +430,34 @@ function ApplicationsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-sm text-muted-foreground">
           {(apps as unknown[]).length} {(apps as unknown[]).length === 1 ? 'university' : 'universities'} tracked
         </p>
-        <Button
-          size="sm"
-          onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }}
-          className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
-        >
-          <Plus className="w-4 h-4 mr-1" /> Add University
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2.5 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'bg-navy text-white dark:bg-indigo' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <List className="w-3.5 h-3.5" /> List
+            </button>
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={`px-2.5 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'bg-navy text-white dark:bg-indigo' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <GitBranch className="w-3.5 h-3.5" /> Timeline
+            </button>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }}
+            className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Add University
+          </Button>
+        </div>
       </div>
 
       {/* ── Add / Edit Form ── */}
@@ -620,7 +638,7 @@ function ApplicationsTab() {
         </Card>
       )}
 
-      {/* ── Application list ── */}
+      {/* ── Application list / timeline ── */}
       {isLoading ? (
         <p className="text-muted-foreground text-sm py-8 text-center">Loading…</p>
       ) : (apps as unknown[]).length === 0 ? (
@@ -628,6 +646,89 @@ function ApplicationsTab() {
           <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-25" />
           <p className="font-semibold">No applications yet</p>
           <p className="text-sm mt-1">Add your first target university to start tracking.</p>
+        </div>
+      ) : viewMode === 'timeline' ? (
+        /* ── TIMELINE VIEW ── */
+        <div className="space-y-2">
+          {/* legend */}
+          <div className="flex flex-wrap gap-2 pb-2">
+            {Object.entries(APP_STATUS_META).map(([k, v]) => (
+              <span key={k} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${v.bg} ${v.color}`}>{v.label}</span>
+            ))}
+          </div>
+          <div className="relative">
+            {/* Vertical spine */}
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+            <div className="space-y-4 pl-12">
+              {[...(apps as (Record<string, unknown> & { id: number })[])].sort((a, b) => {
+                const da = a.deadline as string | null;
+                const db = b.deadline as string | null;
+                if (!da && !db) return 0;
+                if (!da) return 1;
+                if (!db) return -1;
+                return da > db ? 1 : -1;
+              }).map(app => {
+                const meta = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
+                const days = daysUntil(app.deadline as string);
+                const urgent = days !== null && days >= 0 && days <= 7;
+                const dotColor: Record<AppStatus, string> = {
+                  researching: 'bg-slate-400',
+                  applied:     'bg-blue-500',
+                  interview:   'bg-purple-500',
+                  admitted:    'bg-green-500',
+                  rejected:    'bg-red-400',
+                  waitlisted:  'bg-orange-400',
+                  deferred:    'bg-yellow-400',
+                };
+                return (
+                  <div key={app.id} className="relative">
+                    {/* Dot on spine */}
+                    <div className={`absolute -left-8 top-4 w-4 h-4 rounded-full border-2 border-background shadow ${dotColor[app.status as AppStatus] || 'bg-slate-400'}`} />
+                    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${urgent ? 'border-red-300 dark:border-red-700' : ''}`}>
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-navy dark:text-white">{String(app.universityName)}</h3>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>{meta.label}</span>
+                              {urgent && (
+                                <span className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800">
+                                  ⚠️ Due in {days}d
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                              {String(app.degreeType)} · {String(app.program)} · <Globe className="w-3 h-3 inline" /> {String(app.country)}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            {app.deadline ? (
+                              <p className="text-sm font-semibold text-foreground">{fmtDate(app.deadline as string)}</p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground italic">No deadline set</p>
+                            )}
+                            {days !== null && days >= 0 && (
+                              <p className={`text-xs font-medium ${days <= 7 ? 'text-red-500' : days <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                                {days === 0 ? 'Today!' : `${days} days left`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button onClick={() => startEdit(app)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => deleteMutation.mutate(app.id)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-red-500">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

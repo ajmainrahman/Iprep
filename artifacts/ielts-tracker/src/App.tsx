@@ -5,6 +5,7 @@ import { StudyLog } from '@/pages/StudyLog';
 import { PracticeTracker } from '@/pages/PracticeTracker';
 import { VocabularyBank } from '@/pages/VocabularyBank';
 import { MindsetCorner } from '@/pages/MindsetCorner';
+import { ExamTimer } from '@/pages/ExamTimer';
 import { HigherStudyPrep } from '@/pages/HigherStudyPrep';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Confetti } from '@/components/Confetti';
@@ -26,7 +27,7 @@ const queryClient = new QueryClient({
 
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates';
-type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'mindset';
+type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'mindset' | 'timer';
 
 const FLY_TABS: { id: FlyTab; label: string; emoji: string }[] = [
   { id: 'overview',     label: 'Overview',       emoji: '🗺️' },
@@ -43,6 +44,7 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'practice',  label: 'Practice Tracker', emoji: '🎯' },
   { id: 'vocab',     label: 'Vocab Bank',       emoji: '🔤' },
   { id: 'mindset',   label: 'Mindset',          emoji: '🧘' },
+  { id: 'timer',     label: 'Exam Timer',       emoji: '⏱️' },
 ];
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
@@ -508,6 +510,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
             {tab === 'practice'  && <PracticeTracker />}
             {tab === 'vocab'     && <VocabularyBank />}
             {tab === 'mindset'   && <MindsetCorner />}
+            {tab === 'timer'     && <ExamTimer />}
           </div>
         </main>
       </div>
