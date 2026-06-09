@@ -1,0 +1,15 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./api" }
+  ],
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "artifacts",
+    "lib",
+    "scripts",
+    "node_modules"
+  ]
+}

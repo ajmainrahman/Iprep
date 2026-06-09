@@ -1,6 +1,6 @@
-# FlyStudy
+# [Project name]
 
-A dual-mode study-abroad companion: **Fly** tracks university applications, scholarships, test scores, and document checklists; **Study Journey** is a full IELTS preparation tracker with score tracking, study logs, vocab bank, and mindset coaching.
+_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
 
 ## Run & Operate
 
@@ -22,32 +22,19 @@ A dual-mode study-abroad companion: **Fly** tracks university applications, scho
 
 ## Where things live
 
-- DB schema: `lib/db/src/schema/` — source of truth for all tables
-- API routes: `artifacts/api-server/src/routes/`
-- Frontend pages: `artifacts/ielts-tracker/src/pages/`
-- CSS theme + colors: `artifacts/ielts-tracker/src/index.css`
-- Date utilities: `artifacts/ielts-tracker/src/lib/utils/date.ts`
-- Checklist templates (default): `DEFAULT_TEMPLATES` constant in `HigherStudyPrep.tsx`
+_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
 
 ## Architecture decisions
 
-- Landing page → dual-mode navigation: `AppMode = 'home' | 'fly' | 'study'` (state in `App.tsx`; no router)
-- Dynamic requirements: stored as `requirementsJson TEXT` (JSON array `[{label, done}]`) in `higher_study_applications`; old boolean columns kept for backward compat
-- Checklist templates: 5 built-in defaults in frontend (no DB); custom templates stored in `checklist_templates` table
-- CSS fly-mode: `.fly-mode` class on root div overrides `--sidebar-*` CSS vars to indigo; study mode uses default teal/navy vars
-- Date formatting: always use `fmtDate()` and `daysUntil()` from `src/lib/utils/date.ts` — never `new Date(isoString)` directly (avoids timezone-off-by-one bugs)
+_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
 
 ## Product
 
-- **Landing**: Full-screen Nordic aurora hero with ✈️ Fly + 📚 Study Journey cards; country flags for Denmark, Finland, Norway, Sweden; Erasmus badge
-- **Fly (Higher Study)**: Overview dashboard, Applications (dynamic checklist per app, template picker), Test Scores (GRE/GMAT/TOEFL/etc.), Scholarships, Doc Templates (5 built-in + custom)
-- **Study Journey (IELTS)**: Dashboard, Score Tracker, Study Log, Practice Tracker, 1000-word Vocab Bank, Mindset Corner
+_Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-- App name: **FlyStudy**
-- Theme: Nordic / Aurora — dark indigo landing, indigo sidebar for Fly mode, teal sidebar for Study mode
-- Erasmus countries always featured: Denmark 🇩🇰, Finland 🇫🇮, Norway 🇳🇴, Sweden 🇸🇪
+_Populate as you build — explicit user instructions worth remembering across sessions._
 
 ## Gotchas
 
