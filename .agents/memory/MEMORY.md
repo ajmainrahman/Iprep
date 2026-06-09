@@ -1,0 +1,1 @@
+- [Timezone date comparison bug](timezone-date-comparison.md) — toISOString() returns UTC, breaks date matching for UTC+ users; use localDateStr() helper instead.

@@ -1,0 +1,154 @@
+You are improving an existing IELTS preparation and higher study tracker web app called "Within a Few Weeks". The app is built with React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, and Wouter for routing. The backend is Vercel serverless functions (api/index.mjs) connected to a Neon PostgreSQL database via drizzle-orm/neon-http.
+
+IMPORTANT: Do NOT touch or modify these files:
+- api/index.mjs
+- vercel.json
+- .vercelignore
+- lib/db/src/index.ts
+- Any file in lib/db/src/schema/
+- pnpm-workspace.yaml
+- Any backend/server files
+
+Only modify files inside: artifacts/ielts-tracker/src/
+
+The existing database tables already available are:
+- settings (id, name, examDate, targetReading, targetListening, targetWriting, targetSpeaking, dailyGoalMinutes, darkMode)
+- scores (id, date, module, score, band, notes, createdAt)
+- study_sessions (id, date, module, minutes, activityType, wentWell, improve, createdAt)
+- practice_logs (id, date, module, subType, score, totalQuestions, notes, createdAt)
+- vocab_words (id, word, pos, definition, example, topic, known, createdAt)
+- favourite_affirmations (id, affirmation, savedAt, createdAt)
+- higher_study_applications (id, universityName, country, program, degreeType, status, deadline, appliedDate, notes, reqSop, reqLor1, reqLor2, reqLor3, reqTranscripts, reqCv, reqGre, reqToefl, reqPortfolio, requirementsJson, createdAt)
+- other_test_scores (id, testName, attemptDate, totalScore, sectionsJson, notes, createdAt)
+- scholarships (id, name, provider, amount, currency, fundingType, deadline, status, notes, createdAt)
+- checklist_templates (id, name, degreeType, items, createdAt)
+
+All API calls go through artifacts/ielts-tracker/src/lib/api.ts using fetch('/api/...').
+
+=== FEATURES TO BUILD ===
+
+FEATURE 2 — Exam Countdown:
+- On the dashboard homepage, show a large prominent countdown card displaying days, hours, minutes remaining until the exam date stored in settings.examDate
+- If no exam date is set, show a CTA to set it in settings
+- Show motivational message based on days remaining (e.g. "You've got this!", "Final stretch!", "Start strong!")
+
+FEATURE 3 — Daily Study Streak:
+- Calculate consecutive days where at least one study_session was logged
+- Show a streak counter with a fire emoji 🔥 on the dashboard
+- Show a 7-day mini calendar heatmap (current week) showing which days had sessions
+- Store nothing new — calculate from existing study_sessions data
+
+FEATURE 4 — Vocabulary Flashcard Mode:
+- Add a "Flashcard Mode" button on the Vocab page
+- Show one vocab word at a time as a flip card (front: word + part of speech, back: definition + example sentence)
+- Navigation: Previous / Next / Shuffle buttons
+- Mark as Known button that calls the existing PATCH /api/vocab/:id/toggle endpoint
+- Filter options: All words / Unknown only / By topic
+- Show progress: "Card 12 of 87"
+
+FEATURE 7 — University Deadline Calendar View:
+- On the Higher Study / Applications page, add a toggle between Table View and Timeline View
+- Timeline view shows applications sorted by deadline date on a visual horizontal timeline
+- Color code by status: researching (gray), applied (blue), accepted (green), rejected (red), waitlisted (yellow)
+- Show deadline urgency badge: "⚠️ Due in 7 days" for approaching deadlines
+
+FEATURE 8 — Writing Task Timer:
+- Add a new page or modal called "Exam Timer"
+- Two modes: Task 1 (20 minutes) and Task 2 (40 minutes)
+- Large countdown display (MM:SS format)
+- Start / Pause / Reset controls
+- Audio beep or visual flash when time is up
+- Progress bar showing time remaining
+- Accessible from the dashboard and navigation
+
+FEATURE 9 — Weekly Progress Report:
+- On the dashboard, show a "This Week" summary card
+- Display: total study minutes this week, number of practice logs added, number of vocab words added, daily goal achievement rate (X/7 days met)
+- Compare to last week with a simple up/down arrow indicator
+- Calculate entirely from existing data — no new DB tables needed
+
+FEATURE 10 — Band Score Comparison Radar Chart:
+- On the Score Tracker page or dashboard, add a radar/spider chart
+- Axes: Reading, Listening, Writing, Speaking
+- Two data series: Current Average (from scores table) vs Target (from settings table)
+- Use recharts RadarChart component which is already installed
+- Show the gap clearly so students know where to focus
+
+FEATURE 11 — Study Session Heatmap:
+- Add a GitHub-style contribution heatmap to the dashboard or a dedicated stats section
+- Show last 52 weeks of study activity
+- Each cell = one day, color intensity based on total minutes studied that day
+- Tooltip on hover showing date and minutes
+- Use only existing study_sessions data
+
+FEATURE 12 — Vocabulary Flashcard Quiz Mode (extends Feature 4):
+- After flashcard mode, add a Quiz Mode
+- Show the definition, student types or selects the word from 4 options (multiple choice)
+- Track score: correct/incorrect per session
+- Show results summary at the end: "You got 18/25 correct!"
+
+FEATURE 13 — IELTS Writing Task Timer (extends Feature 8) already covered above.
+
+FEATURE 14 — Study Buddy Share Link:
+- Add a "Share Progress" button on the dashboard
+- Generate a unique read-only URL like /share/[randomToken] that shows a simplified read-only view of:
+  - Current band scores summary
+  - Study streak
+  - Weekly progress
+  - Application count and statuses
+- Store the token in localStorage for now (no DB change needed)
+- The share page should work without any auth
+
+=== UI/UX & DESIGN IMPROVEMENTS ===
+
+1. Overall Design Language:
+- Use a modern, clean, premium feel inspired by Notion + Linear + Vercel's own dashboard
+- Primary color palette: Deep teal (#0D9488) as brand color, with warm cream/white backgrounds (#FAFAF9), soft shadows, and subtle gradients
+- Typography: Use Inter font (already available via Tailwind), clear hierarchy with larger headings
+- Consistent card style: rounded-xl, subtle border (border-border/40), soft shadow (shadow-sm), hover:shadow-md transition
+
+2. Dashboard Redesign:
+- Hero section at top: greeting ("Good morning, [name] 👋"), exam countdown prominently displayed, streak counter
+- Quick stats row: Total study hours, Average band score, Vocab words known, Applications in progress
+- Two column layout: Left = weekly progress + streak heatmap (7-day), Right = band radar chart
+- Bottom: Recent activity feed showing last 5 study sessions or practice logs
+
+3. Navigation Improvements:
+- Sidebar navigation (desktop) with icons + labels
+- Mobile: bottom tab bar with 5 main sections
+- Active state clearly highlighted
+- Add smooth page transitions
+
+4. Empty States:
+- Every page should have a beautiful illustrated empty state when no data exists
+- Include a clear CTA button to add first entry
+
+5. Loading States:
+- Add skeleton loading cards instead of spinners
+- Smooth fade-in when data loads
+
+6. Micro-interactions:
+- Button hover/press animations
+- Success toast notifications already exist — make them more prominent
+- Confetti on personal best scores (already partially implemented — enhance it)
+
+7. Color-coded Modules:
+- Reading: Blue (#3B82F6)
+- Listening: Purple (#8B5CF6)  
+- Writing: Orange (#F59E0B)
+- Speaking: Green (#10B981)
+- Apply consistently across all charts, badges, and cards
+
+8. Settings Page Improvement:
+- Show a profile card at top with name and exam date
+- Target scores shown as visual band indicators (like a gauge/meter)
+- Dark mode toggle prominently placed
+
+=== TECHNICAL REQUIREMENTS ===
+- Do NOT add any new API routes or modify api/index.mjs
+- Do NOT install new packages unless absolutely necessary — recharts, framer-motion, lucide-react, date-fns are already available
+- All new features must work with existing API endpoints in artifacts/ielts-tracker/src/lib/api.ts
+- Keep all data fetching using TanStack Query (useQuery/useMutation)
+- Maintain TypeScript throughout
+- Ensure mobile responsiveness for all new components
+- Do not break any existing functionality

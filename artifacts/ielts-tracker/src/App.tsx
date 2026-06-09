@@ -45,11 +45,36 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'mindset',   label: 'Mindset',          emoji: '🧘' },
 ];
 
-/* ─── COUNTDOWN HELPERS ─────────────────────────────────────────────────── */
+/* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
+/** YYYY-MM-DD in LOCAL timezone — never use toISOString() for date comparisons */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function daysUntil(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
-  const diff = new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
-  return Math.ceil(diff / 86_400_000);
+  // Parse "YYYY-MM-DD" as local date to avoid UTC-offset issues
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const target = new Date(y, mo - 1, d);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000);
+}
+
+function calcStreak(sessions: any[]): number {
+  const studyDates = new Set(sessions.map((s: any) => s.date));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(today);
+  // Grace: if today has no session yet, still count from yesterday
+  if (!studyDates.has(localDateStr(d))) d.setDate(d.getDate() - 1);
+  let streak = 0;
+  while (studyDates.has(localDateStr(d))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
 }
 
 function CountdownBadge({
@@ -81,15 +106,17 @@ function CountdownBadge({
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
   const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: studySessions = [] } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
 
   const examDays = daysUntil((settings as any)?.examDate);
+  const streak = calcStreak(studySessions as any[]);
 
   const nextDeadline = (applications as any[])
     .map((a: any) => ({ name: a.universityName, days: daysUntil(a.deadline) }))
     .filter(a => a.days !== null && a.days >= 0)
     .sort((a, b) => (a.days as number) - (b.days as number))[0] ?? null;
 
-  const hasCountdowns = examDays !== null || nextDeadline !== null;
+  const hasCountdowns = examDays !== null || nextDeadline !== null || streak > 0;
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#fafbff' }}>
@@ -155,9 +182,21 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           </span>
         </h1>
 
-        {/* Countdown timers */}
+        {/* Countdown timers + Streak */}
         {hasCountdowns && (
           <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {/* Study streak badge */}
+            {streak > 0 && (
+              <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px]"
+                style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>
+                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#ea580c' }}>
+                  Study Streak
+                </span>
+                <span className="text-2xl font-black leading-none" style={{ color: '#ea580c' }}>
+                  🔥 {streak} {streak === 1 ? 'day' : 'days'}
+                </span>
+              </div>
+            )}
             {examDays !== null && (
               <CountdownBadge
                 label="IELTS Exam"
