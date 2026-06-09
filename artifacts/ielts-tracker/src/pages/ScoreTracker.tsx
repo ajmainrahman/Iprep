@@ -50,7 +50,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     addScore.mutate({
       date,
       module,
-      score: scoreVal,
+      score: scoreVal ? Number(scoreVal) : null,
       band: b,
       notes
     }, {
