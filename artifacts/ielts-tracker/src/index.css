@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* Brand colours */
+  --color-navy:   #1E1B4B;
+  --color-teal:   #2EC4B6;
+  --color-indigo: #6366F1;
+  --color-coral:  #FF6B6B;
+  --color-yellow: #FFD166;
+  --color-purple: #7B5EA7;
+  --color-green:  #06D6A0;
+  --color-orange: #F97316;
+
+  --font-sans:    'Inter', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ── LIGHT MODE ────────────────────────────────────────────────────────── */
+:root {
+  --background: 220 25% 97%;
+  --foreground: 230 30% 12%;
+
+  --border: 220 15% 90%;
+  --input: 220 15% 90%;
+  --ring: 174 62% 47%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 230 30% 12%;
+  --card-border: 220 15% 90%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 230 30% 12%;
+  --popover-border: 220 15% 90%;
+
+  --primary: 174 62% 47%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 244 47% 20%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 220 25% 95%;
+  --muted-foreground: 220 9% 46%;
+
+  --accent: 174 62% 47%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --chart-1: 0 100% 71%;
+  --chart-2: 164 94% 43%;
+  --chart-3: 264 30% 51%;
+  --chart-4: 42 100% 70%;
+  --chart-5: 244 47% 20%;
+
+  /* Study mode sidebar (teal/navy) */
+  --sidebar: 230 47% 15%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 230 47% 20%;
+  --sidebar-primary: 174 62% 47%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 230 47% 22%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 174 62% 47%;
+
+  --radius: 0.875rem;
+}
+
+/* ── DARK MODE ─────────────────────────────────────────────────────────── */
+.dark {
+  --background: 230 30% 10%;
+  --foreground: 220 25% 96%;
+
+  --border: 230 30% 22%;
+  --input: 230 30% 25%;
+  --ring: 174 62% 47%;
+
+  --card: 230 30% 14%;
+  --card-foreground: 220 25% 96%;
+  --card-border: 230 30% 22%;
+
+  --popover: 230 30% 14%;
+  --popover-foreground: 220 25% 96%;
+  --popover-border: 230 30% 22%;
+
+  --primary: 174 62% 47%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 244 47% 30%;
+  --secondary-foreground: 220 25% 96%;
+
+  --muted: 230 30% 20%;
+  --muted-foreground: 220 9% 66%;
+
+  --accent: 174 62% 47%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --sidebar: 230 30% 11%;
+  --sidebar-foreground: 220 25% 96%;
+  --sidebar-border: 230 30% 20%;
+  --sidebar-primary: 174 62% 47%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 230 30% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 174 62% 47%;
+}
+
+/* ── FLY MODE (indigo sidebar override) ──────────────────────────────── */
+.fly-mode {
+  --sidebar: 244 47% 15%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 244 47% 21%;
+  --sidebar-primary: 239 84% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 244 47% 22%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 239 84% 67%;
+}
+.fly-mode.dark {
+  --sidebar: 244 47% 11%;
+  --sidebar-border: 244 47% 18%;
+  --sidebar-accent: 244 47% 17%;
+}
+
+/* ── BASE LAYER ────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+.hover-elevate {
+  @apply transition-all duration-300;
+}
+.hover-elevate:hover {
+  @apply transform -translate-y-1 shadow-md;
+}
