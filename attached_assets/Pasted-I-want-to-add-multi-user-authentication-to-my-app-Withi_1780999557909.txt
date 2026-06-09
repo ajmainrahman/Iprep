@@ -1,0 +1,236 @@
+I want to add multi-user authentication to my app "Within a Few Weeks" without 
+using any third-party auth service like Clerk or Auth0. Build everything from 
+scratch using JWT tokens and bcrypt, with users stored in Neon PostgreSQL.
+
+The stack is:
+- Frontend: React + TypeScript + Vite (in artifacts/ielts-tracker/src/)
+- Backend: Vercel serverless function (api/index.mjs) - single file handler
+- Database: Neon PostgreSQL with drizzle-orm/neon-http and @neondatabase/serverless
+- All DB schema is in lib/db/src/schema/ as individual .ts files
+- All API routes are handled in api/index.mjs as URL pattern matching
+
+IMPORTANT - Do NOT touch these files:
+- vercel.json
+- pnpm-workspace.yaml
+- .vercelignore
+- Any file in lib/db/src/schema/ EXCEPT adding new files
+
+=== STEP 1 - Add users table ===
+
+Create a new file lib/db/src/schema/users.ts:
+
+import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+
+export const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type User = typeof usersTable.$inferSelect;
+
+Then add this export to lib/db/src/schema/index.ts:
+export * from "./users";
+
+Then run: pnpm --filter @workspace/db run push
+to create the users table in Neon.
+
+=== STEP 2 - Add userId to all data tables ===
+
+Add userId integer column to these existing schema files 
+(add it as a non-required field with default null for now so existing 
+data doesn't break):
+- lib/db/src/schema/scores.ts
+- lib/db/src/schema/study-sessions.ts
+- lib/db/src/schema/practice-logs.ts
+- lib/db/src/schema/vocab-words.ts
+- lib/db/src/schema/affirmations.ts
+- lib/db/src/schema/higher-study-applications.ts
+- lib/db/src/schema/other-test-scores.ts
+- lib/db/src/schema/scholarships.ts
+- lib/db/src/schema/checklist-templates.ts
+
+For each file add this column:
+  userId: integer("user_id"),
+
+For settings table (lib/db/src/schema/settings.ts), change the 
+primary key from fixed "default" to use userId:
+  id: text("id").primaryKey(), 
+Keep this the same but when creating settings, use the userId as the id 
+instead of "default".
+
+Run push again after all schema changes:
+pnpm --filter @workspace/db run push
+
+=== STEP 3 - Install required packages ===
+
+In the root workspace run:
+pnpm add -w jsonwebtoken bcryptjs
+pnpm add -D -w @types/jsonwebtoken @types/bcryptjs
+
+=== STEP 4 - Update api/index.mjs ===
+
+IMPORTANT: api/index.mjs is a single self-contained ESM file. 
+Keep it as ONE file. Add to it - do not split it.
+
+Add these imports at the top:
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
+Add the usersTable schema inline (same pattern as other tables already 
+in the file):
+const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+Add a JWT helper function:
+function verifyToken(req) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  try {
+    const token = auth.slice(7);
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+Add these new API routes BEFORE the existing routes in the handler:
+
+POST /api/auth/register:
+- Validate: name (string), email (string), password (min 6 chars) using zod
+- Check if email already exists in usersTable
+- If exists: return 409 { error: "Email already registered" }
+- Hash password: const hash = await bcrypt.hash(password, 10)
+- Insert new user into usersTable
+- Generate JWT: jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" })
+- Return: { token, user: { id, name, email } }
+
+POST /api/auth/login:
+- Validate: email, password using zod
+- Find user by email in usersTable
+- If not found: return 401 { error: "Invalid email or password" }
+- Compare password: await bcrypt.compare(password, user.passwordHash)
+- If wrong: return 401 { error: "Invalid email or password" }
+- Generate JWT same as register
+- Return: { token, user: { id, name, email } }
+
+GET /api/auth/me:
+- Call verifyToken(req)
+- If null: return 401 { error: "Unauthorized" }
+- Find user by id from token
+- Return: { id, name, email }
+
+For ALL other existing routes (settings, scores, study-sessions, etc.):
+- Call verifyToken(req) at the start
+- If null: return 401 { error: "Unauthorized" }
+- Extract userId from the decoded token
+- For GET: add .where(eq(table.userId, userId)) to filter by user
+- For POST: add userId to the inserted values object
+- For PUT/PATCH: verify row belongs to userId
+- For DELETE: verify row belongs to userId before deleting
+
+For settings specifically:
+- Use userId.toString() as the settings id instead of "default"
+- So GET /api/settings looks for eq(settingsTable.id, userId.toString())
+
+=== STEP 5 - Frontend Auth Pages ===
+
+Create these new files in artifacts/ielts-tracker/src/:
+
+1. src/contexts/AuthContext.tsx:
+- Create AuthContext with: user, token, login(), register(), logout(), isLoading
+- Store token in localStorage under key "wfw_token"
+- On app load, check localStorage for token and call GET /api/auth/me to 
+  verify it's still valid
+- login(email, password): POST /api/auth/login, store token, set user
+- register(name, email, password): POST /api/auth/register, store token, set user
+- logout(): clear localStorage, clear user state, redirect to /sign-in
+
+2. src/pages/SignInPage.tsx:
+- Clean, centered card design
+- App name "Within a Few Weeks" at top in teal
+- Tagline: "Master IELTS. Track your future."
+- Email input field
+- Password input with show/hide toggle eye icon
+- "Sign In" button in teal (#0D9488), full width, rounded-full
+- Error message display in red if login fails
+- Link at bottom: "First time? Create your account" → /sign-up
+- Loading spinner on the button while signing in
+
+3. src/pages/SignUpPage.tsx:
+- Same design as SignInPage
+- Fields: Full Name, Email, Password, Confirm Password
+- Validate passwords match before submitting
+- "Create Account" button
+- Link: "Already have an account? Sign in" → /sign-in
+- Show success and redirect to dashboard after register
+
+4. Update src/lib/api.ts:
+- Import getToken function from AuthContext or read from localStorage directly:
+  const token = localStorage.getItem("wfw_token");
+- Add Authorization header to ALL fetch calls:
+  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+- Update all GET fetch calls to also include the Authorization header
+- Create a helper:
+  const authHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("wfw_token") ?? ""}`
+  });
+- Use authHeaders() in all post(), put(), del(), and plain fetch() calls
+
+5. Update src/App.tsx (or main router file):
+- Wrap entire app in <AuthProvider>
+- Add routes: /sign-in → SignInPage, /sign-up → SignUpPage
+- Create a ProtectedRoute component:
+  - If isLoading: show full page skeleton/spinner
+  - If no user: redirect to /sign-in
+  - If user: render children
+- Wrap all existing routes in <ProtectedRoute>
+
+6. Update the Navigation/Sidebar:
+- Show logged-in user's name and email
+- Add a "Sign Out" button at the bottom of the sidebar/nav
+- Call logout() from AuthContext on click
+
+=== STEP 6 - Environment Variables ===
+
+Add this to Replit secrets:
+JWT_SECRET = any long random string like "wfw-super-secret-jwt-key-2024-ajmain"
+
+Add the same to Vercel Environment Variables:
+Name: JWT_SECRET
+Value: same long random string (generate a secure one)
+
+=== DESIGN REQUIREMENTS for Auth Pages ===
+- Background: warm cream color (#FAFAF9) full page
+- Card: white background, rounded-2xl, padding 2rem, 
+  max-width 420px, centered vertically and horizontally,
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08)
+- App logo/name: "Within a Few Weeks" in teal (#0D9488), 
+  font-size 1.5rem, font-weight 700, centered, margin-bottom 0.25rem
+- Tagline: gray-500, font-size 0.875rem, centered, margin-bottom 2rem
+- Input fields: rounded-xl, border border-gray-200, 
+  padding 0.75rem 1rem, full width, focus ring in teal
+- Primary button: background #0D9488, text white, rounded-full, 
+  full width, padding 0.875rem, font-weight 600, 
+  hover:bg-teal-700 transition
+- Error text: text-red-500, font-size 0.875rem, margin-top 0.5rem
+- Bottom link text: text-gray-500 with teal colored clickable part
+
+=== IMPORTANT CONSTRAINTS ===
+- Keep api/index.mjs as a SINGLE FILE - do not split it
+- Do not use any third-party auth library on frontend 
+  (no Clerk, no Auth0, no NextAuth)
+- Do not add new npm packages beyond jsonwebtoken and bcryptjs
+- Keep all existing features working after auth is added
+- The JWT_SECRET must only be used in api/index.mjs, never in frontend code
+- Token expiry is 7 days - user stays logged in for 7 days automatically
+- If token expires, redirect to /sign-in automatically
+- All error messages should be user-friendly, not technical

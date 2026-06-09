@@ -13,6 +13,9 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import SignInPage from '@/pages/SignInPage';
+import SignUpPage from '@/pages/SignUpPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,8 +107,28 @@ function CountdownBadge({
   );
 }
 
+/* ─── AUTH GATE ─────────────────────────────────────────────────────────── */
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#FAFAF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <style>{`@keyframes wfw-spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '32px', height: '32px', border: '3px solid #E5E7EB', borderTopColor: '#0D9488', borderRadius: '50%', animation: 'wfw-spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
+          <p style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+  if (window.location.pathname === '/sign-up') return <SignUpPage />;
+  if (!user) return <SignInPage />;
+  return <>{children}</>;
+}
+
 /* ─── LANDING PAGE ──────────────────────────────────────────────────────── */
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
+  const { user, logout } = useAuth();
   const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
   const { data: studySessions = [] } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
@@ -140,7 +163,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </div>
 
       {/* Top nav bar */}
-      <nav className="relative z-10 flex items-center px-6 sm:px-10 pt-6 pb-2">
+      <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
         <div className="flex items-center gap-3">
           {/* Logo mark */}
           <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
@@ -159,6 +182,16 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           <span className="font-bold text-base tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
             Within a Few Weeks
           </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:block text-sm" style={{ color: '#6B7280' }}>{user?.name}</span>
+          <button
+            onClick={logout}
+            className="text-sm px-3 py-1.5 rounded-full transition-colors hover:bg-red-50"
+            style={{ color: '#9CA3AF', border: '1px solid #E5E7EB' }}
+          >
+            Sign out
+          </button>
         </div>
       </nav>
 
@@ -352,6 +385,7 @@ function AppSidebar<T extends string>({ tabs, activeTab, onTab, onBack, logo, bo
 /* ─── FLY LAYOUT (Higher Study) ─────────────────────────────────────────── */
 function FlyLayout({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<FlyTab>('overview');
+  const { user, logout } = useAuth();
   const pageTitle = FLY_TABS.find(t => t.id === tab)?.label ?? 'Overview';
 
   return (
@@ -378,9 +412,15 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
           </div>
         }
         bottomWidget={
-          <div className="p-3 rounded-2xl" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.32)' }}>Erasmus</p>
-            <div className="flex gap-1.5 text-lg">🇩🇰 🇫🇮 🇳🇴 🇸🇪</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="p-3 rounded-2xl" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.32)' }}>Erasmus</p>
+              <div className="flex gap-1.5 text-lg">🇩🇰 🇫🇮 🇳🇴 🇸🇪</div>
+            </div>
+            <div style={{ padding: '0.25rem 0.5rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
+              <button onClick={logout} style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Sign out</button>
+            </div>
           </div>
         }
       />
@@ -439,6 +479,7 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
 function StudyLayout({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<StudyTab>('dashboard');
   const [confetti, setConfetti] = useState(false);
+  const { user, logout } = useAuth();
   const pageTitle = STUDY_TABS.find(t => t.id === tab)?.label ?? 'Dashboard';
 
   function fireConfetti() {
@@ -469,9 +510,15 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
           </div>
         }
         bottomWidget={
-          <div className="p-3 rounded-2xl text-center" style={{ background: 'rgba(46,196,182,0.1)', border: '1px solid rgba(46,196,182,0.2)' }}>
-            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>IELTS Target</p>
-            <p className="text-2xl font-bold text-teal">7.0+</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="p-3 rounded-2xl text-center" style={{ background: 'rgba(46,196,182,0.1)', border: '1px solid rgba(46,196,182,0.2)' }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>IELTS Target</p>
+              <p className="text-2xl font-bold text-teal">7.0+</p>
+            </div>
+            <div style={{ padding: '0.25rem 0.5rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
+              <button onClick={logout} style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Sign out</button>
+            </div>
           </div>
         }
       />
@@ -542,11 +589,15 @@ function MainApp() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <MainApp />
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthGate>
+            <MainApp />
+          </AuthGate>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }

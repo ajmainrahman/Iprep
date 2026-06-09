@@ -1,9 +1,10 @@
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const vocabWordsTable = pgTable("vocab_words", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   word: text("word").notNull(),
   pos: text("pos").notNull(),
   definition: text("definition").notNull(),

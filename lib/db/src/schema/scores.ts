@@ -1,9 +1,10 @@
-import { pgTable, serial, text, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const scoresTable = pgTable("scores", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   date: text("date").notNull(),
   module: text("module").notNull(),
   score: real("score"),
