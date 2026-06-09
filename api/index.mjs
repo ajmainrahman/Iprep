@@ -1,35 +1,140 @@
-
-import { eq, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import * as schema from "../lib/db/src/schema";
+import { drizzle } from "drizzle-orm/neon-http";
+import { pgTable, serial, text, real, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 
-const {
-  scoresTable,
-  settingsTable,
-  studySessionsTable,
-  practiceLogsTable,
-  vocabWordsTable,
-  favouriteAffirmationsTable,
-  higherStudyApplicationsTable,
-  otherTestScoresTable,
-  scholarshipsTable,
-  checklistTemplatesTable,
-} = schema;
+// ── SCHEMA (inlined to avoid ESM/CJS conflict) ────────────────
+const scoresTable = pgTable("scores", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull(),
+  module: text("module").notNull(),
+  score: real("score"),
+  band: real("band").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
+const settingsTable = pgTable("settings", {
+  id: text("id").primaryKey().default("default"),
+  name: text("name").notNull().default("Student"),
+  examDate: text("exam_date"),
+  targetReading: real("target_reading").notNull().default(6.5),
+  targetListening: real("target_listening").notNull().default(6.5),
+  targetWriting: real("target_writing").notNull().default(6.5),
+  targetSpeaking: real("target_speaking").notNull().default(6.0),
+  dailyGoalMinutes: integer("daily_goal_minutes").notNull().default(30),
+  darkMode: text("dark_mode").notNull().default("false"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const studySessionsTable = pgTable("study_sessions", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull(),
+  module: text("module").notNull(),
+  minutes: integer("minutes").notNull(),
+  activityType: text("activity_type").notNull(),
+  wentWell: text("went_well"),
+  improve: text("improve"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const practiceLogsTable = pgTable("practice_logs", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull(),
+  module: text("module").notNull(),
+  subType: text("sub_type").notNull(),
+  score: real("score").notNull(),
+  totalQuestions: integer("total_questions").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const vocabWordsTable = pgTable("vocab_words", {
+  id: serial("id").primaryKey(),
+  word: text("word").notNull(),
+  pos: text("pos").notNull(),
+  definition: text("definition").notNull(),
+  example: text("example").notNull(),
+  topic: text("topic").notNull(),
+  known: text("known").notNull().default("false"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const favouriteAffirmationsTable = pgTable("favourite_affirmations", {
+  id: serial("id").primaryKey(),
+  affirmation: text("affirmation").notNull(),
+  savedAt: text("saved_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const higherStudyApplicationsTable = pgTable("higher_study_applications", {
+  id: serial("id").primaryKey(),
+  universityName: text("university_name").notNull(),
+  country: text("country").notNull(),
+  program: text("program").notNull(),
+  degreeType: text("degree_type").notNull(),
+  status: text("status").notNull().default("researching"),
+  deadline: text("deadline"),
+  appliedDate: text("applied_date"),
+  notes: text("notes"),
+  reqSop: boolean("req_sop").default(false),
+  reqLor1: boolean("req_lor1").default(false),
+  reqLor2: boolean("req_lor2").default(false),
+  reqLor3: boolean("req_lor3").default(false),
+  reqTranscripts: boolean("req_transcripts").default(false),
+  reqCv: boolean("req_cv").default(false),
+  reqGre: boolean("req_gre").default(false),
+  reqToefl: boolean("req_toefl").default(false),
+  reqPortfolio: boolean("req_portfolio").default(false),
+  requirementsJson: text("requirements_json"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const otherTestScoresTable = pgTable("other_test_scores", {
+  id: serial("id").primaryKey(),
+  testName: text("test_name").notNull(),
+  attemptDate: text("attempt_date").notNull(),
+  totalScore: real("total_score"),
+  sectionsJson: text("sections_json"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const scholarshipsTable = pgTable("scholarships", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  provider: text("provider").notNull(),
+  amount: real("amount"),
+  currency: text("currency").default("USD"),
+  fundingType: text("funding_type").notNull().default("partial"),
+  deadline: text("deadline"),
+  status: text("status").notNull().default("planning"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const checklistTemplatesTable = pgTable("checklist_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  degreeType: text("degree_type"),
+  items: text("items").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── DB CONNECTION ─────────────────────────────────────────────
 function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
   const sql = neon(process.env.DATABASE_URL);
-  return drizzle(sql, { schema });
+  return drizzle(sql);
 }
 
-function parseId(raw: string | string[]): number | null {
-  const str = Array.isArray(raw) ? raw[0] : raw;
+function parseId(str) {
   const n = parseInt(str, 10);
   return isNaN(n) ? null : n;
 }
 
+// ── HANDLER ───────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
@@ -39,8 +144,12 @@ export default async function handler(req, res) {
   const db = getDb();
   const url = req.url?.split("?")[0] ?? "";
   const method = req.method ?? "GET";
+  const body = req.body;
 
   try {
+    // ── HEALTH ────────────────────────────────────────────────
+    if (url === "/api/health") return res.json({ status: "ok" });
+
     // ── SETTINGS ──────────────────────────────────────────────
     if (url === "/api/settings" && method === "GET") {
       const [s] = await db.select().from(settingsTable).where(eq(settingsTable.id, "default"));
@@ -52,15 +161,11 @@ export default async function handler(req, res) {
     }
     if (url === "/api/settings" && method === "PUT") {
       const parsed = z.object({
-        name: z.string().optional(),
-        examDate: z.string().nullable().optional(),
-        targetReading: z.number().optional(),
-        targetListening: z.number().optional(),
-        targetWriting: z.number().optional(),
-        targetSpeaking: z.number().optional(),
-        dailyGoalMinutes: z.number().int().optional(),
-        darkMode: z.string().optional(),
-      }).safeParse(req.body);
+        name: z.string().optional(), examDate: z.string().nullable().optional(),
+        targetReading: z.number().optional(), targetListening: z.number().optional(),
+        targetWriting: z.number().optional(), targetSpeaking: z.number().optional(),
+        dailyGoalMinutes: z.number().int().optional(), darkMode: z.string().optional(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [existing] = await db.select().from(settingsTable).where(eq(settingsTable.id, "default"));
       if (!existing) {
@@ -72,22 +177,20 @@ export default async function handler(req, res) {
     }
 
     // ── SCORES ────────────────────────────────────────────────
-    if (url === "/api/scores" && method === "GET") {
+    if (url === "/api/scores" && method === "GET")
       return res.json(await db.select().from(scoresTable).orderBy(desc(scoresTable.createdAt)));
-    }
     if (url === "/api/scores" && method === "POST") {
       const parsed = z.object({
         date: z.string(), module: z.string(),
-        score: z.number().nullable().optional(),
-        band: z.number(),
+        score: z.number().nullable().optional(), band: z.number(),
         notes: z.string().nullable().optional(),
-      }).safeParse(req.body);
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(scoresTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/scores\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(scoresTable).where(eq(scoresTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -95,22 +198,20 @@ export default async function handler(req, res) {
     }
 
     // ── STUDY SESSIONS ────────────────────────────────────────
-    if (url === "/api/study-sessions" && method === "GET") {
+    if (url === "/api/study-sessions" && method === "GET")
       return res.json(await db.select().from(studySessionsTable).orderBy(desc(studySessionsTable.createdAt)));
-    }
     if (url === "/api/study-sessions" && method === "POST") {
       const parsed = z.object({
-        date: z.string(), module: z.string(),
-        minutes: z.number().int(), activityType: z.string(),
-        wentWell: z.string().nullable().optional(),
+        date: z.string(), module: z.string(), minutes: z.number().int(),
+        activityType: z.string(), wentWell: z.string().nullable().optional(),
         improve: z.string().nullable().optional(),
-      }).safeParse(req.body);
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(studySessionsTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/study-sessions\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(studySessionsTable).where(eq(studySessionsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -118,21 +219,20 @@ export default async function handler(req, res) {
     }
 
     // ── PRACTICE LOGS ─────────────────────────────────────────
-    if (url === "/api/practice-logs" && method === "GET") {
+    if (url === "/api/practice-logs" && method === "GET")
       return res.json(await db.select().from(practiceLogsTable).orderBy(desc(practiceLogsTable.createdAt)));
-    }
     if (url === "/api/practice-logs" && method === "POST") {
       const parsed = z.object({
         date: z.string(), module: z.string(), subType: z.string(),
         score: z.number(), totalQuestions: z.number().int(),
         notes: z.string().nullable().optional(),
-      }).safeParse(req.body);
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(practiceLogsTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/practice-logs\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(practiceLogsTable).where(eq(practiceLogsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -140,15 +240,13 @@ export default async function handler(req, res) {
     }
 
     // ── VOCAB ─────────────────────────────────────────────────
-    if (url === "/api/vocab" && method === "GET") {
+    if (url === "/api/vocab" && method === "GET")
       return res.json(await db.select().from(vocabWordsTable).orderBy(desc(vocabWordsTable.createdAt)));
-    }
     if (url === "/api/vocab" && method === "POST") {
       const parsed = z.object({
         word: z.string(), pos: z.string(), definition: z.string(),
-        example: z.string(), topic: z.string(),
-        known: z.string().optional(),
-      }).safeParse(req.body);
+        example: z.string(), topic: z.string(), known: z.string().optional(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(vocabWordsTable).values(parsed.data).returning();
       return res.status(201).json(row);
@@ -157,7 +255,7 @@ export default async function handler(req, res) {
       const parsed = z.object({ words: z.array(z.object({
         word: z.string(), pos: z.string(), definition: z.string(),
         example: z.string(), topic: z.string(), known: z.string().optional(),
-      }))}).safeParse(req.body);
+      }))}).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const inserted = await db.insert(vocabWordsTable).values(parsed.data.words).returning();
       return res.status(201).json(inserted);
@@ -173,7 +271,7 @@ export default async function handler(req, res) {
       return res.json(updated);
     }
     if (url.match(/^\/api\/vocab\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(vocabWordsTable).where(eq(vocabWordsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -181,19 +279,16 @@ export default async function handler(req, res) {
     }
 
     // ── AFFIRMATIONS ──────────────────────────────────────────
-    if (url === "/api/affirmations" && method === "GET") {
+    if (url === "/api/affirmations" && method === "GET")
       return res.json(await db.select().from(favouriteAffirmationsTable).orderBy(desc(favouriteAffirmationsTable.createdAt)));
-    }
     if (url === "/api/affirmations" && method === "POST") {
-      const parsed = z.object({
-        affirmation: z.string(), savedAt: z.string(),
-      }).safeParse(req.body);
+      const parsed = z.object({ affirmation: z.string(), savedAt: z.string() }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(favouriteAffirmationsTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/affirmations\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(favouriteAffirmationsTable).where(eq(favouriteAffirmationsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -201,46 +296,41 @@ export default async function handler(req, res) {
     }
 
     // ── HIGHER STUDY APPLICATIONS ─────────────────────────────
-    if (url === "/api/higher-study/applications" && method === "GET") {
+    if (url === "/api/higher-study/applications" && method === "GET")
       return res.json(await db.select().from(higherStudyApplicationsTable).orderBy(desc(higherStudyApplicationsTable.createdAt)));
-    }
     if (url === "/api/higher-study/applications" && method === "POST") {
       const parsed = z.object({
         universityName: z.string(), country: z.string(),
         program: z.string(), degreeType: z.string(),
-        status: z.string().optional(),
-        deadline: z.string().nullable().optional(),
-        appliedDate: z.string().nullable().optional(),
-        notes: z.string().nullable().optional(),
+        status: z.string().optional(), deadline: z.string().nullable().optional(),
+        appliedDate: z.string().nullable().optional(), notes: z.string().nullable().optional(),
         reqSop: z.boolean().optional(), reqLor1: z.boolean().optional(),
         reqLor2: z.boolean().optional(), reqLor3: z.boolean().optional(),
         reqTranscripts: z.boolean().optional(), reqCv: z.boolean().optional(),
         reqGre: z.boolean().optional(), reqToefl: z.boolean().optional(),
-        reqPortfolio: z.boolean().optional(),
-        requirementsJson: z.string().nullable().optional(),
-      }).safeParse(req.body);
+        reqPortfolio: z.boolean().optional(), requirementsJson: z.string().nullable().optional(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(higherStudyApplicationsTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/applications\/\d+$/) && method === "PUT") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const parsed = z.object({
         universityName: z.string().optional(), country: z.string().optional(),
         program: z.string().optional(), degreeType: z.string().optional(),
         status: z.string().optional(), deadline: z.string().nullable().optional(),
-        appliedDate: z.string().nullable().optional(),
-        notes: z.string().nullable().optional(),
+        appliedDate: z.string().nullable().optional(), notes: z.string().nullable().optional(),
         requirementsJson: z.string().nullable().optional(),
-      }).safeParse(req.body);
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.update(higherStudyApplicationsTable).set(parsed.data).where(eq(higherStudyApplicationsTable.id, id)).returning();
       if (!row) return res.status(404).json({ error: "Not found" });
       return res.json(row);
     }
     if (url.match(/^\/api\/higher-study\/applications\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(higherStudyApplicationsTable).where(eq(higherStudyApplicationsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -248,22 +338,20 @@ export default async function handler(req, res) {
     }
 
     // ── OTHER TEST SCORES ─────────────────────────────────────
-    if (url === "/api/higher-study/test-scores" && method === "GET") {
+    if (url === "/api/higher-study/test-scores" && method === "GET")
       return res.json(await db.select().from(otherTestScoresTable).orderBy(desc(otherTestScoresTable.createdAt)));
-    }
     if (url === "/api/higher-study/test-scores" && method === "POST") {
       const parsed = z.object({
         testName: z.string(), attemptDate: z.string(),
         totalScore: z.number().nullable().optional(),
-        sectionsJson: z.string().nullable().optional(),
-        notes: z.string().nullable().optional(),
-      }).safeParse(req.body);
+        sectionsJson: z.string().nullable().optional(), notes: z.string().nullable().optional(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(otherTestScoresTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/test-scores\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(otherTestScoresTable).where(eq(otherTestScoresTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -271,40 +359,35 @@ export default async function handler(req, res) {
     }
 
     // ── SCHOLARSHIPS ──────────────────────────────────────────
-    if (url === "/api/higher-study/scholarships" && method === "GET") {
+    if (url === "/api/higher-study/scholarships" && method === "GET")
       return res.json(await db.select().from(scholarshipsTable).orderBy(desc(scholarshipsTable.createdAt)));
-    }
     if (url === "/api/higher-study/scholarships" && method === "POST") {
       const parsed = z.object({
         name: z.string(), provider: z.string(),
-        amount: z.number().nullable().optional(),
-        currency: z.string().optional(),
-        fundingType: z.string().optional(),
-        deadline: z.string().nullable().optional(),
-        status: z.string().optional(),
-        notes: z.string().nullable().optional(),
-      }).safeParse(req.body);
+        amount: z.number().nullable().optional(), currency: z.string().optional(),
+        fundingType: z.string().optional(), deadline: z.string().nullable().optional(),
+        status: z.string().optional(), notes: z.string().nullable().optional(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(scholarshipsTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/scholarships\/\d+$/) && method === "PUT") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const parsed = z.object({
         name: z.string().optional(), provider: z.string().optional(),
-        amount: z.number().nullable().optional(),
-        currency: z.string().optional(), fundingType: z.string().optional(),
-        deadline: z.string().nullable().optional(),
+        amount: z.number().nullable().optional(), currency: z.string().optional(),
+        fundingType: z.string().optional(), deadline: z.string().nullable().optional(),
         status: z.string().optional(), notes: z.string().nullable().optional(),
-      }).safeParse(req.body);
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.update(scholarshipsTable).set(parsed.data).where(eq(scholarshipsTable.id, id)).returning();
       if (!row) return res.status(404).json({ error: "Not found" });
       return res.json(row);
     }
     if (url.match(/^\/api\/higher-study\/scholarships\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(scholarshipsTable).where(eq(scholarshipsTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
@@ -312,36 +395,28 @@ export default async function handler(req, res) {
     }
 
     // ── CHECKLIST TEMPLATES ───────────────────────────────────
-    if (url === "/api/higher-study/templates" && method === "GET") {
+    if (url === "/api/higher-study/templates" && method === "GET")
       return res.json(await db.select().from(checklistTemplatesTable).orderBy(desc(checklistTemplatesTable.createdAt)));
-    }
     if (url === "/api/higher-study/templates" && method === "POST") {
       const parsed = z.object({
-        name: z.string(),
-        degreeType: z.string().nullable().optional(),
-        items: z.string(),
-      }).safeParse(req.body);
+        name: z.string(), degreeType: z.string().nullable().optional(), items: z.string(),
+      }).safeParse(body);
       if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
       const [row] = await db.insert(checklistTemplatesTable).values(parsed.data).returning();
       return res.status(201).json(row);
     }
     if (url.match(/^\/api\/higher-study\/templates\/\d+$/) && method === "DELETE") {
-      const id = parseId(url.split("/").pop()!);
+      const id = parseId(url.split("/").pop());
       if (!id) return res.status(400).json({ error: "Invalid id" });
       const [deleted] = await db.delete(checklistTemplatesTable).where(eq(checklistTemplatesTable.id, id)).returning();
       if (!deleted) return res.status(404).json({ error: "Not found" });
       return res.status(204).end();
     }
 
-    // ── HEALTH ────────────────────────────────────────────────
-    if (url === "/api/health") {
-      return res.json({ status: "ok" });
-    }
-
     return res.status(404).json({ error: "Not found" });
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: String(err) });
   }
 }
