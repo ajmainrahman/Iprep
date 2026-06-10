@@ -225,6 +225,7 @@ export function StudyLog() {
                       <SelectItem value="Full Passage">Full Passage</SelectItem>
                       <SelectItem value="Mock Test">Mock Test</SelectItem>
                       <SelectItem value="Vocabulary">Vocabulary</SelectItem>
+                      <SelectItem value="Listening Practice">Listening Practice</SelectItem>
                       <SelectItem value="Speaking Practice">Speaking Practice</SelectItem>
                       <SelectItem value="Writing Practice">Writing Practice</SelectItem>
                     </SelectContent>
@@ -307,21 +308,37 @@ export function StudyLog() {
                ) : (
                  <div className="divide-y max-h-[300px] overflow-y-auto">
                    {[...studySessions].sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((s: any) => (
-                     <div key={s.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
-                       <div>
-                         <div className="flex items-center gap-2 mb-1">
-                           <span className="font-bold text-foreground">{s.module}</span>
-                           <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{s.minutes} min</span>
+                     <div key={s.id} className="p-4 hover:bg-muted/30">
+                       <div className="flex items-start justify-between gap-2">
+                         <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-2 mb-1">
+                             <span className="font-bold text-foreground">{s.module}</span>
+                             <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{s.minutes} min</span>
+                           </div>
+                           <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                             <span>{s.date}</span>
+                             <span>•</span>
+                             <span>{s.activityType}</span>
+                           </div>
+                           {(s.wentWell || s.improve) && (
+                             <div className="mt-2 space-y-1">
+                               {s.wentWell && (
+                                 <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded px-2 py-1">
+                                   <span className="font-semibold">✓ Well:</span> {s.wentWell}
+                                 </p>
+                               )}
+                               {s.improve && (
+                                 <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded px-2 py-1">
+                                   <span className="font-semibold">↑ Improve:</span> {s.improve}
+                                 </p>
+                               )}
+                             </div>
+                           )}
                          </div>
-                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                           <span>{new Date(s.date).toLocaleDateString()}</span>
-                           <span>•</span>
-                           <span>{s.activityType}</span>
-                         </div>
+                         <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
                        </div>
-                       <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500">
-                         <Trash2 className="h-4 w-4" />
-                       </Button>
                      </div>
                    ))}
                  </div>

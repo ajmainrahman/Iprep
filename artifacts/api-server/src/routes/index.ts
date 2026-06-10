@@ -11,6 +11,7 @@ import higherStudyApplicationsRouter from "./higher-study-applications";
 import otherTestScoresRouter from "./other-test-scores";
 import scholarshipsRouter from "./scholarships";
 import checklistTemplatesRouter from "./checklist-templates";
+import planningNotesRouter from "./planning-notes";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(higherStudyApplicationsRouter);
 router.use(otherTestScoresRouter);
 router.use(scholarshipsRouter);
 router.use(checklistTemplatesRouter);
+router.use(planningNotesRouter);
 
 export default router;

@@ -4,8 +4,8 @@ import { ScoreTracker } from '@/pages/ScoreTracker';
 import { StudyLog } from '@/pages/StudyLog';
 import { PracticeTracker } from '@/pages/PracticeTracker';
 import { VocabularyBank } from '@/pages/VocabularyBank';
-import { MindsetCorner } from '@/pages/MindsetCorner';
-import { ExamTimer } from '@/pages/ExamTimer';
+import { PlanningCorner } from '@/pages/PlanningCorner';
+import { FlyNotepad } from '@/pages/FlyNotepad';
 import { HigherStudyPrep } from '@/pages/HigherStudyPrep';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Confetti } from '@/components/Confetti';
@@ -29,8 +29,8 @@ const queryClient = new QueryClient({
 });
 
 type AppMode  = 'home' | 'fly' | 'study';
-type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates';
-type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'mindset' | 'timer';
+type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates' | 'notepad';
+type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'planning';
 
 const FLY_TABS: { id: FlyTab; label: string; emoji: string }[] = [
   { id: 'overview',     label: 'Overview',       emoji: '🗺️' },
@@ -38,6 +38,7 @@ const FLY_TABS: { id: FlyTab; label: string; emoji: string }[] = [
   { id: 'tests',        label: 'Test Scores',    emoji: '📊' },
   { id: 'scholarships', label: 'Scholarships',   emoji: '🏆' },
   { id: 'templates',    label: 'Doc Templates',  emoji: '📋' },
+  { id: 'notepad',      label: 'Notepad',        emoji: '📝' },
 ];
 
 const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
@@ -46,8 +47,7 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'study',     label: 'Study Log',        emoji: '📖' },
   { id: 'practice',  label: 'Practice Tracker', emoji: '🎯' },
   { id: 'vocab',     label: 'Vocab Bank',       emoji: '🔤' },
-  { id: 'mindset',   label: 'Mindset',          emoji: '🧘' },
-  { id: 'timer',     label: 'Exam Timer',       emoji: '⏱️' },
+  { id: 'planning',  label: 'Planning',         emoji: '🗂️' },
 ];
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
@@ -447,13 +447,15 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
                 <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · Within a Few Weeks</p>
               </div>
             </div>
-            <SettingsPanel />
           </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
           <div className="max-w-5xl mx-auto">
-            <HigherStudyPrep tab={tab} onTabChange={(t) => setTab(t as FlyTab)} />
+            {tab === 'notepad'
+              ? <FlyNotepad />
+              : <HigherStudyPrep tab={tab} onTabChange={(t) => setTab(t as FlyTab)} />
+            }
           </div>
         </main>
       </div>
@@ -545,7 +547,6 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
                 <p className="text-[11px] text-muted-foreground hidden sm:block">IELTS Journey · Within a Few Weeks</p>
               </div>
             </div>
-            <SettingsPanel />
           </div>
         </header>
 
@@ -556,8 +557,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
             {tab === 'study'     && <StudyLog />}
             {tab === 'practice'  && <PracticeTracker />}
             {tab === 'vocab'     && <VocabularyBank />}
-            {tab === 'mindset'   && <MindsetCorner />}
-            {tab === 'timer'     && <ExamTimer />}
+            {tab === 'planning'  && <PlanningCorner />}
           </div>
         </main>
       </div>

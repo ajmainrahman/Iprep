@@ -905,6 +905,7 @@ function TestScoresTab() {
   const { data: scores = [], isLoading } = useQuery({ queryKey: ['other-tests'], queryFn: api.getOtherTestScores });
 
   const [showForm, setShowForm] = useState(false);
+  const [editId,   setEditId]   = useState<number | null>(null);
   const [testName,   setTestName]   = useState('GRE');
   const [customTest, setCustomTest] = useState('');
   const [date,  setDate]  = useState('');
@@ -918,9 +919,18 @@ function TestScoresTab() {
     mutationFn: (data: Record<string, unknown>) => api.addOtherTestScore(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['other-tests'] });
-      setShowForm(false);
+      setShowForm(false); setEditId(null);
       setDate(''); setTotal(''); setSections({}); setNotes('');
       toast({ title: '📊 Score recorded!' });
+    },
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateOtherTestScore(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['other-tests'] });
+      setShowForm(false); setEditId(null);
+      setDate(''); setTotal(''); setSections({}); setNotes('');
+      toast({ title: '📊 Score updated!' });
     },
   });
   const deleteMutation = useMutation({
@@ -928,16 +938,32 @@ function TestScoresTab() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['other-tests'] }); toast({ title: 'Score removed' }); },
   });
 
+  function startEdit(s: { id: number; testName: string; totalScore?: number | null; attemptDate: string; sectionsJson?: string | null; notes?: string | null }) {
+    let sectionData: Record<string, string> = {};
+    try { if (s.sectionsJson) sectionData = JSON.parse(s.sectionsJson); } catch { /* ignore */ }
+    const tName = TEST_SECTIONS[s.testName] ? s.testName : 'Other';
+    setTestName(tName);
+    setCustomTest(tName === 'Other' ? s.testName : '');
+    setDate(s.attemptDate);
+    setTotal(s.totalScore != null ? String(s.totalScore) : '');
+    setSections(sectionData);
+    setNotes(s.notes || '');
+    setEditId(s.id);
+    setShowForm(true);
+  }
+
   function saveScore() {
     const name = testName === 'Other' ? customTest.trim() : testName;
     if (!name || !date) return;
-    addMutation.mutate({
+    const payload = {
       testName: name,
       attemptDate: date,
       totalScore: total ? Number(total) : null,
-      scoresJson: JSON.stringify(sections),
+      sectionsJson: JSON.stringify(sections),
       notes: notes || null,
-    });
+    };
+    if (editId) updateMutation.mutate({ id: editId, data: payload });
+    else addMutation.mutate(payload);
   }
 
   return (
@@ -948,7 +974,7 @@ function TestScoresTab() {
         </p>
         <Button
           size="sm"
-          onClick={() => setShowForm(p => !p)}
+          onClick={() => { setEditId(null); setDate(''); setTotal(''); setSections({}); setNotes(''); setShowForm(p => !p); }}
           className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
         >
           <Plus className="w-4 h-4 mr-1" />
@@ -961,7 +987,7 @@ function TestScoresTab() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <BookMarked className="w-4 h-4 text-indigo" />
-              Record Test Score
+              {editId ? 'Edit Test Score' : 'Record Test Score'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1015,9 +1041,9 @@ function TestScoresTab() {
 
             <div className="flex gap-2">
               <Button size="sm" disabled={!date} onClick={saveScore} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
-                <Check className="w-4 h-4 mr-1" /> Save
+                <Check className="w-4 h-4 mr-1" /> {editId ? 'Update' : 'Save'}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>
+              <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setEditId(null); }}>
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
@@ -1037,10 +1063,10 @@ function TestScoresTab() {
         <div className="grid sm:grid-cols-2 gap-4">
           {(scores as {
             id: number; testName: string; totalScore?: number | null;
-            attemptDate: string; scoresJson?: string | null; notes?: string | null;
+            attemptDate: string; sectionsJson?: string | null; notes?: string | null;
           }[]).map(s => {
             let sectionData: Record<string, string> = {};
-            try { if (s.scoresJson) sectionData = JSON.parse(s.scoresJson); } catch { /* ignore */ }
+            try { if (s.sectionsJson) sectionData = JSON.parse(s.sectionsJson); } catch { /* ignore */ }
 
             return (
               <Card key={s.id} className="relative group overflow-hidden hover:shadow-md transition-shadow">
@@ -1051,12 +1077,20 @@ function TestScoresTab() {
                       <p className="text-sm font-semibold">{s.testName}</p>
                       <p className="text-xs text-muted-foreground">{fmtDate(s.attemptDate)}</p>
                     </div>
-                    <button
-                      onClick={() => deleteMutation.mutate(s.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={() => startEdit(s)}
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(s.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   {Object.entries(sectionData).length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -1285,6 +1319,9 @@ function ScholarshipsTab() {
                       })()}
                     </p>
                   )}
+                  {s.notes && (
+                    <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2">{String(s.notes)}</p>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -1303,7 +1340,8 @@ function ChecklistTemplates() {
   const { toast } = useToast();
   const { data: custom = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
 
-  const [showForm,    setShowForm]    = useState(false);
+  const [showForm,      setShowForm]      = useState(false);
+  const [editTemplateId, setEditTemplateId] = useState<number | null>(null);
   const [formName,    setFormName]    = useState('');
   const [formDegree,  setFormDegree]  = useState('');
   const [formItems,   setFormItems]   = useState<string[]>(['']);
@@ -1313,8 +1351,16 @@ function ChecklistTemplates() {
     mutationFn: (data: Record<string, unknown>) => api.addTemplate(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['templates'] });
-      setShowForm(false); setFormName(''); setFormDegree(''); setFormItems(['']);
+      setShowForm(false); setEditTemplateId(null); setFormName(''); setFormDegree(''); setFormItems(['']);
       toast({ title: '📋 Template saved!' });
+    },
+  });
+  const updateTemplateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateTemplate(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['templates'] });
+      setShowForm(false); setEditTemplateId(null); setFormName(''); setFormDegree(''); setFormItems(['']);
+      toast({ title: '📋 Template updated!' });
     },
   });
   const deleteMutation = useMutation({
@@ -1334,7 +1380,16 @@ function ChecklistTemplates() {
   function saveTemplate() {
     const items = formItems.filter(x => x.trim());
     if (!formName.trim() || !items.length) return;
-    addMutation.mutate({ name: formName, degreeType: formDegree || null, items: JSON.stringify(items) });
+    const payload = { name: formName, degreeType: formDegree || null, items: JSON.stringify(items) };
+    if (editTemplateId) updateTemplateMutation.mutate({ id: editTemplateId, data: payload });
+    else addMutation.mutate(payload);
+  }
+  function startEditTemplate(tmpl: { id: number; name: string; degreeType?: string | null; itemsParsed: string[] }) {
+    setEditTemplateId(tmpl.id);
+    setFormName(tmpl.name);
+    setFormDegree(tmpl.degreeType || '');
+    setFormItems(tmpl.itemsParsed.length ? tmpl.itemsParsed : ['']);
+    setShowForm(true);
   }
 
   const customParsed = (custom as { id: number; name: string; degreeType?: string | null; items: string }[])
@@ -1352,7 +1407,7 @@ function ChecklistTemplates() {
             Pre-built and custom templates. Apply them when adding a new university application to auto-fill the requirements list.
           </p>
         </div>
-        <Button size="sm" onClick={() => setShowForm(p => !p)} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white shrink-0">
+        <Button size="sm" onClick={() => { setEditTemplateId(null); setFormName(''); setFormDegree(''); setFormItems(['']); setShowForm(p => !p); }} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white shrink-0">
           <Plus className="w-4 h-4 mr-1" /> Custom Template
         </Button>
       </div>
@@ -1363,7 +1418,7 @@ function ChecklistTemplates() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-indigo" />
-              New Custom Template
+              {editTemplateId ? 'Edit Custom Template' : 'New Custom Template'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1412,9 +1467,9 @@ function ChecklistTemplates() {
                 onClick={saveTemplate}
                 className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
               >
-                <Check className="w-4 h-4 mr-1" /> Save Template
+                <Check className="w-4 h-4 mr-1" /> {editTemplateId ? 'Update Template' : 'Save Template'}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>
+              <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setEditTemplateId(null); }}>
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
@@ -1497,12 +1552,20 @@ function ChecklistTemplates() {
                           </ul>
                         )}
                       </button>
-                      <button
-                        onClick={() => deleteMutation.mutate(tmpl.id)}
-                        className="ml-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-all shrink-0"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                        <button
+                          onClick={() => startEditTemplate(tmpl)}
+                          className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteMutation.mutate(tmpl.id)}
+                          className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </Card>

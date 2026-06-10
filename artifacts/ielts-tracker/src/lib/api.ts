@@ -35,6 +35,7 @@ export const api = {
 
   getScores: () => get('/api/scores'),
   addScore: (body: Record<string, unknown>) => post('/api/scores', body),
+  updateScore: (id: number, body: Record<string, unknown>) => put(`/api/scores/${id}`, body),
   deleteScore: (id: number) => del(`/api/scores/${id}`),
 
   getStudySessions: () => get('/api/study-sessions'),
@@ -62,6 +63,7 @@ export const api = {
 
   getOtherTestScores: () => get('/api/higher-study/test-scores'),
   addOtherTestScore: (body: Record<string, unknown>) => post('/api/higher-study/test-scores', body),
+  updateOtherTestScore: (id: number, body: Record<string, unknown>) => put(`/api/higher-study/test-scores/${id}`, body),
   deleteOtherTestScore: (id: number) => del(`/api/higher-study/test-scores/${id}`),
 
   getScholarships: () => get('/api/higher-study/scholarships'),
@@ -71,5 +73,11 @@ export const api = {
 
   getTemplates: () => get('/api/higher-study/templates'),
   addTemplate: (body: Record<string, unknown>) => post('/api/higher-study/templates', body),
+  updateTemplate: (id: number, body: Record<string, unknown>) => put(`/api/higher-study/templates/${id}`, body),
   deleteTemplate: (id: number) => del(`/api/higher-study/templates/${id}`),
+
+  getPlanningNotes: (section?: string) => get(`/api/planning-notes${section ? `?section=${section}` : ''}`),
+  addPlanningNote: (body: Record<string, unknown>) => post('/api/planning-notes', body),
+  updatePlanningNote: (id: number, body: Record<string, unknown>) => put(`/api/planning-notes/${id}`, body),
+  deletePlanningNote: (id: number) => del(`/api/planning-notes/${id}`),
 };
