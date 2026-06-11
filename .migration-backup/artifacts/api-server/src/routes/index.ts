@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import authRouter from "./auth";
 import settingsRouter from "./settings";
 import scoresRouter from "./scores";
 import studySessionsRouter from "./study-sessions";
@@ -10,10 +11,12 @@ import higherStudyApplicationsRouter from "./higher-study-applications";
 import otherTestScoresRouter from "./other-test-scores";
 import scholarshipsRouter from "./scholarships";
 import checklistTemplatesRouter from "./checklist-templates";
+import planningNotesRouter from "./planning-notes";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(authRouter);
 router.use(settingsRouter);
 router.use(scoresRouter);
 router.use(studySessionsRouter);
@@ -24,5 +27,6 @@ router.use(higherStudyApplicationsRouter);
 router.use(otherTestScoresRouter);
 router.use(scholarshipsRouter);
 router.use(checklistTemplatesRouter);
+router.use(planningNotesRouter);
 
 export default router;

@@ -9,9 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Trash2, TrendingUp, Award } from 'lucide-react';
+import { Trash2, TrendingUp, Award, Edit2, X, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void }) {
   const { toast } = useToast();
@@ -24,17 +31,28 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     mutationFn: api.addScore,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scores'] })
   });
+
+  const updateScoreReq = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateScore(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['scores'] });
+      setEditingScore(null);
+      toast({ title: 'Score updated!' });
+    }
+  });
   
   const deleteScoreReq = useMutation({
     mutationFn: (id: number) => api.deleteScore(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scores'] })
   });
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(localDateStr(new Date()));
   const [module, setModule] = useState('Reading');
   const [scoreVal, setScoreVal] = useState('');
   const [band, setBand] = useState('');
   const [notes, setNotes] = useState('');
+  const [filterDate, setFilterDate] = useState<string>('');
+  const [editingScore, setEditingScore] = useState<null | { id: number; date: string; module: string; band: string; score: string; notes: string }>(null);
 
   const handleAddScore = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +68,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     addScore.mutate({
       date,
       module,
-      score: scoreVal,
+      score: scoreVal ? Number(scoreVal) : null,
       band: b,
       notes
     }, {
@@ -66,10 +84,36 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     });
   };
 
+  const handleUpdateScore = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingScore) return;
+    updateScoreReq.mutate({
+      id: editingScore.id,
+      data: {
+        date: editingScore.date,
+        module: editingScore.module,
+        band: Number(editingScore.band),
+        score: editingScore.score ? Number(editingScore.score) : null,
+        notes: editingScore.notes || null,
+      }
+    });
+  };
+
   const deleteScore = (id: number) => {
     if (confirm('Delete this score entry?')) {
       deleteScoreReq.mutate(id);
     }
+  };
+
+  const startEditScore = (s: any) => {
+    setEditingScore({
+      id: s.id,
+      date: s.date,
+      module: s.module,
+      band: String(s.band),
+      score: s.score ? String(s.score) : '',
+      notes: s.notes || '',
+    });
   };
 
   // Compute best scores
@@ -215,9 +259,70 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
             </CardContent>
           </Card>
 
+          {editingScore && (
+            <Card className="shadow-sm border-2 border-teal/30">
+              <CardHeader className="pb-3 bg-teal/5">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>Edit Score</span>
+                  <button onClick={() => setEditingScore(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <form onSubmit={handleUpdateScore} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label>Date</Label>
+                    <Input type="date" value={editingScore.date} onChange={e => setEditingScore(p => p && ({ ...p, date: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Module</Label>
+                    <Select value={editingScore.module} onValueChange={v => setEditingScore(p => p && ({ ...p, module: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['Reading','Listening','Writing','Speaking','Full Mock'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Band Score</Label>
+                    <Input type="number" step="0.5" min="0" max="9" value={editingScore.band} onChange={e => setEditingScore(p => p && ({ ...p, band: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Raw Score</Label>
+                    <Input placeholder="e.g. 34/40" value={editingScore.score} onChange={e => setEditingScore(p => p && ({ ...p, score: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Notes</Label>
+                    <Input value={editingScore.notes} onChange={e => setEditingScore(p => p && ({ ...p, notes: e.target.value }))} />
+                  </div>
+                  <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
+                    <Button type="submit" size="sm" disabled={updateScoreReq.isPending} className="bg-teal text-white hover:bg-teal/90">
+                      <Check className="w-4 h-4 mr-1" /> Save Changes
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingScore(null)}>Cancel</Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="shadow-sm overflow-hidden">
             <CardHeader className="pb-2 bg-muted/50 border-b">
-              <CardTitle className="text-lg">Recent History</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg">Recent History</CardTitle>
+                {scores.length > 0 && (
+                  <Select value={filterDate} onValueChange={setFilterDate}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="All dates" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All dates</SelectItem>
+                      {[...new Set((scores as any[]).map((s: any) => s.date))].sort((a, b) => b.localeCompare(a)).map(d => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {scores.length === 0 ? (
@@ -234,15 +339,16 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                         <TableHead>Band</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead className="max-w-[200px]">Notes</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {[...scores].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10).map((s: any) => (
+                      {[...scores]
+                        .filter((s: any) => !filterDate || s.date === filterDate)
+                        .sort((a: any, b: any) => b.date.localeCompare(a.date))
+                        .map((s: any) => (
                         <TableRow key={s.id} className="hover:bg-muted/50">
-                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground font-medium">
-                            {new Date(s.date).toLocaleDateString()}
-                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground font-medium">{s.date}</TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-sm ${getModuleBadgeColor(s.module)}`}>
                               {s.module}
@@ -254,9 +360,14 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                             {s.notes || '-'}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-8 w-8 text-muted-foreground hover:text-teal hover:bg-teal/10">
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

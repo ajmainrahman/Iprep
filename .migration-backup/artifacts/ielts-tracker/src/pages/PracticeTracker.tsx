@@ -85,7 +85,7 @@ export function PracticeTracker() {
       module: activeTab,
       subType: activeSubtype,
       score: numScore,
-      totalQuestions: ['Reading', 'Listening'].includes(activeTab) ? numTotal : null,
+      totalQuestions: numTotal || 0,
       notes
     }, {
       onSuccess: () => {

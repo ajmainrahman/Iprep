@@ -1,4 +1,3 @@
 artifacts/api-server
-lib/db
 lib/api-zod
 scripts

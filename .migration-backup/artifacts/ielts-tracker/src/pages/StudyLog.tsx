@@ -12,6 +12,14 @@ import { BookOpen, Flame, Clock, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/* Return "YYYY-MM-DD" in the user's LOCAL timezone — never use toISOString() for this */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function StudyLog() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -29,7 +37,7 @@ export function StudyLog() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['study-sessions'] })
   });
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(localDateStr(new Date()));
   const [module, setModule] = useState('Reading');
   const [duration, setDuration] = useState('30');
   const [activityType, setActivityType] = useState('Question Type Drill');
@@ -66,61 +74,50 @@ export function StudyLog() {
     return <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-[400px] w-full" /></div>;
   }
 
-  // Streak & Map Calculation
+  // ── Streak & Map Calculation (all dates in LOCAL timezone) ──────────────
   const today = new Date();
-  today.setHours(0,0,0,0);
-  
+  today.setHours(0, 0, 0, 0);
+
   const studyDates = new Set(studySessions.map((s: any) => s.date));
+
+  // Streak: allow grace if today has no session yet
   let currentStreak = 0;
-  let d = new Date(today);
-  
-  // Calculate streak backwards from today
-  while (true) {
-    const dStr = d.toISOString().split('T')[0];
-    if (studyDates.has(dStr)) {
+  {
+    const cursor = new Date(today);
+    if (!studyDates.has(localDateStr(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (studyDates.has(localDateStr(cursor))) {
       currentStreak++;
-      d.setDate(d.getDate() - 1);
-    } else if (d.getTime() === today.getTime()) {
-      // It's okay if today is missing, check yesterday
-      d.setDate(d.getDate() - 1);
-    } else {
-      break;
+      cursor.setDate(cursor.getDate() - 1);
     }
   }
 
-  // 40 Day Activity Map
-  const mapDays = [];
-  const startMap = new Date(today);
-  startMap.setDate(today.getDate() - 39);
-  
-  for (let i = 0; i < 40; i++) {
-    const curr = new Date(startMap);
-    curr.setDate(startMap.getDate() + i);
-    const dateStr = curr.toISOString().split('T')[0];
-    
-    const daySessions = studySessions.filter((s: any) => s.date === dateStr);
-    const dayTotal = daySessions.reduce((sum: number, s: any) => sum + s.minutes, 0);
-    
-    let color = 'bg-muted'; // none
-    if (dayTotal > 0 && dayTotal <= 45) color = 'bg-teal/60 dark:bg-teal/80'; // studied
-    if (dayTotal > 45) color = 'bg-coral dark:bg-coral'; // intensive
-    
+  // 40-day Consistency Map
+  const mapDays: { date: string; total: number; color: string }[] = [];
+  for (let i = 39; i >= 0; i--) {
+    const curr = new Date(today);
+    curr.setDate(today.getDate() - i);
+    const dateStr = localDateStr(curr);
+    const dayTotal = (studySessions as any[])
+      .filter((s: any) => s.date === dateStr)
+      .reduce((sum: number, s: any) => sum + s.minutes, 0);
+    const color =
+      dayTotal === 0   ? 'bg-muted' :
+      dayTotal <= 45   ? 'bg-teal/60 dark:bg-teal/80' :
+                         'bg-coral dark:bg-coral';
     mapDays.push({ date: dateStr, total: dayTotal, color });
   }
 
   // Weekly Chart Data
-  const weeklyData = [];
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - 6);
-  
+  const weeklyData: { day: string; minutes: number; fullDate: string }[] = [];
   let weekTotal = 0;
-  for (let i = 0; i < 7; i++) {
-    const curr = new Date(weekStart);
-    curr.setDate(weekStart.getDate() + i);
-    const dateStr = curr.toISOString().split('T')[0];
+  for (let i = 6; i >= 0; i--) {
+    const curr = new Date(today);
+    curr.setDate(today.getDate() - i);
+    const dateStr = localDateStr(curr);
     const shortDay = curr.toLocaleDateString(undefined, { weekday: 'short' });
-    
-    const dayTotal = studySessions.filter((s: any) => s.date === dateStr).reduce((sum: number, s: any) => sum + s.minutes, 0);
+    const dayTotal = (studySessions as any[])
+      .filter((s: any) => s.date === dateStr)
+      .reduce((sum: number, s: any) => sum + s.minutes, 0);
     weekTotal += dayTotal;
     weeklyData.push({ day: shortDay, minutes: dayTotal, fullDate: dateStr });
   }
@@ -228,6 +225,7 @@ export function StudyLog() {
                       <SelectItem value="Full Passage">Full Passage</SelectItem>
                       <SelectItem value="Mock Test">Mock Test</SelectItem>
                       <SelectItem value="Vocabulary">Vocabulary</SelectItem>
+                      <SelectItem value="Listening Practice">Listening Practice</SelectItem>
                       <SelectItem value="Speaking Practice">Speaking Practice</SelectItem>
                       <SelectItem value="Writing Practice">Writing Practice</SelectItem>
                     </SelectContent>
@@ -310,21 +308,37 @@ export function StudyLog() {
                ) : (
                  <div className="divide-y max-h-[300px] overflow-y-auto">
                    {[...studySessions].sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((s: any) => (
-                     <div key={s.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
-                       <div>
-                         <div className="flex items-center gap-2 mb-1">
-                           <span className="font-bold text-foreground">{s.module}</span>
-                           <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{s.minutes} min</span>
+                     <div key={s.id} className="p-4 hover:bg-muted/30">
+                       <div className="flex items-start justify-between gap-2">
+                         <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-2 mb-1">
+                             <span className="font-bold text-foreground">{s.module}</span>
+                             <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{s.minutes} min</span>
+                           </div>
+                           <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                             <span>{s.date}</span>
+                             <span>•</span>
+                             <span>{s.activityType}</span>
+                           </div>
+                           {(s.wentWell || s.improve) && (
+                             <div className="mt-2 space-y-1">
+                               {s.wentWell && (
+                                 <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded px-2 py-1">
+                                   <span className="font-semibold">✓ Well:</span> {s.wentWell}
+                                 </p>
+                               )}
+                               {s.improve && (
+                                 <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded px-2 py-1">
+                                   <span className="font-semibold">↑ Improve:</span> {s.improve}
+                                 </p>
+                               )}
+                             </div>
+                           )}
                          </div>
-                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                           <span>{new Date(s.date).toLocaleDateString()}</span>
-                           <span>•</span>
-                           <span>{s.activityType}</span>
-                         </div>
+                         <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
                        </div>
-                       <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500">
-                         <Trash2 className="h-4 w-4" />
-                       </Button>
                      </div>
                    ))}
                  </div>
