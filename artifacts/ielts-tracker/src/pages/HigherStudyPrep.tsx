@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label';
 import {
   GraduationCap, Trophy, BookMarked, Plus, Trash2, Edit2, X, Check,
   CalendarDays, Globe, FileText, TrendingUp, ChevronDown, ChevronUp,
-  Target, ClipboardList, ChevronRight, Layers, List, GitBranch
+  Target, ClipboardList, ChevronRight, Layers, List, GitBranch,
+  ExternalLink, Copy, MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -326,6 +327,7 @@ function ApplicationsTab() {
   const emptyBase = {
     universityName: '', country: '', program: '', degreeType: 'MS',
     status: 'researching', deadline: '', appliedDate: '', notes: '',
+    websiteUrl: '', comments: '',
   };
   const [formBase,    setFormBase]    = useState(emptyBase);
   const [requirements, setRequirements] = useState<ReqItem[]>([]);
@@ -363,6 +365,8 @@ function ApplicationsTab() {
       deadline:       String(app.deadline || ''),
       appliedDate:    String(app.appliedDate || ''),
       notes:          String(app.notes || ''),
+      websiteUrl:     String(app.websiteUrl || ''),
+      comments:       String(app.comments || ''),
     });
     setRequirements(safeParseReqs(app.requirementsJson as string));
     setEditId(app.id);
@@ -393,6 +397,8 @@ function ApplicationsTab() {
       ...formBase,
       deadline:    formBase.deadline || null,
       appliedDate: formBase.appliedDate || null,
+      websiteUrl:  formBase.websiteUrl || null,
+      comments:    formBase.comments || null,
       requirementsJson: reqs.length ? JSON.stringify(reqs) : null,
     };
     if (editId) updateMutation.mutate({ id: editId, data: payload });
@@ -533,6 +539,15 @@ function ApplicationsTab() {
                   onChange={e => setFormBase(p => ({ ...p, appliedDate: e.target.value }))}
                 />
               </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>University Portal / Application URL</Label>
+                <Input
+                  type="url"
+                  placeholder="https://apply.university.edu"
+                  value={formBase.websiteUrl}
+                  onChange={e => setFormBase(p => ({ ...p, websiteUrl: e.target.value }))}
+                />
+              </div>
             </div>
 
             {/* Dynamic requirements */}
@@ -610,9 +625,19 @@ function ApplicationsTab() {
               <Label>Notes</Label>
               <Textarea
                 rows={2}
-                placeholder="Funding info, contact person, ranking, link…"
+                placeholder="Funding info, contact person, ranking…"
                 value={formBase.notes}
                 onChange={e => setFormBase(p => ({ ...p, notes: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Comments</Label>
+              <Textarea
+                rows={2}
+                placeholder="Pros/cons, tuition cost, visa notes, personal impressions…"
+                value={formBase.comments}
+                onChange={e => setFormBase(p => ({ ...p, comments: e.target.value }))}
               />
             </div>
 
@@ -732,7 +757,14 @@ function ApplicationsTab() {
         </div>
       ) : (
         <div className="space-y-3">
-          {(apps as (Record<string, unknown> & { id: number })[]).map(app => {
+          {[...(apps as (Record<string, unknown> & { id: number })[])].sort((a, b) => {
+            const da = a.deadline as string | null;
+            const db = b.deadline as string | null;
+            if (!da && !db) return 0;
+            if (!da) return 1;
+            if (!db) return -1;
+            return da > db ? 1 : -1;
+          }).map(app => {
             const meta     = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
             const reqs     = safeParseReqs(app.requirementsJson as string);
             const doneCount = reqs.filter(r => r.done).length;
@@ -782,6 +814,18 @@ function ApplicationsTab() {
                             <FileText className="w-3 h-3" />
                             {doneCount}/{reqs.length} docs done
                           </span>
+                        )}
+                        {app.websiteUrl && (
+                          <a
+                            href={String(app.websiteUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="flex items-center gap-1 text-indigo hover:underline transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Portal
+                          </a>
                         )}
                       </div>
                     </div>
@@ -882,6 +926,28 @@ function ApplicationsTab() {
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
                           <p className="text-sm text-foreground/80 whitespace-pre-line">{String(app.notes)}</p>
+                        </div>
+                      )}
+                      {app.websiteUrl && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">University Portal</p>
+                          <a
+                            href={String(app.websiteUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-indigo hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            {String(app.websiteUrl).replace(/^https?:\/\//, '').slice(0, 60)}{String(app.websiteUrl).length > 65 ? '…' : ''}
+                          </a>
+                        </div>
+                      )}
+                      {app.comments && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" /> Comments
+                          </p>
+                          <p className="text-sm text-foreground/80 whitespace-pre-line">{String(app.comments)}</p>
                         </div>
                       )}
                     </div>
@@ -1092,15 +1158,22 @@ function TestScoresTab() {
                       </button>
                     </div>
                   </div>
-                  {Object.entries(sectionData).length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {Object.entries(sectionData).filter(([, v]) => v).map(([k, v]) => (
-                        <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {k}: <strong>{v}</strong>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const definedSections = TEST_SECTIONS[s.testName];
+                    const entries: [string, string][] = definedSections
+                      ? definedSections.map(k => [k, sectionData[k] || ''])
+                      : Object.entries(sectionData).filter(([, v]) => v);
+                    if (entries.length === 0) return null;
+                    return (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {entries.map(([k, v]) => (
+                          <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {k}: <strong>{v || '–'}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   {s.notes && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{s.notes}</p>}
                 </CardContent>
               </Card>
@@ -1122,6 +1195,9 @@ function ScholarshipsTab() {
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [expandedSchId, setExpandedSchId] = useState<number | null>(null);
+  const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
+  const [notesEditDraft, setNotesEditDraft] = useState('');
 
   const emptyForm = {
     name: '', provider: '', country: '', fundingType: 'Full Scholarship',
@@ -1274,25 +1350,35 @@ function ScholarshipsTab() {
           <p className="text-sm mt-1">Track Erasmus+, Nordic grants and other funding opportunities.</p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-3">
           {(scholarships as (Record<string, unknown> & { id: number })[]).map(s => {
             const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
+            const isExpanded = expandedSchId === s.id;
             return (
-              <Card key={s.id} className="group hover:shadow-md transition-all hover:-translate-y-0.5">
+              <Card key={s.id} className="group overflow-hidden hover:shadow-md transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
+                    <button
+                      className="flex-1 text-left min-w-0"
+                      onClick={() => setExpandedSchId(isExpanded ? null : s.id)}
+                    >
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                       </div>
                       {s.provider && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
-                    </div>
-                    <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEdit(s)} className="p-1 rounded hover:bg-muted text-muted-foreground">
+                    </button>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => setExpandedSchId(isExpanded ? null : s.id)}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground"
+                      >
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                      <button onClick={() => startEdit(s)} className="p-1 rounded hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteMutation.mutate(s.id)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                      <button onClick={() => deleteMutation.mutate(s.id)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1319,8 +1405,71 @@ function ScholarshipsTab() {
                       })()}
                     </p>
                   )}
-                  {s.notes && (
+                  {!isExpanded && s.notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2">{String(s.notes)}</p>
+                  )}
+
+                  {/* Expanded detail + notepad */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                        {s.fundingType && (
+                          <div><span className="text-muted-foreground">Type</span><p className="font-medium">{String(s.fundingType)}</p></div>
+                        )}
+                        {s.country && (
+                          <div><span className="text-muted-foreground">Country</span><p className="font-medium">🌍 {String(s.country)}</p></div>
+                        )}
+                        {s.amount && (
+                          <div><span className="text-muted-foreground">Amount</span><p className="font-medium text-yellow-700 dark:text-yellow-400">{Number(s.amount).toLocaleString()} {String(s.currency)}</p></div>
+                        )}
+                        {s.status && (
+                          <div><span className="text-muted-foreground">Status</span><p className={`font-medium ${meta.color}`}>{meta.label}</p></div>
+                        )}
+                      </div>
+
+                      {/* Inline notepad */}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> Notes / Notepad
+                        </p>
+                        {editingNotesId === s.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              rows={4}
+                              value={notesEditDraft}
+                              onChange={e => setNotesEditDraft(e.target.value)}
+                              placeholder="Requirements, eligibility, contacts, reminders…"
+                              className="text-sm"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
+                                onClick={() => {
+                                  updateMutation.mutate({ id: s.id, data: { notes: notesEditDraft || null } });
+                                  setEditingNotesId(null);
+                                }}
+                              >
+                                <Check className="w-3 h-3 mr-1" /> Save
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingNotesId(null)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="min-h-[60px] p-2.5 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:border-indigo/40 hover:bg-muted/50 transition-colors"
+                            onClick={() => { setEditingNotesId(s.id); setNotesEditDraft(String(s.notes || '')); }}
+                          >
+                            {s.notes
+                              ? <p className="text-sm text-foreground/75 whitespace-pre-wrap">{String(s.notes)}</p>
+                              : <p className="text-xs text-muted-foreground italic">Click to add notes, requirements, contacts…</p>
+                            }
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -1384,6 +1533,15 @@ function ChecklistTemplates() {
     if (editTemplateId) updateTemplateMutation.mutate({ id: editTemplateId, data: payload });
     else addMutation.mutate(payload);
   }
+  function copyDefaultTemplate(tmpl: { id: string; name: string; degreeType: string; items: string[] }) {
+    setEditTemplateId(null);
+    setFormName(tmpl.name + ' (Copy)');
+    setFormDegree(tmpl.degreeType);
+    setFormItems(tmpl.items.length ? [...tmpl.items] : ['']);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function startEditTemplate(tmpl: { id: number; name: string; degreeType?: string | null; itemsParsed: string[] }) {
     setEditTemplateId(tmpl.id);
     setFormName(tmpl.name);
@@ -1486,29 +1644,40 @@ function ChecklistTemplates() {
           {DEFAULT_TEMPLATES.map(tmpl => {
             const isOpen = expandedId === tmpl.id;
             return (
-              <Card key={tmpl.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <button
-                  className="w-full text-left p-4"
-                  onClick={() => setExpandedId(isOpen ? null : tmpl.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{tmpl.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{tmpl.degreeType} · {tmpl.items.length} items</p>
-                    </div>
-                    {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+              <Card key={tmpl.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      className="flex-1 text-left"
+                      onClick={() => setExpandedId(isOpen ? null : tmpl.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm">{tmpl.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{tmpl.degreeType} · {tmpl.items.length} items</p>
+                        </div>
+                        {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground mr-2" /> : <ChevronRight className="w-4 h-4 text-muted-foreground mr-2" />}
+                      </div>
+                      {isOpen && (
+                        <ul className="mt-3 space-y-1.5">
+                          {tmpl.items.map((item, i) => (
+                            <li key={i} className="flex items-center gap-2 text-xs text-foreground/75">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => copyDefaultTemplate(tmpl)}
+                      title="Copy and edit this template"
+                      className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  {isOpen && (
-                    <ul className="mt-3 space-y-1.5">
-                      {tmpl.items.map((item, i) => (
-                        <li key={i} className="flex items-center gap-2 text-xs text-foreground/75">
-                          <span className="w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </button>
+                </div>
               </Card>
             );
           })}

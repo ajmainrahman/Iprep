@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, asc, desc, and, sql } from "drizzle-orm";
 import { db, higherStudyApplicationsTable } from "@workspace/db";
 import { z } from "zod";
 import { requireAuth } from "../middlewares/auth";
@@ -9,7 +9,11 @@ const router: IRouter = Router();
 router.get("/higher-study/applications", requireAuth, async (req, res): Promise<void> => {
   const rows = await db.select().from(higherStudyApplicationsTable)
     .where(eq(higherStudyApplicationsTable.userId, req.userId!))
-    .orderBy(desc(higherStudyApplicationsTable.createdAt));
+    .orderBy(
+      sql`CASE WHEN ${higherStudyApplicationsTable.deadline} IS NULL THEN 1 ELSE 0 END`,
+      asc(higherStudyApplicationsTable.deadline),
+      desc(higherStudyApplicationsTable.createdAt)
+    );
   res.json(rows);
 });
 
@@ -22,6 +26,8 @@ const bodySchema = z.object({
   deadline: z.string().nullable().optional(),
   appliedDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  websiteUrl: z.string().nullable().optional(),
+  comments: z.string().nullable().optional(),
   reqSop: z.boolean().optional(),
   reqLor1: z.boolean().optional(),
   reqLor2: z.boolean().optional(),

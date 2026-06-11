@@ -6,7 +6,7 @@ export const scholarshipsTable = pgTable("scholarships", {
   id: serial("id").primaryKey(),
   userId: integer("user_id"),
   name: text("name").notNull(),
-  provider: text("provider").notNull(),
+  provider: text("provider"),
   country: text("country"),
   amount: real("amount"),
   currency: text("currency").default("USD"),

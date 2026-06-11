@@ -15,7 +15,7 @@ router.get("/higher-study/scholarships", requireAuth, async (req, res): Promise<
 
 const bodySchema = z.object({
   name: z.string(),
-  provider: z.string(),
+  provider: z.string().nullable().optional(),
   country: z.string().nullable().optional(),
   amount: z.number().nullable().optional(),
   currency: z.string().optional(),
