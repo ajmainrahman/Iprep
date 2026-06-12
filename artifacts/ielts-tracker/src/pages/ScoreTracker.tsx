@@ -315,7 +315,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                       <SelectValue placeholder="All dates" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All dates</SelectItem>
+                      <SelectItem value="all">All dates</SelectItem>
                       {[...new Set((scores as any[]).map((s: any) => s.date))].sort((a, b) => b.localeCompare(a)).map(d => (
                         <SelectItem key={d} value={d}>{d}</SelectItem>
                       ))}
