@@ -17,7 +17,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000);
 }
 
-export function SettingsPanel() {
+export function SettingsPanel({ dark = false }: { dark?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -80,7 +80,8 @@ export function SettingsPanel() {
 
   if (isLoading || !settings) {
     return (
-      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full text-white/50 hover:bg-white/10">
+      <Button variant="ghost" size="icon"
+        className={`w-8 h-8 rounded-full ${dark ? 'text-white/50 hover:bg-white/10' : 'text-muted-foreground hover:bg-muted'}`}>
         <SettingsIcon className="w-4 h-4 animate-pulse" />
       </Button>
     );
@@ -90,12 +91,16 @@ export function SettingsPanel() {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          variant={dark ? 'ghost' : 'outline'}
+          size={dark ? 'icon' : 'sm'}
+          className={dark
+            ? 'w-8 h-8 rounded-full text-white/70 hover:bg-white/15 hover:text-white transition-colors'
+            : 'h-8 gap-1.5 text-sm font-medium rounded-full border-border hover:bg-muted transition-colors'
+          }
           title="Settings"
         >
-          <SettingsIcon className="w-4 h-4" />
+          <SettingsIcon className="w-3.5 h-3.5" />
+          {!dark && <span>Settings</span>}
         </Button>
       </DialogTrigger>
 

@@ -531,7 +531,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
                 </p>
                 <button onClick={logout} style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.7rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Sign out</button>
               </div>
-              <SettingsPanel />
+              <SettingsPanel dark />
             </div>
           </div>
         }
