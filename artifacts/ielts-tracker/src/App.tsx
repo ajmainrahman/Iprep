@@ -484,6 +484,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<StudyTab>('dashboard');
   const [confetti, setConfetti] = useState(false);
   const { user, logout } = useAuth();
+  const { data: studySettings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const pageTitle = STUDY_TABS.find(t => t.id === tab)?.label ?? 'Dashboard';
 
   function fireConfetti() {
@@ -517,11 +518,20 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div className="p-3 rounded-2xl text-center" style={{ background: 'rgba(46,196,182,0.1)', border: '1px solid rgba(46,196,182,0.2)' }}>
               <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>IELTS Target</p>
-              <p className="text-2xl font-bold text-teal">7.0+</p>
+              <p className="text-2xl font-bold text-teal">
+                {(studySettings as any)?.targetReading
+                  ? (((studySettings as any).targetReading + (studySettings as any).targetListening + (studySettings as any).targetWriting + (studySettings as any).targetSpeaking) / 4).toFixed(1)
+                  : '7.0'}
+              </p>
             </div>
-            <div style={{ padding: '0.25rem 0.5rem' }}>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
-              <button onClick={logout} style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Sign out</button>
+            <div style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', fontWeight: 500, marginBottom: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {(studySettings as any)?.name || user?.name || 'Student'}
+                </p>
+                <button onClick={logout} style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.7rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Sign out</button>
+              </div>
+              <SettingsPanel />
             </div>
           </div>
         }
@@ -548,6 +558,10 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden sm:block">IELTS Journey · Within a Few Weeks</p>
               </div>
+            </div>
+            {/* Settings button in header (always visible) */}
+            <div className="flex items-center gap-2 shrink-0">
+              <SettingsPanel />
             </div>
           </div>
         </header>
