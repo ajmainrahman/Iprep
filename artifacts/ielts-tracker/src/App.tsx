@@ -44,7 +44,7 @@ const FLY_TABS: { id: FlyTab; label: string; emoji: string }[] = [
 
 const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'dashboard', label: 'Dashboard',        emoji: '🏠' },
-  { id: 'scores',    label: 'Score Tracker',    emoji: '📈' },
+  { id: 'scores',    label: 'Mock Test',    emoji: '📈' },
   { id: 'study',     label: 'Study Log',        emoji: '📖' },
   { id: 'practice',  label: 'Practice Tracker', emoji: '🎯' },
   { id: 'vocab',     label: 'Vocab Bank',       emoji: '🔤' },

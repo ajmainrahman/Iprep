@@ -150,7 +150,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-3 mb-6">
         <TrendingUp className="w-8 h-8 text-teal" />
-        <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Score Tracker</h1>
+        <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Mock Test</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
