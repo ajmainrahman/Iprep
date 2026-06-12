@@ -3,16 +3,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, ChevronDown, ChevronUp, Save, GripVertical, X } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Save, X } from 'lucide-react';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
+interface Task {
+  text: string;
+  done: boolean;
+}
+
 interface ModuleEntry {
   id: string;
   name: string;
   target: string;
-  tasks: string[];
+  tasks: Task[];
 }
 
 interface Phase {
@@ -45,7 +49,7 @@ function calcDays(start: string, end: string): number | null {
 }
 
 function makeFreshModule(name: string): ModuleEntry {
-  return { id: uid(), name, target: '', tasks: [''] };
+  return { id: uid(), name, target: '', tasks: [{ text: '', done: false }] };
 }
 
 function makeFreshPhase(index: number): Phase {
@@ -59,7 +63,79 @@ function makeFreshPhase(index: number): Phase {
   };
 }
 
+/** Migrate old string[] tasks to Task[] on load */
+function normalizeTasks(raw: any[]): Task[] {
+  return raw.map(t =>
+    typeof t === 'string' ? { text: t, done: false } : t
+  );
+}
+
+function normalizePhases(phases: any[]): Phase[] {
+  return phases.map(p => ({
+    ...p,
+    modules: (p.modules || []).map((m: any) => ({
+      ...m,
+      tasks: normalizeTasks(m.tasks || [{ text: '', done: false }]),
+    })),
+  }));
+}
+
 const EMPTY_PLAN: JourneyPlan = { phases: [] };
+
+/* ── Progress ring (SVG) ─────────────────────────────────────────────────── */
+function ProgressRing({
+  pct,
+  size = 52,
+  strokeWidth = 5,
+  color = '#fff',
+  trackColor = 'rgba(255,255,255,0.2)',
+  label,
+}: {
+  pct: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  trackColor?: string;
+  label?: string;
+}) {
+  const r = (size - strokeWidth) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90" style={{ display: 'block' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${dash} ${circ - dash}`}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+        />
+      </svg>
+      <span
+        className="absolute font-bold"
+        style={{ fontSize: size * 0.22, color, lineHeight: 1, userSelect: 'none' }}
+      >
+        {label ?? `${Math.round(pct)}%`}
+      </span>
+    </div>
+  );
+}
+
+/* ── Phase completion helper ─────────────────────────────────────────────── */
+function phaseCompletion(phase: Phase): { done: number; total: number; pct: number } {
+  let done = 0, total = 0;
+  for (const mod of phase.modules) {
+    for (const task of mod.tasks) {
+      if (task.text.trim()) { total++; if (task.done) done++; }
+    }
+  }
+  return { done, total, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
+}
 
 /* ── Module row ──────────────────────────────────────────────────────────── */
 function ModuleRow({
@@ -69,15 +145,14 @@ function ModuleRow({
   onChange: (updated: ModuleEntry) => void;
   onRemove: () => void;
 }) {
-  const updateTask = (i: number, val: string) => {
-    const tasks = [...mod.tasks];
-    tasks[i] = val;
+  const updateTask = (i: number, val: Partial<Task>) => {
+    const tasks = mod.tasks.map((t, idx) => idx === i ? { ...t, ...val } : t);
     onChange({ ...mod, tasks });
   };
-  const addTask = () => onChange({ ...mod, tasks: [...mod.tasks, ''] });
+  const addTask = () => onChange({ ...mod, tasks: [...mod.tasks, { text: '', done: false }] });
   const removeTask = (i: number) => {
     const tasks = mod.tasks.filter((_, idx) => idx !== i);
-    onChange({ ...mod, tasks: tasks.length ? tasks : [''] });
+    onChange({ ...mod, tasks: tasks.length ? tasks : [{ text: '', done: false }] });
   };
 
   const MODULE_COLORS: Record<string, string> = {
@@ -95,6 +170,9 @@ function ModuleRow({
   const colorClass = MODULE_COLORS[mod.name] || 'bg-gray-50 border-gray-200';
   const labelClass = MODULE_LABEL[mod.name] || 'text-gray-700';
 
+  const doneTasks = mod.tasks.filter(t => t.text.trim() && t.done).length;
+  const totalTasks = mod.tasks.filter(t => t.text.trim()).length;
+
   return (
     <div className={`rounded-xl border p-4 ${colorClass}`}>
       <div className="flex items-center gap-2 mb-3">
@@ -106,6 +184,11 @@ function ModuleRow({
             placeholder="Module name"
           />
         </div>
+        {totalTasks > 0 && (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${doneTasks === totalTasks ? 'bg-green-100 text-green-700' : 'bg-white/70 text-muted-foreground'}`}>
+            {doneTasks}/{totalTasks}
+          </span>
+        )}
         <div className="flex items-center gap-1">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Target:</span>
           <Input
@@ -122,16 +205,25 @@ function ModuleRow({
 
       <div className="space-y-1.5 ml-1">
         {mod.tasks.map((task, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <span className="text-muted-foreground text-xs w-3 shrink-0">•</span>
+          <div key={i} className="flex items-center gap-1.5 group">
+            <input
+              type="checkbox"
+              checked={task.done}
+              onChange={e => updateTask(i, { done: e.target.checked })}
+              className="w-4 h-4 rounded accent-teal shrink-0 cursor-pointer"
+              title="Mark as done"
+            />
             <Input
-              value={task}
-              onChange={e => updateTask(i, e.target.value)}
-              className="h-7 text-sm flex-1 bg-white/70"
+              value={task.text}
+              onChange={e => updateTask(i, { text: e.target.value })}
+              className={`h-7 text-sm flex-1 bg-white/70 transition-all ${task.done ? 'line-through text-muted-foreground opacity-60' : ''}`}
               placeholder="Daily task…"
             />
             {mod.tasks.length > 1 && (
-              <button onClick={() => removeTask(i)} className="text-muted-foreground hover:text-red-400 transition-colors">
+              <button
+                onClick={() => removeTask(i)}
+                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+              >
                 <X className="w-3 h-3" />
               </button>
             )}
@@ -158,6 +250,7 @@ function PhaseCard({
   onRemove: () => void;
 }) {
   const days = calcDays(phase.startDate, phase.endDate);
+  const { done, total, pct } = phaseCompletion(phase);
 
   const updateModule = (modId: string, updated: ModuleEntry) => {
     onUpdate({ ...phase, modules: phase.modules.map(m => m.id === modId ? updated : m) });
@@ -183,12 +276,15 @@ function PhaseCard({
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       {/* Header */}
       <div className={`bg-gradient-to-r ${gradient} p-4 text-white`}>
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
+          {/* Progress ring */}
+          <ProgressRing pct={pct} size={54} strokeWidth={5} />
+
           <div className="flex-1 min-w-0">
             <Input
               value={phase.title}
               onChange={e => onUpdate({ ...phase, title: e.target.value })}
-              className="font-bold text-lg h-8 border-0 bg-white/20 text-white placeholder-white/60 focus-visible:ring-white/40 mb-2"
+              className="font-bold text-lg h-8 border-0 bg-white/20 text-white placeholder-white/60 focus-visible:ring-white/40 mb-1"
               placeholder={`Phase ${index + 1}`}
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -216,6 +312,11 @@ function PhaseCard({
                   {days} day{days !== 1 ? 's' : ''}
                 </span>
               )}
+              {total > 0 && (
+                <span className="bg-white/25 text-white text-xs font-medium px-2.5 py-1 rounded-full border border-white/30">
+                  {done}/{total} tasks
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
@@ -227,6 +328,16 @@ function PhaseCard({
             </button>
           </div>
         </div>
+
+        {/* Progress bar below header */}
+        {total > 0 && (
+          <div className="mt-3 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white rounded-full transition-all duration-500"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -248,6 +359,58 @@ function PhaseCard({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Overall progress summary ────────────────────────────────────────────── */
+function OverallProgress({ phases }: { phases: Phase[] }) {
+  if (phases.length === 0) return null;
+  let totalDone = 0, totalAll = 0;
+  const perPhase = phases.map(p => {
+    const c = phaseCompletion(p);
+    totalDone += c.done;
+    totalAll += c.total;
+    return c;
+  });
+  const overallPct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
+
+  return (
+    <div className="bg-gradient-to-br from-navy/5 to-teal/5 border border-teal/20 rounded-2xl p-5">
+      <div className="flex items-center gap-4 mb-4">
+        <ProgressRing pct={overallPct} size={68} strokeWidth={6} color="#0d9488" trackColor="#e2e8f0" />
+        <div>
+          <h3 className="font-bold text-base text-foreground">Overall Progress</h3>
+          <p className="text-sm text-muted-foreground">
+            {totalDone} of {totalAll} tasks completed across {phases.length} phase{phases.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-2">
+        {phases.map((phase, i) => {
+          const { done, total, pct } = perPhase[i];
+          const PHASE_COLORS = ['bg-indigo-500', 'bg-teal-500', 'bg-orange-400', 'bg-blue-500', 'bg-pink-500'];
+          const bar = PHASE_COLORS[i % PHASE_COLORS.length];
+          return (
+            <div key={phase.id} className="flex items-center gap-3 text-sm">
+              <span className="w-5 text-xs font-bold text-muted-foreground shrink-0 text-right">{i + 1}</span>
+              <span className="w-28 font-medium truncate text-foreground">{phase.title || `Phase ${i + 1}`}</span>
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${bar} rounded-full transition-all duration-500`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="w-10 text-xs text-right text-muted-foreground shrink-0">
+                {total === 0 ? '—' : `${pct}%`}
+              </span>
+              <span className="w-14 text-xs text-right text-muted-foreground/70 shrink-0 hidden sm:block">
+                {total === 0 ? '' : `${done}/${total}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -281,7 +444,8 @@ export function IELTSJourneyPlanner() {
   useEffect(() => {
     if (serverPlan?.content) {
       try {
-        setPlan(JSON.parse(serverPlan.content));
+        const parsed = JSON.parse(serverPlan.content);
+        setPlan({ phases: normalizePhases(parsed.phases || []) });
       } catch {
         setPlan(EMPTY_PLAN);
       }
@@ -334,7 +498,7 @@ export function IELTSJourneyPlanner() {
             🗺️ My IELTS Journey
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Plan your study in phases — changes save automatically.
+            Plan your study in phases — tick tasks as you complete them.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -351,6 +515,9 @@ export function IELTSJourneyPlanner() {
           )}
         </div>
       </div>
+
+      {/* Overall progress */}
+      <OverallProgress phases={plan.phases} />
 
       {/* Empty state */}
       {plan.phases.length === 0 && (
