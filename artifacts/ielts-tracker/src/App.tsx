@@ -5,6 +5,7 @@ import { StudyLog } from '@/pages/StudyLog';
 import { PracticeTracker } from '@/pages/PracticeTracker';
 import { VocabularyBank } from '@/pages/VocabularyBank';
 import { PlanningCorner } from '@/pages/PlanningCorner';
+import { IELTSJourneyPlanner } from '@/pages/IELTSJourneyPlanner';
 import { FlyNotepad } from '@/pages/FlyNotepad';
 import { HigherStudyPrep } from '@/pages/HigherStudyPrep';
 import { SettingsPanel } from '@/components/SettingsPanel';
@@ -30,7 +31,7 @@ const queryClient = new QueryClient({
 
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates' | 'notepad';
-type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'planning';
+type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'planning' | 'journey';
 
 const FLY_TABS: { id: FlyTab; label: string; emoji: string }[] = [
   { id: 'overview',     label: 'Overview',       emoji: '🗺️' },
@@ -47,6 +48,7 @@ const STUDY_TABS: { id: StudyTab; label: string; emoji: string }[] = [
   { id: 'study',     label: 'Study Log',        emoji: '📖' },
   { id: 'practice',  label: 'Practice Tracker', emoji: '🎯' },
   { id: 'vocab',     label: 'Vocab Bank',       emoji: '🔤' },
+  { id: 'journey',   label: 'My Journey',       emoji: '🗺️' },
   { id: 'planning',  label: 'Planning',         emoji: '🗂️' },
 ];
 
@@ -557,6 +559,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
             {tab === 'study'     && <StudyLog />}
             {tab === 'practice'  && <PracticeTracker />}
             {tab === 'vocab'     && <VocabularyBank />}
+            {tab === 'journey'   && <IELTSJourneyPlanner />}
             {tab === 'planning'  && <PlanningCorner />}
           </div>
         </main>

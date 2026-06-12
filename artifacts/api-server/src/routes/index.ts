@@ -12,6 +12,7 @@ import otherTestScoresRouter from "./other-test-scores";
 import scholarshipsRouter from "./scholarships";
 import checklistTemplatesRouter from "./checklist-templates";
 import planningNotesRouter from "./planning-notes";
+import journeyPlannerRouter from "./journey-planner";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(otherTestScoresRouter);
 router.use(scholarshipsRouter);
 router.use(checklistTemplatesRouter);
 router.use(planningNotesRouter);
+router.use(journeyPlannerRouter);
 
 export default router;

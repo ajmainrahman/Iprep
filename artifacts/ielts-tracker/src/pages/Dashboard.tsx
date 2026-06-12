@@ -269,14 +269,15 @@ export function Dashboard() {
   }
 
   const getDaysRemaining = () => {
-    if (!settings?.examDate) return 0;
-    const today = new Date();
-    const exam = new Date(settings.examDate);
-    const diffTime = Math.max(0, exam.getTime() - today.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!settings?.examDate) return null;
+    const [y, mo, d] = (settings.examDate as string).split('-').map(Number);
+    const exam = new Date(y, mo - 1, d);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Math.ceil((exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const daysRemaining = getDaysRemaining();
+  const daysRemaining = getDaysRemaining() ?? 0;
+  const hasExamDate = getDaysRemaining() !== null;
   const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
   const quote = MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 
@@ -289,7 +290,12 @@ export function Dashboard() {
   const totalScores = Object.values(latestScores).filter(s => s > 0);
   const overallBand = totalScores.length === 4 ? (totalScores.reduce((a, b) => a + b, 0) / 4) : 0;
 
-  const targets = settings?.targets || { Reading: 7, Listening: 7, Writing: 7, Speaking: 7 };
+  const targets = {
+    Reading: (settings as any)?.targetReading || 7,
+    Listening: (settings as any)?.targetListening || 7,
+    Writing: (settings as any)?.targetWriting || 7,
+    Speaking: (settings as any)?.targetSpeaking || 7,
+  };
   const overallTarget = Object.values(targets).reduce((a: any, b: any) => a + b, 0) / 4;
 
   const getDaysColor = (days: number) => {
@@ -346,16 +352,26 @@ export function Dashboard() {
       {/* Top 3 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className={`p-6 h-full flex flex-col justify-center ${getDaysColor(daysRemaining).split(' ')[1]} rounded-xl border border-transparent`}>
+          <CardContent className={`p-6 h-full flex flex-col justify-center ${hasExamDate ? getDaysColor(Math.max(0, daysRemaining)).split(' ')[1] : 'bg-gray-50'} rounded-xl border border-transparent`}>
             <div className="flex items-center gap-2 mb-4">
-              <CalendarIcon className={`w-5 h-5 ${getDaysColor(daysRemaining).split(' ')[0]}`} />
+              <CalendarIcon className={`w-5 h-5 ${hasExamDate ? getDaysColor(Math.max(0, daysRemaining)).split(' ')[0] : 'text-gray-400'}`} />
               <h3 className="font-semibold text-lg text-gray-800">Exam Countdown</h3>
             </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="text-5xl font-heading font-bold mb-1 tracking-tight text-gray-900">{daysRemaining}</div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">Days left</p>
-              <Progress value={Math.min(100, Math.max(0, (90 - daysRemaining) / 90 * 100))} className={`h-2.5 bg-black/10 ${getProgressColor(daysRemaining)}`} />
-            </div>
+            {!hasExamDate ? (
+              <div className="flex-1 flex flex-col justify-center">
+                <p className="text-sm text-gray-400">Set your exam date in Settings to see the countdown.</p>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="text-5xl font-heading font-bold mb-1 tracking-tight text-gray-900">
+                  {daysRemaining > 0 ? daysRemaining : daysRemaining === 0 ? '🎓' : `${Math.abs(daysRemaining)}d`}
+                </div>
+                <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
+                  {daysRemaining > 0 ? 'Days left' : daysRemaining === 0 ? 'Exam day!' : 'Days ago'}
+                </p>
+                <Progress value={Math.min(100, Math.max(0, (90 - Math.max(0, daysRemaining)) / 90 * 100))} className={`h-2.5 bg-black/10 ${getProgressColor(Math.max(0, daysRemaining))}`} />
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -94,7 +94,7 @@ export function SettingsPanel() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="examDate">Exam Date</Label>
-              <Input id="examDate" name="examDate" type="date" defaultValue={settings.examDate} required />
+              <Input id="examDate" name="examDate" type="date" defaultValue={settings.examDate ?? ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="dailyGoalMinutes">Daily Study Goal (minutes)</Label>

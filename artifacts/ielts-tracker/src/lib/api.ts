@@ -80,4 +80,7 @@ export const api = {
   addPlanningNote: (body: Record<string, unknown>) => post('/api/planning-notes', body),
   updatePlanningNote: (id: number, body: Record<string, unknown>) => put(`/api/planning-notes/${id}`, body),
   deletePlanningNote: (id: number) => del(`/api/planning-notes/${id}`),
+
+  getJourneyPlan: () => get('/api/journey-planner'),
+  saveJourneyPlan: (content: string) => put('/api/journey-planner', { content }),
 };
