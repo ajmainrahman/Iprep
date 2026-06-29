@@ -905,6 +905,9 @@ function ApplicationsTab() {
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>
                           {meta.label}
                         </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>
+                          {pMeta.label}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-0.5">
                         {String(app.degreeType)} in {String(app.program)} ·{' '}
@@ -1078,11 +1081,7 @@ function ApplicationsTab() {
                 </div>
               </Card>
             );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
