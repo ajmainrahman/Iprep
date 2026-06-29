@@ -18,26 +18,42 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
-type AppStatus = 'researching' | 'applied' | 'interview' | 'admitted' | 'rejected' | 'waitlisted' | 'deferred';
-type ScholarshipStatus = 'planning' | 'applied' | 'awarded' | 'rejected';
+type AppStatus = 'researching' | 'ready_to_apply' | 'applied' | 'interview' | 'rejected' | 'waitlisted' | 'deferred';
+type ScholarshipStatus = 'planning' | 'ready_to_apply' | 'applied' | 'awarded' | 'rejected';
+type Priority = 'high' | 'medium' | 'low';
 type ReqItem = { label: string; done: boolean };
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
-  researching: { label: 'Researching',  color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  applied:     { label: 'Applied',      color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  interview:   { label: 'Interview',    color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  admitted:    { label: 'Admitted 🎉',  color: 'text-green-600',   bg: 'bg-green-100 dark:bg-green-900/30' },
-  rejected:    { label: 'Rejected',     color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
-  waitlisted:  { label: 'Waitlisted',   color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
-  deferred:    { label: 'Deferred',     color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  ready_to_apply: { label: 'Ready to Apply', color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  applied:        { label: 'Applied',        color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  interview:      { label: 'Interview',      color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  rejected:       { label: 'Rejected',       color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
+  waitlisted:     { label: 'Waitlisted',     color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  deferred:       { label: 'Deferred',       color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
 };
 
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string }> = {
-  planning: { label: 'Planning',   color: 'text-slate-500' },
-  applied:  { label: 'Applied',    color: 'text-blue-600' },
-  awarded:  { label: 'Awarded 🏆', color: 'text-green-600' },
-  rejected: { label: 'Rejected',   color: 'text-red-600' },
+  planning:       { label: 'Planning',       color: 'text-slate-500' },
+  ready_to_apply: { label: 'Ready to Apply', color: 'text-emerald-600' },
+  applied:        { label: 'Applied',        color: 'text-blue-600' },
+  awarded:        { label: 'Awarded 🏆',     color: 'text-green-600' },
+  rejected:       { label: 'Rejected',       color: 'text-red-600' },
 };
+
+const PRIORITY_META: Record<Priority, { label: string; color: string; bg: string; dot: string }> = {
+  high:   { label: 'High',   color: 'text-red-600',    bg: 'bg-red-50 border-red-200 dark:bg-red-900/20',       dot: 'bg-red-500' },
+  medium: { label: 'Medium', color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200 dark:bg-orange-900/20', dot: 'bg-orange-400' },
+  low:    { label: 'Low',    color: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200 dark:bg-slate-800',    dot: 'bg-slate-400' },
+};
+
+const COUNTRIES = [
+  'Australia','Austria','Belgium','Canada','China','Czech Republic','Denmark','Estonia',
+  'Finland','France','Germany','Hungary','India','Ireland','Italy','Japan','Latvia',
+  'Lithuania','Luxembourg','Netherlands','New Zealand','Norway','Poland','Portugal',
+  'Romania','Singapore','Slovakia','Slovenia','South Korea','Spain','Sweden',
+  'Switzerland','United Kingdom','United States',
+];
 
 const TEST_SECTIONS: Record<string, string[]> = {
   IELTS:    ['Listening', 'Reading', 'Writing', 'Speaking'],
@@ -172,7 +188,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
     .sort((a, b) => (a.deadline! > b.deadline! ? 1 : -1))
     .slice(0, 6);
 
-  const admittedCount = byStatus['admitted'] || 0;
+  const admittedCount = byStatus['ready_to_apply'] || 0;
   const appliedCount  = (byStatus['applied'] || 0) + (byStatus['interview'] || 0);
 
   return (
@@ -182,7 +198,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
         {[
           { label: 'Universities',  value: (apps as unknown[]).length,   color: 'text-navy dark:text-indigo',  tab: 'applications', emoji: '🎓' },
           { label: 'Applied',       value: appliedCount,                 color: 'text-blue-600',               tab: 'applications', emoji: '📨' },
-          { label: 'Admitted',      value: admittedCount,                color: 'text-green-600',              tab: 'applications', emoji: '✅' },
+          { label: 'Ready to Apply', value: admittedCount,                color: 'text-emerald-600',            tab: 'applications', emoji: '✅' },
           { label: 'Scholarships',  value: (schols as unknown[]).length, color: 'text-yellow-600',             tab: 'scholarships', emoji: '🏆' },
         ].map(({ label, value, color, tab, emoji }) => (
           <Card
@@ -292,6 +308,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
           <CardContent>
             <div className="flex flex-wrap gap-3">
               {(tests as { id: number; testName: string; totalScore?: number | null; attemptDate: string }[])
+                .slice().sort((a, b) => new Date(b.attemptDate).getTime() - new Date(a.attemptDate).getTime())
                 .slice(0, 6)
                 .map(t => (
                   <div key={t.id} className="border rounded-xl px-4 py-3 text-center min-w-[90px]">
@@ -324,9 +341,17 @@ function ApplicationsTab() {
   const [newItemDraft,  setNewItemDraft]  = useState('');
   const [viewMode,    setViewMode]    = useState<'list' | 'timeline'>('list');
 
+  const [countryFilter,  setCountryFilter]  = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+
+  const uniqueCountries = React.useMemo(() => {
+    const cs = [...new Set((apps as any[]).map((a: any) => String(a.country || '')).filter(Boolean))].sort();
+    return cs;
+  }, [apps]);
+
   const emptyBase = {
     universityName: '', country: '', program: '', degreeType: 'MS',
-    status: 'researching', deadline: '', appliedDate: '', notes: '',
+    status: 'researching', priority: 'medium', deadline: '', appliedDate: '', notes: '',
     websiteUrl: '', comments: '',
   };
   const [formBase,    setFormBase]    = useState(emptyBase);
@@ -362,6 +387,7 @@ function ApplicationsTab() {
       program:        String(app.program || ''),
       degreeType:     String(app.degreeType || 'MS'),
       status:         String(app.status || 'researching'),
+      priority:       String(app.priority || 'medium'),
       deadline:       String(app.deadline || ''),
       appliedDate:    String(app.appliedDate || ''),
       notes:          String(app.notes || ''),
@@ -436,11 +462,12 @@ function ApplicationsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Top bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-sm text-muted-foreground">
           {(apps as unknown[]).length} {(apps as unknown[]).length === 1 ? 'university' : 'universities'} tracked
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* View toggle */}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
@@ -466,6 +493,45 @@ function ApplicationsTab() {
         </div>
       </div>
 
+      {/* Country filter pills */}
+      {uniqueCountries.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setCountryFilter(null)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${!countryFilter ? 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo' : 'border-border text-muted-foreground hover:bg-muted'}`}
+          >
+            All
+          </button>
+          {uniqueCountries.map(c => (
+            <button
+              key={c}
+              onClick={() => setCountryFilter(countryFilter === c ? null : c)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${countryFilter === c ? 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo' : 'border-border text-muted-foreground hover:bg-muted'}`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Priority filter */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-xs text-muted-foreground font-medium shrink-0">Priority:</span>
+        {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(p => (
+          <button
+            key={p ?? 'all'}
+            onClick={() => setPriorityFilter(p)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+              priorityFilter === p
+                ? p ? `${PRIORITY_META[p].bg} ${PRIORITY_META[p].color} border-current` : 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo'
+                : 'border-border text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {p ? PRIORITY_META[p].label : 'All'}
+          </button>
+        ))}
+      </div>
+
       {/* ── Add / Edit Form ── */}
       {showForm && (
         <Card className="border-2 border-indigo/25 dark:border-indigo/40">
@@ -488,10 +554,14 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Country *</Label>
                 <Input
-                  placeholder="e.g. Denmark 🇩🇰"
+                  placeholder="e.g. Denmark"
+                  list="countries-list"
                   value={formBase.country}
                   onChange={e => setFormBase(p => ({ ...p, country: e.target.value }))}
                 />
+                <datalist id="countries-list">
+                  {COUNTRIES.map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <Label>Program *</Label>
@@ -519,6 +589,19 @@ function ApplicationsTab() {
                   <SelectContent>
                     {Object.entries(APP_STATUS_META).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Priority</Label>
+                <Select value={formBase.priority} onValueChange={v => setFormBase(p => ({ ...p, priority: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PRIORITY_META).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        <span className={v.color}>{v.label}</span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -697,13 +780,13 @@ function ApplicationsTab() {
                 const days = daysUntil(app.deadline as string);
                 const urgent = days !== null && days >= 0 && days <= 7;
                 const dotColor: Record<AppStatus, string> = {
-                  researching: 'bg-slate-400',
-                  applied:     'bg-blue-500',
-                  interview:   'bg-purple-500',
-                  admitted:    'bg-green-500',
-                  rejected:    'bg-red-400',
-                  waitlisted:  'bg-orange-400',
-                  deferred:    'bg-yellow-400',
+                  researching:    'bg-slate-400',
+                  ready_to_apply: 'bg-emerald-500',
+                  applied:        'bg-blue-500',
+                  interview:      'bg-purple-500',
+                  rejected:       'bg-red-400',
+                  waitlisted:     'bg-orange-400',
+                  deferred:       'bg-yellow-400',
                 };
                 return (
                   <div key={app.id} className="relative">
@@ -757,18 +840,58 @@ function ApplicationsTab() {
         </div>
       ) : (
         <div className="space-y-3">
-          {[...(apps as (Record<string, unknown> & { id: number })[])].sort((a, b) => {
-            const da = a.deadline as string | null;
-            const db = b.deadline as string | null;
-            if (!da && !db) return 0;
-            if (!da) return 1;
-            if (!db) return -1;
-            return da > db ? 1 : -1;
-          }).map(app => {
+          {(() => {
+            const sortedApps = [...(apps as (Record<string, unknown> & { id: number })[])].filter(app => {
+              if (countryFilter && String(app.country || '') !== countryFilter) return false;
+              if (priorityFilter && String(app.priority || 'medium') !== priorityFilter) return false;
+              return true;
+            }).sort((a, b) => {
+              const da = a.deadline as string | null;
+              const db = b.deadline as string | null;
+              if (!da && !db) return 0;
+              if (!da) return 1;
+              if (!db) return -1;
+              return da > db ? 1 : -1;
+            });
+
+            if (countryFilter) {
+              return sortedApps.map(app => renderAppCard(app));
+            }
+
+            const grouped: Record<string, (Record<string, unknown> & { id: number })[]> = {};
+            sortedApps.forEach(app => {
+              const c = String(app.country || 'Unknown');
+              if (!grouped[c]) grouped[c] = [];
+              grouped[c].push(app);
+            });
+            const sortedCountries = Object.keys(grouped).sort();
+
+            return sortedCountries.map(country => (
+              <div key={country}>
+                <div className="flex items-center gap-2 mb-2 mt-1">
+                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{country}</h3>
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">{grouped[country].length}</span>
+                </div>
+                <div className="space-y-3">
+                  {grouped[country].map(app => renderAppCard(app))}
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
+      )}
+    </div>
+  );
+
+  function renderAppCard(app: Record<string, unknown> & { id: number }) {
             const meta     = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
             const reqs     = safeParseReqs(app.requirementsJson as string);
             const doneCount = reqs.filter(r => r.done).length;
             const isExpanded = expandedId === app.id;
+            const priorityKey = (app.priority || 'medium') as Priority;
+            const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
 
             return (
               <Card key={app.id} className="overflow-hidden transition-shadow hover:shadow-md">

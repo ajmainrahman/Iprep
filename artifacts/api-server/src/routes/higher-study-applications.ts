@@ -43,6 +43,7 @@ const bodySchema = z.object({
   reqToefl: z.boolean().optional(),
   reqPortfolio: z.boolean().optional(),
   requirementsJson: z.string().nullable().optional(),
+  priority: z.string().optional(),
 });
 
 router.post("/higher-study/applications", requireAuth, async (req, res): Promise<void> => {
