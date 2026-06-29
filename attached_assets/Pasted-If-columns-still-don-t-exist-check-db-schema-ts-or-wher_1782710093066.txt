@@ -1,0 +1,60 @@
+If columns still don't exist, check `db/schema.ts` (or wherever the schema lives) and manually verify `priority`, `country`, and any other new fields are present in the table definition and in the actual DB.
+
+---
+
+### Fix 2 — Backend Route Defensive Fix
+In the `/api/higher-study/applications` route handler (GET), wrap the entire handler in a try/catch and return a proper error response instead of crashing:
+
+```ts
+try {
+  const applications = await db.select().from(higherStudyApplications);
+  return res.json(applications); // always return an array
+} catch (err) {
+  console.error("Applications fetch error:", err);
+  return res.status(500).json({ error: "Failed to fetch applications", details: String(err) });
+}
+```
+
+Also ensure the query result is always an array — if `db.select()` can return null/undefined, default it:
+```ts
+const applications = (await db.select().from(higherStudyApplications)) ?? [];
+```
+
+---
+
+### Fix 3 — Frontend Defensive Fix
+In the component that calls `/api/higher-study/applications` and maps over the result, add a guard before `.map()`:
+
+```ts
+const data = await res.json();
+const applications = Array.isArray(data) ? data : [];
+// use `applications` from here on, not `data`
+```
+
+This prevents the "s.map is not a function" crash even if the API returns an error object.
+
+---
+
+### Fix 4 — Verify All New Columns Exist
+Check that the following new fields exist in BOTH the Drizzle schema AND the database:
+- `priority` (for applications) — e.g. varchar or text with values 'high', 'medium', 'low'
+- `country` (for universities) — varchar/text
+- `status` values now include `'ready_to_apply'` — if status is an enum in the DB, make sure the new value was added to the enum
+
+If status is a Postgres ENUM type, run this SQL directly:
+```sql
+ALTER TYPE application_status ADD VALUE IF NOT EXISTS 'ready_to_apply';
+ALTER TYPE scholarship_status ADD VALUE IF NOT EXISTS 'ready_to_apply';
+```
+
+---
+
+### Fix 5 — Scholarships API Same Treatment
+Apply the same try/catch + array guard fix to `/api/higher-study/scholarships` so it doesn't have the same issue.
+
+---
+
+After all fixes, confirm:
+- GET /api/higher-study/applications returns 200 with an array (even if empty)
+- GET /api/higher-study/scholarships returns 200 with an array
+- The Fly Section loads without any console errors

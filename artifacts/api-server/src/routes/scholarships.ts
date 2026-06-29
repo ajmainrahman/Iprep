@@ -7,10 +7,15 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 router.get("/higher-study/scholarships", requireAuth, async (req, res): Promise<void> => {
-  const rows = await db.select().from(scholarshipsTable)
-    .where(eq(scholarshipsTable.userId, req.userId!))
-    .orderBy(desc(scholarshipsTable.createdAt));
-  res.json(rows);
+  try {
+    const rows = await db.select().from(scholarshipsTable)
+      .where(eq(scholarshipsTable.userId, req.userId!))
+      .orderBy(desc(scholarshipsTable.createdAt));
+    res.json(rows ?? []);
+  } catch (err: any) {
+    console.error("higher-study/scholarships error:", err?.message, err?.stack);
+    res.status(500).json({ error: err?.message ?? "Unknown error" });
+  }
 });
 
 const bodySchema = z.object({
