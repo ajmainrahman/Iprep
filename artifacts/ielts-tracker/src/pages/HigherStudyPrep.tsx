@@ -191,8 +191,51 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
   const admittedCount = byStatus['ready_to_apply'] || 0;
   const appliedCount  = (byStatus['applied'] || 0) + (byStatus['interview'] || 0);
 
+  const urgentApps = (apps as any[]).filter((a: any) => {
+    const d = daysUntil(a.deadline as string);
+    return d !== null && d >= 0 && d <= 15;
+  }).sort((a: any, b: any) => {
+    return (daysUntil(a.deadline as string) ?? 99) - (daysUntil(b.deadline as string) ?? 99);
+  });
+
   return (
     <div className="space-y-6">
+
+      {/* ── Deadline Reminder Banner ── */}
+      {urgentApps.length > 0 && (
+        <div className="rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fff3cd 100%)' }}>
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-orange-100 dark:border-orange-900">
+            <span className="text-xl">⏰</span>
+            <div>
+              <p className="text-sm font-bold text-orange-800 dark:text-orange-200">
+                {urgentApps.length} application deadline{urgentApps.length > 1 ? 's' : ''} approaching!
+              </p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">
+                Don't miss these — submit early
+              </p>
+            </div>
+          </div>
+          <div className="px-4 py-3 flex flex-wrap gap-2">
+            {urgentApps.map((a: any) => {
+              const d = daysUntil(a.deadline as string) as number;
+              return (
+                <div key={a.id} className="flex items-center gap-2 bg-white dark:bg-orange-950 rounded-xl px-3 py-2 border border-orange-100 dark:border-orange-800 shadow-sm">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${d <= 7 ? 'bg-red-500' : 'bg-orange-400'}`} />
+                  <div>
+                    <p className="text-xs font-semibold text-foreground leading-tight">{String(a.universityName)}</p>
+                    <p className="text-[10px] text-muted-foreground">{String(a.country)}</p>
+                  </div>
+                  <span className={`ml-1 text-xs font-bold shrink-0 ${d <= 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                    {d === 0 ? 'Today!' : `${d}d`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[

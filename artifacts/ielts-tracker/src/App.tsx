@@ -337,7 +337,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
 
 /* ─── SHARED SIDEBAR SHELL ──────────────────────────────────────────────── */
 interface SidebarProps<T extends string> {
-  tabs: { id: T; label: string; emoji: string }[];
+  tabs: { id: T; label: string; emoji: string; badge?: number }[];
   activeTab: T;
   onTab: (t: T) => void;
   onBack: () => void;
@@ -373,7 +373,12 @@ function AppSidebar<T extends string>({ tabs, activeTab, onTab, onBack, logo, bo
               }`}
             >
               <span className="text-base">{tab.emoji}</span>
-              <span>{tab.label}</span>
+              <span className="flex-1 text-left">{tab.label}</span>
+              {(tab.badge ?? 0) > 0 && (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white bg-red-500 shrink-0 animate-pulse">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -390,10 +395,21 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
   const { user, logout } = useAuth();
   const pageTitle = FLY_TABS.find(t => t.id === tab)?.label ?? 'Overview';
 
+  const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const urgentDeadlineCount = (applications as any[]).filter((a: any) => {
+    const d = daysUntil(a.deadline);
+    return d !== null && d >= 0 && d <= 15;
+  }).length;
+
+  const flyTabsWithBadges = FLY_TABS.map(t => ({
+    ...t,
+    badge: (t.id === 'applications' || t.id === 'overview') ? urgentDeadlineCount : undefined,
+  }));
+
   return (
     <div className="fly-mode min-h-screen bg-background text-foreground font-sans flex">
       <AppSidebar
-        tabs={FLY_TABS}
+        tabs={flyTabsWithBadges}
         activeTab={tab}
         onTab={setTab}
         onBack={onBack}
@@ -449,6 +465,15 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
                 <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · Within a Few Weeks</p>
               </div>
             </div>
+            {urgentDeadlineCount > 0 && (
+              <button
+                onClick={() => setTab('applications')}
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-white animate-pulse"
+                style={{ background: 'linear-gradient(90deg,#ef4444,#f97316)', boxShadow: '0 2px 10px rgba(239,68,68,0.35)' }}
+              >
+                ⏰ {urgentDeadlineCount} deadline{urgentDeadlineCount > 1 ? 's' : ''} in ≤15 days
+              </button>
+            )}
           </div>
         </header>
 
@@ -463,14 +488,19 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
       </div>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-1.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
-        {FLY_TABS.map(t => {
+        {flyTabsWithBadges.map(t => {
           const isActive = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-indigo-500' : 'text-muted-foreground'}`}
+              className={`relative flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-indigo-500' : 'text-muted-foreground'}`}
             >
               <span className="text-[15px] mb-0.5">{t.emoji}</span>
               <span className="text-[8px] leading-tight font-medium">{t.label.split(' ')[0]}</span>
+              {(t.badge ?? 0) > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {t.badge}
+                </span>
+              )}
             </button>
           );
         })}
