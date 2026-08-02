@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +14,12 @@ export const scholarshipsTable = pgTable("scholarships", {
   deadline: text("deadline"),
   status: text("status").notNull().default("planning"),
   notes: text("notes"),
+  // Pre-existing columns in Neon
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  websiteUrl: text("website_url"),
+  eligible: boolean("eligible"),
+  link: text("link"),
+  // New columns
   dateApplied: text("date_applied"),
   portalUrl: text("portal_url"),
   requirementsJson: text("requirements_json"),
