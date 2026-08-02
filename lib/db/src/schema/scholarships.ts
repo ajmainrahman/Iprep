@@ -14,6 +14,9 @@ export const scholarshipsTable = pgTable("scholarships", {
   deadline: text("deadline"),
   status: text("status").notNull().default("planning"),
   notes: text("notes"),
+  dateApplied: text("date_applied"),
+  portalUrl: text("portal_url"),
+  requirementsJson: text("requirements_json"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -1353,6 +1353,11 @@ function TestScoresTab() {
 /* ═══════════════════════════════════════════════════════════════════════════
    SCHOLARSHIPS TAB
 ═══════════════════════════════════════════════════════════════════════════ */
+function parseReqs(json: unknown): ReqItem[] {
+  if (!json || typeof json !== 'string') return [];
+  try { const p = JSON.parse(json); return Array.isArray(p) ? p : []; } catch { return []; }
+}
+
 function ScholarshipsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -1363,10 +1368,13 @@ function ScholarshipsTab() {
   const [expandedSchId, setExpandedSchId] = useState<number | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
   const [notesEditDraft, setNotesEditDraft] = useState('');
+  // inline checklist new-item input per card
+  const [newReqText, setNewReqText] = useState<Record<number, string>>({});
 
   const emptyForm = {
     name: '', provider: '', country: '', fundingType: 'Full Scholarship',
     amount: '', currency: 'USD', deadline: '', status: 'planning', notes: '',
+    dateApplied: '', portalUrl: '', requirements: [] as ReqItem[],
   };
   const [form, setForm] = useState(emptyForm);
 
@@ -1401,15 +1409,48 @@ function ScholarshipsTab() {
       deadline:     String(s.deadline || ''),
       status:       String(s.status || 'planning'),
       notes:        String(s.notes || ''),
+      dateApplied:  String(s.dateApplied || ''),
+      portalUrl:    String(s.portalUrl || ''),
+      requirements: parseReqs(s.requirementsJson),
     });
     setEditId(s.id);
     setShowForm(true);
   }
 
   function saveForm() {
-    const payload = { ...form, deadline: form.deadline || null, amount: form.amount ? Number(form.amount) : null };
+    const { requirements, ...rest } = form;
+    const payload = {
+      ...rest,
+      deadline:         form.deadline || null,
+      dateApplied:      form.dateApplied || null,
+      portalUrl:        form.portalUrl || null,
+      amount:           form.amount ? Number(form.amount) : null,
+      requirementsJson: requirements.length ? JSON.stringify(requirements) : null,
+    };
     if (editId) updateMutation.mutate({ id: editId, data: payload });
     else addMutation.mutate(payload);
+  }
+
+  // Toggle a checklist item directly on a card (inline, immediate save)
+  function toggleReq(s: Record<string, unknown> & { id: number }, idx: number) {
+    const reqs = parseReqs(s.requirementsJson);
+    reqs[idx] = { ...reqs[idx], done: !reqs[idx].done };
+    updateMutation.mutate({ id: s.id, data: { requirementsJson: JSON.stringify(reqs) } });
+  }
+
+  // Add a new checklist item to a card inline
+  function addReqInline(s: Record<string, unknown> & { id: number }) {
+    const text = (newReqText[s.id] || '').trim();
+    if (!text) return;
+    const reqs = [...parseReqs(s.requirementsJson), { label: text, done: false }];
+    updateMutation.mutate({ id: s.id, data: { requirementsJson: JSON.stringify(reqs) } });
+    setNewReqText(p => ({ ...p, [s.id]: '' }));
+  }
+
+  // Remove a checklist item inline
+  function removeReq(s: Record<string, unknown> & { id: number }, idx: number) {
+    const reqs = parseReqs(s.requirementsJson).filter((_, i) => i !== idx);
+    updateMutation.mutate({ id: s.id, data: { requirementsJson: reqs.length ? JSON.stringify(reqs) : null } });
   }
 
   return (
@@ -1486,13 +1527,74 @@ function ScholarshipsTab() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Deadline</Label>
+                <Label>Application Deadline</Label>
                 <Input type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
               </div>
+              <div className="space-y-1">
+                <Label>Date Applied</Label>
+                <Input type="date" value={form.dateApplied} onChange={e => setForm(p => ({ ...p, dateApplied: e.target.value }))} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>University Portal / Application URL</Label>
+                <Input
+                  type="url"
+                  placeholder="https://apply.university.edu/scholarships/…"
+                  value={form.portalUrl}
+                  onChange={e => setForm(p => ({ ...p, portalUrl: e.target.value }))}
+                />
+              </div>
             </div>
+
+            {/* Requirements Checklist builder */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Requirements Checklist</Label>
+              <div className="space-y-1.5">
+                {form.requirements.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => {
+                        const reqs = [...p.requirements];
+                        reqs[i] = { ...reqs[i], done: !reqs[i].done };
+                        return { ...p, requirements: reqs };
+                      })}
+                      className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background'}`}
+                    >
+                      {r.done && <Check className="w-2.5 h-2.5" />}
+                    </button>
+                    <Input
+                      className="h-7 text-xs flex-1"
+                      value={r.label}
+                      onChange={e => setForm(p => {
+                        const reqs = [...p.requirements];
+                        reqs[i] = { ...reqs[i], label: e.target.value };
+                        return { ...p, requirements: reqs };
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, requirements: p.requirements.filter((_, j) => j !== i) }))}
+                      className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => setForm(p => ({ ...p, requirements: [...p.requirements, { label: '', done: false }] }))}
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Add requirement
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label>Notes</Label>
-              <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
+              <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Eligibility criteria, contacts, reminders…" />
             </div>
             <div className="flex gap-2">
               <Button size="sm" disabled={!form.name} onClick={saveForm} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
@@ -1519,6 +1621,8 @@ function ScholarshipsTab() {
           {(scholarships as (Record<string, unknown> & { id: number })[]).map(s => {
             const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
             const isExpanded = expandedSchId === s.id;
+            const reqs = parseReqs(s.requirementsJson);
+            const doneCount = reqs.filter(r => r.done).length;
             return (
               <Card key={s.id} className="group overflow-hidden hover:shadow-md transition-all">
                 <CardContent className="p-4">
@@ -1557,26 +1661,41 @@ function ScholarshipsTab() {
                         {Number(s.amount).toLocaleString()} {String(s.currency)}
                       </span>
                     )}
+                    {reqs.length > 0 && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${doneCount === reqs.length ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+                        ✓ {doneCount}/{reqs.length} reqs
+                      </span>
+                    )}
                   </div>
 
-                  {s.deadline && (
-                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                      <CalendarDays className="w-3 h-3" />
-                      Deadline: {fmtDate(s.deadline as string)}
-                      {(() => {
-                        const d = daysUntil(s.deadline as string);
-                        if (d === null || d < 0) return null;
-                        return <span className={`font-semibold ml-1 ${d <= 14 ? 'text-red-500' : 'text-muted-foreground'}`}>({d}d)</span>;
-                      })()}
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                    {s.deadline && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" />
+                        Deadline: {fmtDate(s.deadline as string)}
+                        {(() => {
+                          const d = daysUntil(s.deadline as string);
+                          if (d === null || d < 0) return null;
+                          return <span className={`font-semibold ml-1 ${d <= 14 ? 'text-red-500' : 'text-muted-foreground'}`}>({d}d)</span>;
+                        })()}
+                      </p>
+                    )}
+                    {s.dateApplied && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-500" />
+                        Applied: {fmtDate(s.dateApplied as string)}
+                      </p>
+                    )}
+                  </div>
+
                   {!isExpanded && s.notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2">{String(s.notes)}</p>
                   )}
 
-                  {/* Expanded detail + notepad */}
+                  {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t space-y-4">
+                    <div className="mt-4 pt-4 border-t space-y-5">
+                      {/* Key info grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                         {s.fundingType && (
                           <div><span className="text-muted-foreground">Type</span><p className="font-medium">{String(s.fundingType)}</p></div>
@@ -1590,12 +1709,88 @@ function ScholarshipsTab() {
                         {s.status && (
                           <div><span className="text-muted-foreground">Status</span><p className={`font-medium ${meta.color}`}>{meta.label}</p></div>
                         )}
+                        {s.deadline && (
+                          <div><span className="text-muted-foreground">Deadline</span><p className="font-medium">{fmtDate(String(s.deadline))}</p></div>
+                        )}
+                        {s.dateApplied && (
+                          <div><span className="text-muted-foreground">Date Applied</span><p className="font-medium text-emerald-600 dark:text-emerald-400">{fmtDate(String(s.dateApplied))}</p></div>
+                        )}
                       </div>
 
-                      {/* Inline notepad */}
+                      {/* Portal URL */}
+                      {s.portalUrl && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                            <Globe className="w-3 h-3" /> Application Portal
+                          </p>
+                          <a
+                            href={String(s.portalUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-indigo dark:text-indigo-300 hover:underline bg-indigo/5 px-2.5 py-1.5 rounded-lg border border-indigo/20 max-w-full"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{String(s.portalUrl)}</span>
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Requirements Checklist */}
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3" /> Notes / Notepad
+                          <ClipboardList className="w-3 h-3" /> Requirements Checklist
+                          {reqs.length > 0 && (
+                            <span className="ml-auto font-normal normal-case tracking-normal text-muted-foreground">
+                              {doneCount}/{reqs.length} done
+                            </span>
+                          )}
+                        </p>
+                        {reqs.length > 0 && (
+                          <div className="space-y-1.5 mb-2">
+                            {reqs.map((r, i) => (
+                              <div key={i} className="flex items-center gap-2 group/req">
+                                <button
+                                  onClick={() => toggleReq(s, i)}
+                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background hover:border-emerald-400'}`}
+                                >
+                                  {r.done && <Check className="w-2.5 h-2.5" />}
+                                </button>
+                                <span className={`text-sm flex-1 ${r.done ? 'line-through text-muted-foreground' : ''}`}>{r.label}</span>
+                                <button
+                                  onClick={() => removeReq(s, i)}
+                                  className="opacity-0 group-hover/req:opacity-100 p-0.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-opacity"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Add new requirement inline */}
+                        <div className="flex gap-2">
+                          <Input
+                            className="h-7 text-xs flex-1"
+                            placeholder="Add a requirement…"
+                            value={newReqText[s.id] || ''}
+                            onChange={e => setNewReqText(p => ({ ...p, [s.id]: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addReqInline(s); } }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2"
+                            onClick={() => addReqInline(s)}
+                            disabled={!(newReqText[s.id] || '').trim()}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Inline Notes */}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> Notes
                         </p>
                         {editingNotesId === s.id ? (
                           <div className="space-y-2">
@@ -1603,7 +1798,7 @@ function ScholarshipsTab() {
                               rows={4}
                               value={notesEditDraft}
                               onChange={e => setNotesEditDraft(e.target.value)}
-                              placeholder="Requirements, eligibility, contacts, reminders…"
+                              placeholder="Eligibility details, contacts, reminders…"
                               className="text-sm"
                             />
                             <div className="flex gap-2">
@@ -1629,7 +1824,7 @@ function ScholarshipsTab() {
                           >
                             {s.notes
                               ? <p className="text-sm text-foreground/75 whitespace-pre-wrap">{String(s.notes)}</p>
-                              : <p className="text-xs text-muted-foreground italic">Click to add notes, requirements, contacts…</p>
+                              : <p className="text-xs text-muted-foreground italic">Click to add notes, eligibility details, contacts…</p>
                             }
                           </div>
                         )}
