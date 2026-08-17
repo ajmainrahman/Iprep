@@ -16,6 +16,10 @@ import {
   ExternalLink, Copy, MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 type AppStatus = 'researching' | 'ready_to_apply' | 'applied' | 'interview' | 'rejected' | 'waitlisted' | 'deferred';
@@ -1363,6 +1367,8 @@ function ScholarshipsTab() {
   const { toast } = useToast();
   const { data: scholarships = [], isLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
 
+  const { data: customTemplates = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
+
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [expandedSchId, setExpandedSchId] = useState<number | null>(null);
@@ -1547,49 +1553,101 @@ function ScholarshipsTab() {
 
             {/* Requirements Checklist builder */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Requirements Checklist</Label>
-              <div className="space-y-1.5">
-                {form.requirements.map((r, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm(p => {
-                        const reqs = [...p.requirements];
-                        reqs[i] = { ...reqs[i], done: !reqs[i].done };
-                        return { ...p, requirements: reqs };
-                      })}
-                      className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background'}`}
-                    >
-                      {r.done && <Check className="w-2.5 h-2.5" />}
-                    </button>
-                    <Input
-                      className="h-7 text-xs flex-1"
-                      value={r.label}
-                      onChange={e => setForm(p => {
-                        const reqs = [...p.requirements];
-                        reqs[i] = { ...reqs[i], label: e.target.value };
-                        return { ...p, requirements: reqs };
-                      })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setForm(p => ({ ...p, requirements: p.requirements.filter((_, j) => j !== i) }))}
-                      className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  onClick={() => setForm(p => ({ ...p, requirements: [...p.requirements, { label: '', done: false }] }))}
-                >
-                  <Plus className="w-3 h-3 mr-1" /> Add requirement
-                </Button>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="flex items-center gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5" /> Requirements Checklist
+                </Label>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-xs gap-1">
+                        <Layers className="w-3 h-3" /> Use Template <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64 max-h-72 overflow-y-auto">
+                      <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider">Default Templates</DropdownMenuLabel>
+                      {DEFAULT_TEMPLATES.map(tmpl => (
+                        <DropdownMenuItem
+                          key={tmpl.id}
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => setForm(p => ({ ...p, requirements: tmpl.items.map(label => ({ label, done: false })) }))}
+                        >
+                          <span className="text-sm">{tmpl.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">({tmpl.items.length} items)</span>
+                        </DropdownMenuItem>
+                      ))}
+                      {(customTemplates as { id: number; name: string; items: string }[]).length > 0 && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider">My Templates</DropdownMenuLabel>
+                          {(customTemplates as { id: number; name: string; items: string }[]).map(tmpl => {
+                            const items: string[] = (() => { try { return JSON.parse(tmpl.items) as string[]; } catch { return []; } })();
+                            return (
+                              <DropdownMenuItem
+                                key={tmpl.id}
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => setForm(p => ({ ...p, requirements: items.map(label => ({ label, done: false })) }))}
+                              >
+                                <span className="text-sm">{tmpl.name}</span>
+                                <span className="text-xs text-muted-foreground shrink-0 ml-2">({items.length} items)</span>
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => setForm(p => ({ ...p, requirements: [...p.requirements, { label: '', done: false }] }))}
+                  >
+                    <Plus className="w-3 h-3 mr-1" /> Add Item
+                  </Button>
+                </div>
               </div>
+              {form.requirements.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic py-2 px-1">
+                  No items yet — use a template or add items manually.
+                </p>
+              ) : (
+                <div className="space-y-1.5 mt-1">
+                  {form.requirements.map((r, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm(p => {
+                          const reqs = [...p.requirements];
+                          reqs[i] = { ...reqs[i], done: !reqs[i].done };
+                          return { ...p, requirements: reqs };
+                        })}
+                        className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background hover:border-emerald-400'}`}
+                      >
+                        {r.done && <Check className="w-2.5 h-2.5" />}
+                      </button>
+                      <Input
+                        className="h-7 text-xs flex-1"
+                        value={r.label}
+                        placeholder={`Requirement ${i + 1}…`}
+                        onChange={e => setForm(p => {
+                          const reqs = [...p.requirements];
+                          reqs[i] = { ...reqs[i], label: e.target.value };
+                          return { ...p, requirements: reqs };
+                        })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, requirements: p.requirements.filter((_, j) => j !== i) }))}
+                        className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">

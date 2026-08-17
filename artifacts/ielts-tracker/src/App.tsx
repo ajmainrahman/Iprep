@@ -88,22 +88,21 @@ function CountdownBadge({
   label, days, color,
 }: { label: string; days: number; color: 'indigo' | 'teal' | 'amber' }) {
   const palettes = {
-    indigo: { bg: '#ede9fe', border: '#ddd6fe', text: '#4f46e5' },
-    teal:   { bg: '#ccfbf1', border: '#99f6e4', text: '#0d9488' },
-    amber:  { bg: '#fef3c7', border: '#fde68a', text: '#d97706' },
+    indigo: { bg: '#ffffff', border: '#e0e7ff', text: '#4338ca', shadow: '0 2px 10px rgba(67, 56, 202, 0.05)' },
+    teal:   { bg: '#ffffff', border: '#e0f2fe', text: '#0284c7', shadow: '0 2px 10px rgba(2, 132, 199, 0.05)' },
+    amber:  { bg: '#ffffff', border: '#fef3c7', text: '#d97706', shadow: '0 2px 10px rgba(217, 119, 6, 0.05)' },
   };
   const p = palettes[color];
   const display =
     days === 0 ? 'Today!' :
     days > 0   ? `${days} day${days === 1 ? '' : 's'}` :
                  `${Math.abs(days)}d ago`;
-  const urgent = days >= 0 && days <= 7;
   return (
     <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px]"
-      style={{ background: p.bg, border: `1.5px solid ${p.border}` }}>
+      style={{ background: p.bg, border: `1px solid ${p.border}`, boxShadow: p.shadow }}>
       <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: p.text }}>{label}</span>
       <span className="text-2xl font-black leading-none" style={{ color: p.text }}>
-        {urgent && days >= 0 ? '⚡ ' : ''}{display}
+        {display}
       </span>
     </div>
   );
@@ -146,15 +145,15 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   const hasCountdowns = examDays !== null || nextDeadline !== null || streak > 0;
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#fafbff' }}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#F6F7FB' }}>
 
       {/* Decorative background shapes */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full opacity-40"
-          style={{ background: 'radial-gradient(circle, #e0e7ff 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-40"
-          style={{ background: 'radial-gradient(circle, #ccfbf1 0%, transparent 70%)' }} />
-        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
+        <div className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(circle, #c4b5fd 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(circle, #bae6fd 0%, transparent 70%)' }} />
+        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6366f1" strokeWidth="1"/>
@@ -168,12 +167,11 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
         <div className="flex items-center gap-3">
           {/* Logo mark */}
-          <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+          <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 shadow-sm">
             <defs>
               <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#4f46e5"/>
-                <stop offset="55%" stopColor="#7c3aed"/>
-                <stop offset="100%" stopColor="#0d9488"/>
+                <stop offset="0%" stopColor="#4338CA"/>
+                <stop offset="100%" stopColor="#7C3AED"/>
               </linearGradient>
             </defs>
             <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
@@ -181,16 +179,15 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             <circle cx="17" cy="49" r="2.5" fill="white" opacity="0.4"/>
             <circle cx="11" cy="54" r="1.5" fill="white" opacity="0.25"/>
           </svg>
-          <span className="font-bold text-base tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
+          <span className="font-bold text-[17px] tracking-tight text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
             Within a Few Weeks
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-sm" style={{ color: '#6B7280' }}>{user?.name}</span>
+          <span className="hidden sm:block text-[13px] font-medium text-muted-foreground">{user?.name}</span>
           <button
             onClick={logout}
-            className="text-sm px-3 py-1.5 rounded-full transition-colors hover:bg-red-50"
-            style={{ color: '#9CA3AF', border: '1px solid #E5E7EB' }}
+            className="text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors hover:bg-muted bg-white border border-border text-muted-foreground hover:text-foreground shadow-sm"
           >
             Sign out
           </button>
@@ -201,16 +198,16 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-5 sm:px-8 pt-10 pb-4 text-center">
 
         {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-semibold tracking-wide"
-          style={{ background: '#ede9fe', color: '#6d28d9', border: '1px solid #ddd6fe' }}>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-[11px] font-bold tracking-widest uppercase"
+          style={{ background: '#eef2ff', color: '#4338ca', border: '1px solid #e0e7ff' }}>
           <span>🎯</span> Your IELTS &amp; Higher Study Platform
         </div>
 
         {/* Main headline */}
-        <h1 className="font-black leading-[1.05] mb-5 max-w-2xl"
-          style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.4rem, 7vw, 4.5rem)' }}>
+        <h1 className="font-black leading-[1.1] mb-6 max-w-2xl"
+          style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.4rem, 6vw, 4rem)', letterSpacing: '-0.02em' }}>
           <span style={{
-            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 40%, #0d9488 100%)',
+            background: 'linear-gradient(135deg, #4338CA 0%, #7C3AED 50%, #0EA5E9 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -221,15 +218,15 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
 
         {/* Countdown timers + Streak */}
         {hasCountdowns && (
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
+          <div className="flex flex-wrap justify-center gap-4 mb-10">
             {/* Study streak badge */}
             {streak > 0 && (
-              <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px]"
-                style={{ background: '#fff7ed', border: '1.5px solid #fed7aa' }}>
-                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#ea580c' }}>
+              <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px] bg-white"
+                style={{ border: '1px solid #ffedd5', boxShadow: '0 2px 10px rgba(234, 88, 12, 0.05)' }}>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-600">
                   Study Streak
                 </span>
-                <span className="text-2xl font-black leading-none" style={{ color: '#ea580c' }}>
+                <span className="text-2xl font-black leading-none text-orange-600">
                   🔥 {streak} {streak === 1 ? 'day' : 'days'}
                 </span>
               </div>
@@ -252,35 +249,26 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         )}
 
         {/* Cards */}
-        <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
+        <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-12">
 
           {/* Fly card */}
           <button
             onClick={onFly}
-            className="group relative text-left rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
-            style={{
-              background: 'linear-gradient(145deg, #ffffff 0%, #f5f3ff 100%)',
-              border: '1.5px solid #e0e7ff',
-              boxShadow: '0 4px 24px rgba(99,102,241,0.08)',
-            }}
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#6366F1] shadow-sm hover:shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
           >
-            {/* Coloured accent bar at top */}
-            <div className="absolute top-0 left-6 right-6 h-[3px] rounded-b-full"
-              style={{ background: 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
-
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)' }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #e0e7ff, #ede9fe)' }}>
               ✈️
             </div>
 
-            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
+            <h2 className="text-xl font-bold mb-2.5 text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
               Fly — Higher Study
             </h2>
-            <p className="text-sm leading-relaxed mb-5" style={{ color: '#6b7280' }}>
+            <p className="text-[13px] leading-relaxed mb-6 text-muted-foreground">
               University applications, scholarships, standardised test scores &amp; Erasmus-ready document templates.
             </p>
 
-            <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: '#4f46e5' }}>
+            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#6366F1]">
               Start tracking
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -291,30 +279,21 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           {/* Study Journey card */}
           <button
             onClick={onStudy}
-            className="group relative text-left rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]"
-            style={{
-              background: 'linear-gradient(145deg, #ffffff 0%, #f0fdfa 100%)',
-              border: '1.5px solid #ccfbf1',
-              boxShadow: '0 4px 24px rgba(13,148,136,0.08)',
-            }}
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#0EA5E9] shadow-sm hover:shadow-[0_8px_30px_rgba(14,165,233,0.12)]"
           >
-            {/* Coloured accent bar at top */}
-            <div className="absolute top-0 left-6 right-6 h-[3px] rounded-b-full"
-              style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
-
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #ccfbf1, #a7f3d0)' }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #e0f2fe, #ccfbf1)' }}>
               📚
             </div>
 
-            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: "'Poppins', sans-serif", color: '#1e1b4b' }}>
+            <h2 className="text-xl font-bold mb-2.5 text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
               Study Journey
             </h2>
-            <p className="text-sm leading-relaxed mb-5" style={{ color: '#6b7280' }}>
+            <p className="text-[13px] leading-relaxed mb-6 text-muted-foreground">
               Smart IELTS score tracking, structured practice logs, 1,000-word vocab bank &amp; daily mindset coaching.
             </p>
 
-            <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: '#0d9488' }}>
+            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#0EA5E9]">
               Begin journey
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -326,9 +305,9 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-5">
-        <p className="text-[11px] tracking-[0.15em] uppercase" style={{ color: '#d1d5db' }}>
-          Within a Few Weeks · Erasmus · Europe · Beyond
+      <footer className="relative z-10 text-center py-6">
+        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+          Within a Few Weeks <span className="mx-2 text-muted-foreground/40">·</span> Erasmus <span className="mx-2 text-muted-foreground/40">·</span> Europe <span className="mx-2 text-muted-foreground/40">·</span> Beyond
         </p>
       </footer>
     </div>
@@ -347,44 +326,49 @@ interface SidebarProps<T extends string> {
 
 function AppSidebar<T extends string>({ tabs, activeTab, onTab, onBack, logo, bottomWidget }: SidebarProps<T>) {
   return (
-    <aside className="hidden md:flex flex-col w-60 bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen overflow-y-auto shrink-0">
-      <div className="p-5 pt-6">
+    <aside className="hidden md:flex flex-col w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen overflow-y-auto shrink-0 relative">
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)' }} />
+      <div className="p-5 pt-6 relative z-10">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-[11px] mb-6 transition-opacity hover:opacity-70"
-          style={{ color: 'rgba(255,255,255,0.38)' }}
+          className="flex items-center gap-2 text-[11px] font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 w-fit mb-6 transition-colors"
         >
           ← Home
         </button>
         {logo}
       </div>
 
-      <nav className="flex-1 px-3 space-y-0.5 mt-1">
+      <nav className="flex-1 px-3 space-y-1 mt-1 relative z-10">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => onTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 text-sm ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm ${
                 isActive
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm'
-                  : 'text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                  ? 'bg-sidebar-primary text-white font-semibold shadow-sm'
+                  : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent'
               }`}
             >
               <span className="text-base">{tab.emoji}</span>
               <span className="flex-1 text-left">{tab.label}</span>
               {(tab.badge ?? 0) > 0 && (
-                <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white bg-red-500 shrink-0 animate-pulse">
-                  {tab.badge}
-                </span>
+                tab.badge === 1 
+                  ? <span className="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                  : <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold text-white bg-red-500 shrink-0 shadow-sm">{tab.badge}</span>
               )}
             </button>
           );
         })}
       </nav>
 
-      {bottomWidget && <div className="m-3">{bottomWidget}</div>}
+      {bottomWidget && (
+        <div className="m-3 relative z-10">
+          <div className="h-px bg-white/10 mb-3 mx-2" />
+          {bottomWidget}
+        </div>
+      )}
     </aside>
   );
 }
@@ -416,8 +400,8 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
         logo={
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner"
-              style={{ background: 'rgba(99,102,241,0.22)', border: '1px solid rgba(99,102,241,0.35)' }}
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm backdrop-blur-sm"
+              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
             >
               ✈️
             </div>
@@ -425,7 +409,7 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
               <p className="font-bold text-[15px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                 Fly
               </p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Higher Study Prep</p>
+              <p className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Higher Study Prep</p>
             </div>
           </div>
         }
@@ -444,8 +428,9 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-card border-b border-border sticky top-0 z-40">
-          <div className="px-4 sm:px-8 h-16 flex items-center justify-between gap-2">
+        <header className="bg-card shadow-[0_1px_15px_rgba(0,0,0,0.03)] sticky top-0 z-40 relative">
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
+          <div className="px-4 sm:px-8 h-[60px] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               {/* Mobile back button */}
               <button
@@ -459,10 +444,10 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
               </button>
               <span className="text-xl hidden xs:inline md:hidden">✈️</span>
               <div className="min-w-0">
-                <h1 className="font-bold text-[17px] leading-tight truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                <h1 className="font-sans font-bold text-[17px] leading-tight truncate">
                   {pageTitle}
                 </h1>
-                <p className="text-[11px] text-muted-foreground hidden sm:block">Higher Study · Within a Few Weeks</p>
+                <p className="text-[10px] font-medium text-muted-foreground/80 hidden sm:block">Higher Study · Within a Few Weeks</p>
               </div>
             </div>
             {urgentDeadlineCount > 0 && (
@@ -487,17 +472,18 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
         </main>
       </div>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-1.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/50 flex justify-around p-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
         {flyTabsWithBadges.map(t => {
           const isActive = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`relative flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-indigo-500' : 'text-muted-foreground'}`}
+              className={`relative flex flex-col items-center py-2 px-2 rounded-xl min-w-[48px] transition-colors ${isActive ? 'text-[#6366F1]' : 'text-muted-foreground'}`}
             >
-              <span className="text-[15px] mb-0.5">{t.emoji}</span>
-              <span className="text-[8px] leading-tight font-medium">{t.label.split(' ')[0]}</span>
+              <span className="text-[16px] mb-1">{t.emoji}</span>
+              <span className="text-[9px] leading-tight font-semibold">{t.label.split(' ')[0]}</span>
+              {isActive && <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-[#6366F1]" />}
               {(t.badge ?? 0) > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm">
                   {t.badge}
                 </span>
               )}
@@ -533,14 +519,15 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
         onBack={onBack}
         logo={
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-teal flex items-center justify-center text-lg shadow-inner">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm backdrop-blur-sm"
+              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
               📚
             </div>
             <div>
               <p className="font-bold text-[15px] text-white leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                 Study
               </p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>IELTS Journey</p>
+              <p className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>IELTS Journey</p>
             </div>
           </div>
         }
