@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -128,6 +128,219 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+/* ─── Progress visualisations ─────────────────────────────────────────────── */
+function SemiCircleGauge({ value, target, scoredModules }: { value: number; target: number; scoredModules: number }) {
+  const percent = Math.min(100, Math.max(0, target > 0 ? (value / target) * 100 : 0));
+
+  return (
+    <div className="relative mx-auto w-full max-w-[280px]" aria-label={`Overall band ${value.toFixed(1)} of ${target.toFixed(1)}`}>
+      <svg viewBox="0 0 240 140" className="w-full overflow-visible" role="img">
+        <defs>
+          <linearGradient id="overall-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#14b8a6" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M 20 120 A 100 100 0 0 1 220 120"
+          fill="none"
+          stroke="currentColor"
+          className="text-muted/70"
+          strokeWidth="18"
+          strokeLinecap="round"
+          pathLength="100"
+        />
+        <path
+          d="M 20 120 A 100 100 0 0 1 220 120"
+          fill="none"
+          stroke="url(#overall-gauge-gradient)"
+          strokeWidth="18"
+          strokeLinecap="round"
+          pathLength="100"
+          strokeDasharray="100"
+          strokeDashoffset={100 - percent}
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
+        <span className="text-4xl font-heading font-bold tracking-tight text-foreground">
+          {value > 0 ? value.toFixed(1) : '—'}
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {scoredModules === 4 ? 'Overall band' : `${scoredModules}/4 modules scored`}
+        </span>
+        <span className="mt-1 text-xs text-muted-foreground">Target {target.toFixed(1)}</span>
+      </div>
+    </div>
+  );
+}
+
+function ModuleProgressRing({
+  module,
+  current,
+  target,
+  color,
+  icon: Icon,
+}: {
+  module: string;
+  current: number;
+  target: number;
+  color: string;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  const radius = 30;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.min(100, Math.max(0, target > 0 ? (current / target) * 100 : 0));
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card/80 p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative h-[76px] w-[76px] shrink-0">
+        <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90" role="img" aria-label={`${module} progress`}>
+          <circle cx="38" cy="38" r={radius} fill="none" stroke="currentColor" className="text-muted" strokeWidth="7" />
+          <circle
+            cx="38"
+            cy="38"
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - (circumference * progress) / 100}
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">
+          {current > 0 ? current.toFixed(1) : '—'}
+        </span>
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}18`, color }}>
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+          <p className="truncate text-sm font-semibold text-foreground">{module}</p>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Target {target.toFixed(1)}</p>
+        <p className="mt-0.5 text-[11px] font-semibold" style={{ color }}>
+          {current > 0 ? `${Math.round(progress)}% there` : 'Awaiting first score'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StreakTracker({ sessions }: { sessions: any[] }) {
+  const { currentStreak, record, activeDays, flameDays } = useMemo(() => {
+    const dayMap: Record<string, number> = {};
+    sessions.forEach((session: any) => {
+      const date = String(session.date || '');
+      if (date) dayMap[date] = (dayMap[date] || 0) + Number(session.minutes || 0);
+    });
+
+    const dates = Object.keys(dayMap).filter(date => dayMap[date] > 0).sort();
+    const activeDays = new Set(dates);
+    let record = 0;
+    let running = 0;
+    let previous: Date | null = null;
+
+    dates.forEach(date => {
+      const current = new Date(`${date}T00:00:00`);
+      if (previous && Math.round((current.getTime() - previous.getTime()) / 86_400_000) === 1) running++;
+      else running = 1;
+      record = Math.max(record, running);
+      previous = current;
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayKey = localDateStr(today);
+    const yesterday = addDays(today, -1);
+    const streakStart = activeDays.has(todayKey) ? today : yesterday;
+    let currentStreak = 0;
+    let cursor = streakStart;
+    while (activeDays.has(localDateStr(cursor))) {
+      currentStreak++;
+      cursor = addDays(cursor, -1);
+    }
+
+    const flameDays = Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(today, index - 6);
+      const dateKey = localDateStr(date);
+      return {
+        key: dateKey,
+        label: date.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2),
+        active: activeDays.has(dateKey),
+        minutes: dayMap[dateKey] || 0,
+      };
+    });
+
+    return { currentStreak, record, activeDays, flameDays };
+  }, [sessions]);
+
+  return (
+    <Card className="h-full overflow-hidden border-0 shadow-sm">
+      <CardHeader className="border-b border-border/60 bg-gradient-to-r from-orange-50/80 via-card to-amber-50/60 pb-4 dark:from-orange-950/20 dark:via-card dark:to-amber-950/10">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-100 text-orange-500 dark:bg-orange-900/30">
+                <Flame className="h-4 w-4 fill-current" />
+              </span>
+              Study streak
+            </CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">Build a rhythm, one focused session at a time.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-heading font-bold leading-none text-orange-500">{currentStreak}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">days</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5 p-4 sm:p-5">
+        <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-orange-50/70 px-3 py-2.5 dark:border-orange-900/40 dark:bg-orange-950/20">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <span className="text-xs font-medium text-foreground">Your record</span>
+          </div>
+          <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{record} days</span>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5">
+          {flameDays.map(day => (
+            <div key={day.key} className="flex flex-col items-center gap-1.5">
+              <div
+                title={`${day.key}: ${day.minutes > 0 ? `${day.minutes} minutes` : 'No study'}`}
+                className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
+                  day.active
+                    ? 'bg-orange-100 text-orange-500 dark:bg-orange-900/30 dark:text-orange-300'
+                    : 'bg-muted/70 text-muted-foreground/40'
+                }`}
+              >
+                <Flame className={`h-4 w-4 ${day.active ? 'fill-current' : ''}`} />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">{day.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+          Activity heatmap
+          <span className="ml-auto normal-case tracking-normal font-medium">{activeDays.size} active days</span>
+        </div>
+        {sessions.length === 0 ? (
+          <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+            Log your first study session to start your streak.
+          </div>
+        ) : (
+          <StudyHeatmap sessions={sessions} />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -288,7 +501,7 @@ export function Dashboard() {
   });
 
   const totalScores = Object.values(latestScores).filter(s => s > 0);
-  const overallBand = totalScores.length === 4 ? (totalScores.reduce((a, b) => a + b, 0) / 4) : 0;
+  const overallBand = totalScores.length > 0 ? (totalScores.reduce((a, b) => a + b, 0) / totalScores.length) : 0;
 
   const targets = {
     Reading: (settings as any)?.targetReading || 7,
@@ -378,18 +591,7 @@ export function Dashboard() {
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
           <CardContent className="p-6 h-full flex flex-col justify-center items-center text-center bg-card rounded-xl">
             <h3 className="font-semibold text-lg text-foreground mb-4 w-full text-left">Overall Band</h3>
-            <div className="relative w-32 h-32 flex items-center justify-center mb-2">
-              <svg className="absolute inset-0 w-full h-full -rotate-90">
-                <circle cx="64" cy="64" r="56" fill="none" stroke="#E5E7EB" strokeWidth="12" className="dark:stroke-gray-800" />
-                <circle cx="64" cy="64" r="56" fill="none" stroke="#2EC4B6" strokeWidth="12" strokeDasharray="351.8"
-                  strokeDashoffset={351.8 - (351.8 * Math.min(100, overallTarget > 0 ? (overallBand / overallTarget) * 100 : 0)) / 100}
-                  className="transition-all duration-1000 ease-out" strokeLinecap="round" />
-              </svg>
-              <div className="flex flex-col items-center">
-                <span className="text-4xl font-bold text-foreground">{overallBand.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground font-medium">Target: {overallTarget.toFixed(1)}</span>
-              </div>
-            </div>
+            <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
           </CardContent>
         </Card>
 
@@ -422,8 +624,8 @@ export function Dashboard() {
         />
       </section>
 
-      {/* ── 2-col: Radar + Heatmap ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── 2-col: Radar + Streak tracker ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[0.85fr_1.15fr] gap-6">
         {/* Radar chart */}
         <Card className="shadow-sm border-none">
           <CardHeader className="pb-2">
@@ -436,24 +638,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Study heatmap */}
-        <Card className="shadow-sm border-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              📅 Study Activity — Last 52 Weeks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(sessions as any[]).length === 0 ? (
-              <div className="h-40 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                <span className="text-3xl">🌱</span>
-                <p className="text-sm">Log your first study session to grow your heatmap.</p>
-              </div>
-            ) : (
-              <StudyHeatmap sessions={sessions as any[]} />
-            )}
-          </CardContent>
-        </Card>
+        <StreakTracker sessions={sessions as any[]} />
       </div>
 
       {/* ── Module Progress ── */}
@@ -465,25 +650,17 @@ export function Dashboard() {
           {['Reading', 'Listening', 'Writing', 'Speaking'].map((mod) => {
             const target = (targets as any)[mod] || 0;
             const current = latestScores[mod] || 0;
-            const progress = Math.min(100, target > 0 ? (current / target) * 100 : 0);
             const config = getModuleConfig(mod);
             const Icon = config.icon;
             return (
-              <Card key={mod} className={`overflow-hidden shadow-sm hover-elevate border-t-4 ${config.border}`}>
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg ${config.bg} ${config.color}`}><Icon className="w-4 h-4" /></div>
-                      <h3 className="font-semibold text-foreground">{mod}</h3>
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-bold text-xl ${config.color}`}>{current > 0 ? current.toFixed(1) : '-'}</div>
-                      <div className="text-xs text-muted-foreground font-medium">of {target.toFixed(1)}</div>
-                    </div>
-                  </div>
-                  <Progress value={progress} className={`h-2 bg-muted ${config.bar}`} />
-                </CardContent>
-              </Card>
+              <ModuleProgressRing
+                key={mod}
+                module={mod}
+                current={current}
+                target={target}
+                color={config.color.includes('coral') ? '#f97316' : config.color.includes('green') ? '#16a34a' : config.color.includes('purple') ? '#9333ea' : '#ca8a04'}
+                icon={Icon}
+              />
             );
           })}
         </div>
