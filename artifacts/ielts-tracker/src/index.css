@@ -206,8 +206,9 @@
 }
 
 .glass-card {
-  @apply bg-white/80 backdrop-blur-sm border border-white/60;
+  @apply bg-white/80 backdrop-blur-sm border border-white/60 dark:bg-card/80 dark:border-white/10;
 }
+
 .section-label {
   @apply text-[11px] font-semibold uppercase tracking-widest text-muted-foreground;
 }

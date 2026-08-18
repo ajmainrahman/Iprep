@@ -44,6 +44,7 @@ export function PracticeTracker() {
   const [activeTab, setActiveTab] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
   
   const { data: logs = [], isLoading } = useQuery({ queryKey: ['practice-logs'], queryFn: api.getPracticeLogs });
+  const practiceLogs = logs as any[];
   const qc = useQueryClient();
   const addLog = useMutation({
     mutationFn: api.addPracticeLog,
@@ -97,7 +98,7 @@ export function PracticeTracker() {
 
   // Reading Stats
   const readingStats = READING_TYPES.map(type => {
-    const typeLogs = logs.filter((l: any) => l.module === 'Reading' && l.subType === type.id);
+    const typeLogs = practiceLogs.filter((l: any) => l.module === 'Reading' && l.subType === type.id);
     const attempts = typeLogs.length;
     let avgAccuracy = 0;
     let bestScoreStr = '-';
@@ -121,7 +122,7 @@ export function PracticeTracker() {
 
   // Listening Stats
   const listeningStats = LISTENING_PARTS.map(part => {
-    const partLogs = logs.filter((l: any) => l.module === 'Listening' && l.subType === part.id);
+    const partLogs = practiceLogs.filter((l: any) => l.module === 'Listening' && l.subType === part.id);
     const attempts = partLogs.length;
     let avgScore = 0;
     let bestScore = 0;
@@ -140,7 +141,7 @@ export function PracticeTracker() {
 
   // Writing Stats
   const writingStats = WRITING_TASKS.map(task => {
-    const taskLogs = logs.filter((l: any) => l.module === 'Writing' && l.subType === task.id);
+    const taskLogs = practiceLogs.filter((l: any) => l.module === 'Writing' && l.subType === task.id);
     const attempts = taskLogs.length;
     let avgBand = 0;
     let bestBand = 0;
@@ -154,7 +155,7 @@ export function PracticeTracker() {
 
   // Prepare writing chart data
   const writingChartDataMap = new Map<string, any>();
-  logs.filter((l: any) => l.module === 'Writing').sort((a: any,b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach((l: any) => {
+  practiceLogs.filter((l: any) => l.module === 'Writing').sort((a: any,b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach((l: any) => {
     if (!writingChartDataMap.has(l.date)) writingChartDataMap.set(l.date, { date: l.date });
     writingChartDataMap.get(l.date)[l.subType] = l.score;
   });
@@ -162,7 +163,7 @@ export function PracticeTracker() {
 
   // Speaking Stats
   const speakingStats = SPEAKING_PARTS.map(part => {
-    const partLogs = logs.filter((l: any) => l.module === 'Speaking' && l.subType === part.id);
+    const partLogs = practiceLogs.filter((l: any) => l.module === 'Speaking' && l.subType === part.id);
     const attempts = partLogs.length;
     let avgBand = 0;
     let bestBand = 0;

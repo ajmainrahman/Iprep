@@ -92,4 +92,7 @@ export const api = {
 
   getJourneyPlan: () => get('/api/journey-planner'),
   saveJourneyPlan: (content: string) => put('/api/journey-planner', { content }),
+
+  getNoticeBoards: () => getList('/api/notice-boards'),
+  updateNoticeBoard: (boardKey: string, body: Record<string, unknown>) => put(`/api/notice-boards/${boardKey}`, body),
 };

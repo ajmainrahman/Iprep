@@ -13,7 +13,8 @@ import {
   GraduationCap, Trophy, BookMarked, Plus, Trash2, Edit2, X, Check,
   CalendarDays, Globe, FileText, TrendingUp, ChevronDown, ChevronUp,
   Target, ClipboardList, ChevronRight, Layers, List, GitBranch,
-  ExternalLink, Copy, MessageSquare
+  ExternalLink, Copy, MessageSquare, Bell, Pencil, Save, ArrowUpRight,
+  CircleCheckBig, Clock3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -174,6 +175,106 @@ export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange
   );
 }
 
+function NoticeBoardCard({
+  board,
+  boardKey,
+}: {
+  board: { id: number; title: string; content: string };
+  boardKey: 'left' | 'right';
+}) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(board.title);
+  const [draftContent, setDraftContent] = useState(board.content);
+
+  useEffect(() => {
+    if (!editing) {
+      setDraftTitle(board.title);
+      setDraftContent(board.content);
+    }
+  }, [board.title, board.content, editing]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => api.updateNoticeBoard(boardKey, { title: draftTitle, content: draftContent }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notice-boards'] });
+      setEditing(false);
+      toast({ title: 'Notice board updated' });
+    },
+  });
+
+  return (
+    <Card className={`overflow-hidden border-0 shadow-sm ${boardKey === 'left' ? 'bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/60 dark:from-indigo-950/30 dark:via-card dark:to-sky-950/20' : 'bg-gradient-to-br from-amber-50/90 via-white to-rose-50/60 dark:from-amber-950/20 dark:via-card dark:to-rose-950/20'}`}>
+      <div className={`h-1 ${boardKey === 'left' ? 'bg-gradient-to-r from-indigo-500 to-sky-400' : 'bg-gradient-to-r from-amber-400 to-rose-400'}`} />
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${boardKey === 'left' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'}`}>
+            <Bell className="w-4 h-4" />
+          </div>
+          {editing ? (
+            <Input
+              value={draftTitle}
+              onChange={e => setDraftTitle(e.target.value)}
+              className="h-8 text-sm font-semibold bg-white/70 dark:bg-background/60"
+              aria-label={`${boardKey} notice board title`}
+            />
+          ) : (
+            <div>
+              <CardTitle className="text-sm">{board.title}</CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Editable dashboard board</p>
+            </div>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 px-2 text-xs shrink-0"
+          onClick={() => {
+            if (editing) saveMutation.mutate();
+            else setEditing(true);
+          }}
+          disabled={saveMutation.isPending || !draftTitle.trim()}
+        >
+          {editing ? <Save className="w-3.5 h-3.5 mr-1" /> : <Pencil className="w-3.5 h-3.5 mr-1" />}
+          {editing ? 'Save' : 'Edit'}
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-2">
+        {editing ? (
+          <Textarea
+            rows={5}
+            value={draftContent}
+            onChange={e => setDraftContent(e.target.value)}
+            placeholder={boardKey === 'left' ? 'Write an upcoming notice, deadline, or reminder…' : 'Write the tasks you want to focus on…'}
+            className="resize-none bg-white/80 dark:bg-background/60 text-sm"
+            aria-label={`${boardKey} notice board content`}
+          />
+        ) : (
+          <div
+            className="min-h-[112px] rounded-xl border border-dashed border-border/80 bg-white/45 dark:bg-background/30 p-3 cursor-text hover:bg-white/70 dark:hover:bg-background/50 transition-colors"
+            onClick={() => setEditing(true)}
+          >
+            {board.content.trim() ? (
+              <p className="text-sm leading-6 whitespace-pre-wrap text-foreground/80">{board.content}</p>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">Click Edit to add a notice or task…</p>
+            )}
+          </div>
+        )}
+        {editing && (
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[11px] text-muted-foreground">{draftContent.length}/4000 characters</span>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setDraftTitle(board.title); setDraftContent(board.content); setEditing(false); }}>
+              Cancel
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    OVERVIEW TAB
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -181,6 +282,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
   const { data: apps = [] }   = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
   const { data: tests = [] }  = useQuery({ queryKey: ['other-tests'],  queryFn: api.getOtherTestScores });
   const { data: schols = [] } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: noticeBoards = [] } = useQuery({ queryKey: ['notice-boards'], queryFn: api.getNoticeBoards });
 
   const byStatus = (apps as { status: string }[]).reduce<Record<string, number>>((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1;
@@ -204,6 +306,39 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
 
   return (
     <div className="space-y-6">
+      {/* Dashboard masthead */}
+      <div className="relative overflow-hidden rounded-3xl p-5 sm:p-7 text-white shadow-lg shadow-indigo-500/10"
+        style={{ background: 'linear-gradient(120deg, #17153d 0%, #312e81 48%, #0f766e 100%)' }}>
+        <div className="absolute -right-10 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute right-24 -bottom-20 w-48 h-48 rounded-full bg-sky-300/15 blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-5">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-indigo-200 font-semibold mb-2">Fly · Higher Study</p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Your application command center</h2>
+            <p className="text-sm text-indigo-100/75 mt-2 max-w-xl">Keep every university, scholarship, deadline and document in view — then take the next best action.</p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button size="sm" variant="secondary" className="bg-white/15 hover:bg-white/25 text-white border-white/20" onClick={() => onTabChange('applications')}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add target
+            </Button>
+            <Button size="sm" variant="secondary" className="bg-white text-indigo-900 hover:bg-indigo-50" onClick={() => onTabChange('scholarships')}>
+              Scholarships <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Two editable notice boards */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {(['left', 'right'] as const).map((boardKey, i) => {
+          const fallback = boardKey === 'left'
+            ? { id: 0, title: 'Upcoming Notices', content: '' }
+            : { id: 0, title: 'Focus Tasks', content: '' };
+          const board = (noticeBoards as { id: number; boardKey?: string; title: string; content: string }[])
+            .find(item => item.boardKey === boardKey) ?? fallback;
+          return <NoticeBoardCard key={boardKey} board={board} boardKey={boardKey} />;
+        })}
+      </div>
 
       {/* ── Deadline Reminder Banner ── */}
       {urgentApps.length > 0 && (
@@ -250,11 +385,11 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
         ].map(({ label, value, color, tab, emoji }) => (
           <Card
             key={label}
-            className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5"
+            className="cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-0.5 bg-card/90"
             onClick={() => onTabChange(tab)}
           >
             <CardContent className="p-4 text-center">
-              <div className="text-2xl mb-1">{emoji}</div>
+              <div className={`w-9 h-9 mx-auto mb-2 rounded-xl flex items-center justify-center text-lg ${label === 'Scholarships' ? 'bg-amber-100 dark:bg-amber-900/30' : label === 'Applied' ? 'bg-sky-100 dark:bg-sky-900/30' : label === 'Ready to Apply' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'}`}>{emoji}</div>
               <p className={`text-3xl font-bold font-heading ${color}`}>{value}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </CardContent>
@@ -344,6 +479,46 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
         </Card>
       </div>
 
+      {/* Scholarship tracker snapshot — spreadsheet-inspired, but responsive */}
+      <Card className="overflow-hidden border-0 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+          <div>
+            <CardTitle className="text-sm flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" /> Scholarship tracker</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Your funding opportunities at a glance</p>
+          </div>
+          <Button size="sm" variant="ghost" className="text-xs text-indigo-600 dark:text-indigo-300" onClick={() => onTabChange('scholarships')}>
+            View all <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {(schols as any[]).length === 0 ? (
+            <div className="px-5 pb-5 text-sm text-muted-foreground">Add a scholarship to start your tracker.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[680px]">
+                <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-3 px-5 py-2.5 bg-muted/50 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                  <span>Scholarship</span><span>Country</span><span>Deadline</span><span>Documents</span><span>Status</span>
+                </div>
+                {(schols as any[]).slice(0, 5).map((s: any, index: number) => {
+                  const reqs = parseReqs(s.requirementsJson);
+                  const done = reqs.filter(r => r.done).length;
+                  const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
+                  return (
+                    <button key={s.id} onClick={() => onTabChange('scholarships')} className="w-full grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-3 px-5 py-3 text-left border-t border-border/60 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors">
+                      <span className="font-medium text-sm truncate">{String(s.name)}</span>
+                      <span className="text-xs text-muted-foreground truncate">{String(s.country || '—')}</span>
+                      <span className="text-xs text-muted-foreground">{s.deadline ? fmtDate(String(s.deadline)) : 'No deadline'}</span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1"><CircleCheckBig className="w-3 h-3 text-emerald-500" /> {reqs.length ? `${done}/${reqs.length}` : '—'}</span>
+                      <span className={`text-[11px] font-semibold ${meta.color}`}>{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Test scores snapshot */}
       {(tests as unknown[]).length > 0 && (
         <Card>
@@ -384,7 +559,6 @@ function ApplicationsTab() {
   const [showForm,    setShowForm]    = useState(false);
   const [editId,      setEditId]      = useState<number | null>(null);
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
-  const [showTplPicker, setShowTplPicker] = useState(false);
   const [newItemDraft,  setNewItemDraft]  = useState('');
   const [viewMode,    setViewMode]    = useState<'list' | 'timeline'>('list');
 
@@ -449,7 +623,6 @@ function ApplicationsTab() {
 
   function applyTemplate(items: string[]) {
     setRequirements(items.map(label => ({ label, done: false })));
-    setShowTplPicker(false);
   }
 
   function addReqItem() {
@@ -685,33 +858,30 @@ function ApplicationsTab() {
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold">📋 Requirements Checklist</Label>
                 <div className="flex gap-2">
-                  <div className="relative">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7 gap-1"
-                      onClick={() => setShowTplPicker(p => !p)}
-                    >
-                      <Layers className="w-3 h-3" />
-                      Use Template
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                    {showTplPicker && (
-                      <div className="absolute right-0 top-full mt-1 z-50 bg-card border rounded-xl shadow-lg p-2 min-w-[220px] space-y-0.5">
-                        {allTemplates.map(t => (
-                          <button
-                            key={t.id}
-                            onClick={() => applyTemplate(t.items)}
-                            className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <span className="font-medium">{t.name}</span>
-                            <span className="text-muted-foreground ml-1">({t.items.length} items)</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" size="sm" variant="outline" className="text-xs h-7 gap-1">
+                        <Layers className="w-3 h-3" />
+                        Use Template
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64 max-h-72 overflow-y-auto">
+                      <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider">
+                        Templates
+                      </DropdownMenuLabel>
+                      {allTemplates.map(t => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => applyTemplate(t.items)}
+                        >
+                          <span className="text-sm">{t.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">({t.items.length} items)</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button
                     type="button"
                     size="sm"
@@ -784,7 +954,7 @@ function ApplicationsTab() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => { setShowForm(false); setEditId(null); setShowTplPicker(false); }}
+                  onClick={() => { setShowForm(false); setEditId(null); }}
               >
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
@@ -961,7 +1131,7 @@ function ApplicationsTab() {
                         <Globe className="w-3 h-3 inline" /> {String(app.country)}
                       </p>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                        {app.deadline && (
+                        {Boolean(app.deadline) && (
                           <span className="flex items-center gap-1">
                             <CalendarDays className="w-3 h-3" />
                             Deadline: {fmtDate(app.deadline as string)}
@@ -976,7 +1146,7 @@ function ApplicationsTab() {
                             })()}
                           </span>
                         )}
-                        {app.appliedDate && (
+                        {Boolean(app.appliedDate) && (
                           <span className="flex items-center gap-1">
                             <Check className="w-3 h-3 text-green-500" />
                             Applied: {fmtDate(app.appliedDate as string)}
@@ -988,7 +1158,7 @@ function ApplicationsTab() {
                             {doneCount}/{reqs.length} docs done
                           </span>
                         )}
-                        {app.websiteUrl && (
+                        {Boolean(app.websiteUrl) && (
                           <a
                             href={String(app.websiteUrl)}
                             target="_blank"
@@ -1095,13 +1265,13 @@ function ApplicationsTab() {
                         </div>
                       </div>
 
-                      {app.notes && (
+                      {Boolean(app.notes) && (
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
                           <p className="text-sm text-foreground/80 whitespace-pre-line">{String(app.notes)}</p>
                         </div>
                       )}
-                      {app.websiteUrl && (
+                      {Boolean(app.websiteUrl) && (
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">University Portal</p>
                           <a
@@ -1115,7 +1285,7 @@ function ApplicationsTab() {
                           </a>
                         </div>
                       )}
-                      {app.comments && (
+                      {Boolean(app.comments) && (
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
                             <MessageSquare className="w-3 h-3" /> Comments
@@ -1693,7 +1863,7 @@ function ScholarshipsTab() {
                         <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                       </div>
-                      {s.provider && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
+                      {Boolean(s.provider) && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
                     </button>
                     <div className="flex gap-1 shrink-0">
                       <button
@@ -1713,8 +1883,8 @@ function ScholarshipsTab() {
 
                   <div className="flex flex-wrap gap-2 mt-2">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{String(s.fundingType)}</span>
-                    {s.country && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">🌍 {String(s.country)}</span>}
-                    {s.amount && (
+                    {Boolean(s.country) && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">🌍 {String(s.country)}</span>}
+                    {Boolean(s.amount) && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 font-semibold">
                         {Number(s.amount).toLocaleString()} {String(s.currency)}
                       </span>
@@ -1727,7 +1897,7 @@ function ScholarshipsTab() {
                   </div>
 
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                    {s.deadline && (
+                    {Boolean(s.deadline) && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <CalendarDays className="w-3 h-3" />
                         Deadline: {fmtDate(s.deadline as string)}
@@ -1738,7 +1908,7 @@ function ScholarshipsTab() {
                         })()}
                       </p>
                     )}
-                    {s.dateApplied && (
+                    {Boolean(s.dateApplied) && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Check className="w-3 h-3 text-emerald-500" />
                         Applied: {fmtDate(s.dateApplied as string)}
@@ -1746,7 +1916,7 @@ function ScholarshipsTab() {
                     )}
                   </div>
 
-                  {!isExpanded && s.notes && (
+                   {!isExpanded && Boolean(s.notes) && (
                     <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2">{String(s.notes)}</p>
                   )}
 
@@ -1755,28 +1925,28 @@ function ScholarshipsTab() {
                     <div className="mt-4 pt-4 border-t space-y-5">
                       {/* Key info grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                        {s.fundingType && (
+                        {Boolean(s.fundingType) && (
                           <div><span className="text-muted-foreground">Type</span><p className="font-medium">{String(s.fundingType)}</p></div>
                         )}
-                        {s.country && (
+                        {Boolean(s.country) && (
                           <div><span className="text-muted-foreground">Country</span><p className="font-medium">🌍 {String(s.country)}</p></div>
                         )}
-                        {s.amount && (
+                        {Boolean(s.amount) && (
                           <div><span className="text-muted-foreground">Amount</span><p className="font-medium text-yellow-700 dark:text-yellow-400">{Number(s.amount).toLocaleString()} {String(s.currency)}</p></div>
                         )}
-                        {s.status && (
+                        {Boolean(s.status) && (
                           <div><span className="text-muted-foreground">Status</span><p className={`font-medium ${meta.color}`}>{meta.label}</p></div>
                         )}
-                        {s.deadline && (
+                        {Boolean(s.deadline) && (
                           <div><span className="text-muted-foreground">Deadline</span><p className="font-medium">{fmtDate(String(s.deadline))}</p></div>
                         )}
-                        {s.dateApplied && (
+                        {Boolean(s.dateApplied) && (
                           <div><span className="text-muted-foreground">Date Applied</span><p className="font-medium text-emerald-600 dark:text-emerald-400">{fmtDate(String(s.dateApplied))}</p></div>
                         )}
                       </div>
 
                       {/* Portal URL */}
-                      {s.portalUrl && (
+                      {Boolean(s.portalUrl) && (
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
                             <Globe className="w-3 h-3" /> Application Portal

@@ -395,7 +395,7 @@ function FlyLayout({ onBack }: { onBack: () => void }) {
       <AppSidebar
         tabs={flyTabsWithBadges}
         activeTab={tab}
-        onTab={setTab}
+        onTab={(nextTab) => setTab(nextTab as FlyTab)}
         onBack={onBack}
         logo={
           <div className="flex items-center gap-3">
@@ -515,7 +515,7 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
       <AppSidebar
         tabs={STUDY_TABS}
         activeTab={tab}
-        onTab={setTab}
+         onTab={(nextTab) => setTab(nextTab as StudyTab)}
         onBack={onBack}
         logo={
           <div className="flex items-center gap-3">
@@ -555,8 +555,8 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-card border-b border-border sticky top-0 z-40">
-          <div className="px-4 sm:px-8 h-16 flex items-center justify-between gap-2">
+        <header className="bg-card/95 backdrop-blur-md border-b border-border/70 sticky top-0 z-40 shadow-[0_4px_18px_rgba(30,27,75,0.04)]">
+          <div className="px-4 sm:px-8 h-[60px] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               {/* Mobile back button */}
               <button
@@ -596,15 +596,16 @@ function StudyLayout({ onBack }: { onBack: () => void }) {
         </main>
       </div>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-1.5 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/70 flex justify-around p-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-40">
         {STUDY_TABS.map(t => {
           const isActive = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex flex-col items-center py-1.5 px-2 rounded-xl min-w-[44px] transition-colors ${isActive ? 'text-teal' : 'text-muted-foreground'}`}
+              className={`relative flex flex-col items-center py-2 px-2 rounded-xl min-w-[48px] transition-colors ${isActive ? 'text-sky-500' : 'text-muted-foreground'}`}
             >
               <span className="text-[15px] mb-0.5">{t.emoji}</span>
-              <span className="text-[8px] leading-tight font-medium">{t.label.split(' ')[0]}</span>
+              <span className="text-[9px] leading-tight font-semibold">{t.label.split(' ')[0]}</span>
+              {isActive && <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-sky-500" />}
             </button>
           );
         })}

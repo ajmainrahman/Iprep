@@ -13,6 +13,7 @@ import scholarshipsRouter from "./scholarships";
 import checklistTemplatesRouter from "./checklist-templates";
 import planningNotesRouter from "./planning-notes";
 import journeyPlannerRouter from "./journey-planner";
+import noticeBoardsRouter from "./notice-boards";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(scholarshipsRouter);
 router.use(checklistTemplatesRouter);
 router.use(planningNotesRouter);
 router.use(journeyPlannerRouter);
+router.use(noticeBoardsRouter);
 
 export default router;

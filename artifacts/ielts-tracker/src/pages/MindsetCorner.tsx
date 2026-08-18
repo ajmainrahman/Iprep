@@ -62,7 +62,7 @@ export function MindsetCorner() {
   const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
   const dailyAffirmation = AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
 
-  const existingFav = affirmations.find((a: any) => a.text === dailyAffirmation);
+  const existingFav = (affirmations as { id: number; text: string }[]).find(a => a.text === dailyAffirmation);
   const isFav = !!existingFav;
 
   const toggleFavourite = () => {

@@ -11,3 +11,4 @@ export * from "./scholarships";
 export * from "./checklist-templates";
 export * from "./planning-notes";
 export * from "./journey-planner";
+export * from "./notice-boards";

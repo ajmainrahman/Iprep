@@ -122,7 +122,7 @@ export function StudyLog() {
     weeklyData.push({ day: shortDay, minutes: dayTotal, fullDate: dateStr });
   }
 
-  const totalHours = Math.floor(studySessions.reduce((sum: number, s: any) => sum + s.minutes, 0) / 60);
+  const totalHours = Math.floor((studySessions as any[]).reduce((sum: number, s: any) => sum + s.minutes, 0) / 60);
   const targetWeekly = (settings?.dailyGoalMinutes || 60) * 7;
 
   return (
