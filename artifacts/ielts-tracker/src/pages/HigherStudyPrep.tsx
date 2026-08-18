@@ -14,7 +14,7 @@ import {
   CalendarDays, Globe, FileText, TrendingUp, ChevronDown, ChevronUp,
   Target, ClipboardList, ChevronRight, Layers, List, GitBranch,
   ExternalLink, Copy, MessageSquare, Bell, Pencil, Save, ArrowUpRight,
-  CircleCheckBig, Clock3
+  CircleCheckBig, Clock3, Building2, CalendarClock, Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -564,6 +564,7 @@ function ApplicationsTab() {
 
   const [countryFilter,  setCountryFilter]  = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const uniqueCountries = React.useMemo(() => {
     const cs = [...new Set((apps as any[]).map((a: any) => String(a.country || '')).filter(Boolean))].sort();
@@ -680,25 +681,143 @@ function ApplicationsTab() {
     })),
   ];
 
+  const applicationRows = apps as (Record<string, unknown> & { id: number })[];
+  const applicationSummary = React.useMemo(() => {
+    const priorityCounts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
+    let docsCompleted = 0;
+    let docsTotal = 0;
+    let upcomingDeadlines = 0;
+
+    applicationRows.forEach(app => {
+      const requirements = safeParseReqs(app.requirementsJson as string);
+      docsCompleted += requirements.filter(item => item.done).length;
+      docsTotal += requirements.length;
+
+      const priority = String(app.priority || 'medium') as Priority;
+      priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
+
+      const days = daysUntil(String(app.deadline || ''));
+      if (days !== null && days >= 0 && days <= 30) upcomingDeadlines += 1;
+    });
+
+    return { docsCompleted, docsTotal, upcomingDeadlines, priorityCounts };
+  }, [apps]);
+
+  const docsCompletion = applicationSummary.docsTotal > 0
+    ? Math.round((applicationSummary.docsCompleted / applicationSummary.docsTotal) * 100)
+    : 0;
+  const priorityTotal = applicationRows.length || 1;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 rounded-2xl p-1" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
+      {/* Summary stat row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationRows.length}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Total Tracked</p>
+            </div>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--apps-accent-light)', color: 'var(--apps-accent)' }}>
+              <Building2 className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>
+                {applicationSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{applicationSummary.docsTotal}</span>
+              </p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Docs Completed</p>
+            </div>
+            <div className="relative h-11 w-11 shrink-0">
+              <svg viewBox="0 0 44 44" className="-rotate-90" role="img" aria-label={`${docsCompletion}% of documents completed`}>
+                <circle cx="22" cy="22" r="17" fill="none" stroke="var(--apps-progress-track)" strokeWidth="4" />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="17"
+                  fill="none"
+                  stroke="var(--apps-accent)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 17}
+                  strokeDashoffset={(2 * Math.PI * 17) * (1 - docsCompletion / 100)}
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: 'var(--apps-accent)' }}>{docsCompletion}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationSummary.upcomingDeadlines}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Upcoming Deadlines</p>
+              <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>Due within 30 days</p>
+            </div>
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-lg"
+              style={{
+                backgroundColor: applicationSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-bg)' : 'var(--apps-bg-page)',
+                color: applicationSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-text)' : 'var(--apps-text-muted)',
+              }}
+            >
+              <CalendarClock className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>By Priority</p>
+              <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--apps-progress-track)' }}>
+                {(['high', 'medium', 'low'] as Priority[]).map(priority => (
+                  <div
+                    key={priority}
+                    style={{
+                      width: `${(applicationSummary.priorityCounts[priority] / priorityTotal) * 100}%`,
+                      backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)',
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
+                {(['high', 'medium', 'low'] as Priority[]).map(priority => (
+                  <span key={priority} className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)' }} />
+                    {PRIORITY_META[priority].label} {applicationSummary.priorityCounts[priority]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm text-muted-foreground">
-          {(apps as unknown[]).length} {(apps as unknown[]).length === 1 ? 'university' : 'universities'} tracked
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <p className="text-sm" style={{ color: 'var(--apps-text-secondary)' }}>
+          {applicationRows.length} {applicationRows.length === 1 ? 'university' : 'universities'} tracked
         </p>
         <div className="flex items-center gap-2 flex-wrap">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-border overflow-hidden">
+          <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--apps-border)' }}>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-2.5 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'bg-navy text-white dark:bg-indigo' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
+              style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
             >
               <List className="w-3.5 h-3.5" /> List
             </button>
             <button
               onClick={() => setViewMode('timeline')}
-              className={`px-2.5 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'bg-navy text-white dark:bg-indigo' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
+              style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
             >
               <GitBranch className="w-3.5 h-3.5" /> Timeline
             </button>
@@ -706,50 +825,74 @@ function ApplicationsTab() {
           <Button
             size="sm"
             onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }}
-            className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
+            className="text-white hover:brightness-95"
+            style={{ backgroundColor: 'var(--apps-accent)' }}
           >
             <Plus className="w-4 h-4 mr-1" /> Add University
           </Button>
         </div>
       </div>
 
-      {/* Country filter pills */}
-      {uniqueCountries.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setCountryFilter(null)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${!countryFilter ? 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo' : 'border-border text-muted-foreground hover:bg-muted'}`}
-          >
-            All
-          </button>
-          {uniqueCountries.map(c => (
-            <button
-              key={c}
-              onClick={() => setCountryFilter(countryFilter === c ? null : c)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${countryFilter === c ? 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo' : 'border-border text-muted-foreground hover:bg-muted'}`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Filter bar */}
+      <div className="rounded-xl border p-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+          {uniqueCountries.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setCountryFilter(null)}
+                className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors"
+                style={!countryFilter
+                  ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' }
+                  : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}
+              >
+                All
+              </button>
+              {uniqueCountries.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCountryFilter(countryFilter === c ? null : c)}
+                  className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors"
+                  style={countryFilter === c
+                    ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' }
+                    : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
 
-      {/* Priority filter */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-xs text-muted-foreground font-medium shrink-0">Priority:</span>
-        {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(p => (
-          <button
-            key={p ?? 'all'}
-            onClick={() => setPriorityFilter(p)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-              priorityFilter === p
-                ? p ? `${PRIORITY_META[p].bg} ${PRIORITY_META[p].color} border-current` : 'bg-navy text-white border-navy dark:bg-indigo dark:border-indigo'
-                : 'border-border text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            {p ? PRIORITY_META[p].label : 'All'}
-          </button>
-        ))}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 xl:ml-auto">
+            <div className="relative min-w-0 sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: 'var(--apps-text-muted)' }} />
+              <Input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search universities or programs..."
+                aria-label="Search universities or programs"
+                className="h-9 border pl-9 text-xs"
+                style={{ backgroundColor: 'var(--apps-bg-page)', borderColor: 'var(--apps-border)', color: 'var(--apps-text-primary)' }}
+              />
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-medium shrink-0" style={{ color: 'var(--apps-text-secondary)' }}>Priority:</span>
+              {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(p => (
+                <button
+                  key={p ?? 'all'}
+                  onClick={() => setPriorityFilter(p)}
+                  className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={priorityFilter === p
+                    ? p
+                      ? { backgroundColor: PRIORITY_META[p].bg.includes('red') ? 'var(--apps-priority-high-bg)' : PRIORITY_META[p].bg.includes('orange') ? 'var(--apps-priority-medium-bg)' : 'var(--apps-priority-low-bg)', color: p === 'high' ? 'var(--apps-priority-high)' : p === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)', borderColor: 'transparent' }
+                      : { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' }
+                    : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}
+                >
+                  {p ? PRIORITY_META[p].label : 'All'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Add / Edit Form ── */}
@@ -1061,6 +1204,13 @@ function ApplicationsTab() {
             const sortedApps = [...(apps as (Record<string, unknown> & { id: number })[])].filter(app => {
               if (countryFilter && String(app.country || '') !== countryFilter) return false;
               if (priorityFilter && String(app.priority || 'medium') !== priorityFilter) return false;
+              if (searchQuery.trim()) {
+                const query = searchQuery.trim().toLowerCase();
+                const searchable = [app.universityName, app.program, app.country]
+                  .map(value => String(value || '').toLowerCase())
+                  .join(' ');
+                if (!searchable.includes(query)) return false;
+              }
               return true;
             }).sort((a, b) => {
               const da = a.deadline as string | null;

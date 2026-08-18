@@ -1,0 +1,101 @@
+Redesign the UI of the "Applications" section in my Higher Study Tracker app (React/Vite frontend). Do NOT change any data logic, API calls, filtering logic, or existing functionality — this is a visual/layout redesign only. Apply the following design system:
+
+═══════════════════════════════════
+COLOR PALETTE (use CSS variables or Tailwind config — apply consistently)
+═══════════════════════════════════
+--bg-page: #F7F8FA
+--bg-sidebar: #14142B
+--bg-card: #FFFFFF
+--bg-card-hover: #FAFBFF
+--border-subtle: #E5E7EF
+--text-primary: #14142B
+--text-secondary: #6B7280
+--text-muted: #9CA3AF
+
+--accent-primary: #6D5CE8      (purple — matches existing sidebar active state)
+--accent-primary-light: #EDE9FE
+
+--status-researching-bg: #EEF2FF
+--status-researching-text: #4F46E5
+--status-applied-bg: #DBEAFE
+--status-applied-text: #2563EB
+--status-submitted-bg: #E0F2FE
+--status-submitted-text: #0284C7
+--status-accepted-bg: #DCFCE7
+--status-accepted-text: #16A34A
+--status-rejected-bg: #FEE2E2
+--status-rejected-text: #DC2626
+
+--priority-high-bg: #FEE2E2
+--priority-high-text: #DC2626
+--priority-medium-bg: #FEF3C7
+--priority-medium-text: #D97706
+--priority-low-bg: #F1F5F9
+--priority-low-text: #64748B
+
+--progress-track: #EEF0F5
+--progress-fill: #22C55E
+--progress-fill-warning: #F59E0B   (use when docs <50% done AND deadline <30 days)
+
+--deadline-urgent-bg: #FEE2E2     (deadline <14 days)
+--deadline-urgent-text: #DC2626
+--deadline-soon-bg: #FEF3C7       (deadline <60 days)
+--deadline-soon-text: #B45309
+--deadline-normal-bg: #F3F4F6     (deadline >60 days)
+--deadline-normal-text: #6B7280
+
+═══════════════════════════════════
+1. TOP SUMMARY STAT ROW (new — add above the existing filter bar)
+═══════════════════════════════════
+Add a row of 4 compact stat cards, white bg, 12px border-radius, 1px solid var(--border-subtle), subtle shadow (0 1px 2px rgba(0,0,0,0.04)):
+- "Total Tracked" — big number (e.g. 37), label below, small purple icon (building/university icon) top-left
+- "Docs Completed" — show as "42/210" with a thin circular progress ring (var(--accent-primary)) instead of text-only
+- "Upcoming Deadlines" — count of applications due in next 30 days, icon in var(--deadline-urgent-text) if count > 0
+- "By Priority" — small horizontal stacked bar (red/amber/gray segments) showing High/Medium/Low counts, with a legend underneath
+
+Cards: 4-column grid on desktop (grid-template-columns: repeat(4, 1fr), gap: 16px), stack to 2-column on tablet, 1-column on mobile.
+
+═══════════════════════════════════
+2. FILTER BAR (redesign existing All/Canada/Denmark/etc. tabs)
+═══════════════════════════════════
+- Convert the country/category tabs into pill-style buttons: inactive = bg var(--bg-card), border 1px var(--border-subtle), text var(--text-secondary); active = bg var(--accent-primary), text white, no border. 8px border-radius, 6px 14px padding.
+- Add a search input (magnifying glass icon, placeholder "Search universities or programs...") to the left of the priority filter, bg var(--bg-page), border 1px var(--border-subtle), border-radius 8px, full height matching the filter pills.
+- Keep List/Timeline toggle and "Add University" button, but restyle "Add University" button: bg var(--accent-primary), white text, 8px radius, small "+" icon, subtle hover darken (#5B4BD6).
+
+═══════════════════════════════════
+3. COUNTRY GROUP HEADERS (redesign)
+═══════════════════════════════════
+Replace the plain "CANADA · 11" text header with:
+- Country flag emoji or icon + country name (uppercase, letter-spacing 0.05em, font-size 13px, font-weight 600, color var(--text-secondary))
+- Count badge: small pill, bg var(--bg-page), text var(--text-muted), right-aligned
+- A thin horizontal progress bar beneath the header showing % of that country's applications with docs fully complete (bg var(--progress-track), fill var(--progress-fill), height 4px, full width)
+- Make the header sticky (position: sticky, top: 0, z-index: 10, bg var(--bg-page) with slight backdrop-blur) so it stays visible while scrolling through a long country list.
+
+═══════════════════════════════════
+4. UNIVERSITY CARD REDESIGN
+═══════════════════════════════════
+Current cards are flat rows with thin borders. Replace with:
+- Card container: bg var(--bg-card), border 1px solid var(--border-subtle), border-radius 12px, padding 16px 20px, margin-bottom 10px, transition all 0.15s ease
+- On hover: border-color var(--accent-primary-light), box-shadow 0 2px 8px rgba(0,0,0,0.06), slight translateY(-1px)
+- Header row: university name (font-weight 700, font-size 15px, color var(--text-primary)) + status badge + priority badge, all inline with 8px gaps. Badges: pill shape (border-radius 999px, padding 3px 10px, font-size 11px, font-weight 600) using the status/priority colors defined above.
+- Program/country line: font-size 13px, color var(--text-secondary), icon prefix for country (small flag)
+- Deadline row: calendar icon + date + days-remaining chip. The days-remaining chip uses --deadline-urgent/soon/normal colors based on days left (thresholds: <14 red, <60 amber, else gray). Format as "105d left" inside the colored chip, not plain text.
+- Docs progress: replace the thin bottom bar with a compact horizontal bar (8px height, rounded-full, bg var(--progress-track), fill var(--progress-fill) or var(--progress-fill-warning) per the warning rule above) PLUS a small text label "3/12 docs" right-aligned above it.
+- Action icons (edit/delete/chevron): move to top-right corner of the card as a small icon cluster, muted color var(--text-muted), hover color var(--accent-primary) for edit, #DC2626 for delete, with 8px spacing and a subtle circular hover background (var(--bg-page)).
+- Portal link (when present): render as a small pill button with an external-link icon, bg var(--accent-primary-light), text var(--accent-primary), border-radius 6px, instead of plain blue text.
+
+═══════════════════════════════════
+5. TYPOGRAPHY & SPACING
+═══════════════════════════════════
+- Base font: Inter or existing app font, 14px body
+- Section spacing: 24px between country groups
+- Card internal spacing: 8-10px between rows within a card
+- Use consistent 4px/8px/12px/16px/24px spacing scale throughout — no arbitrary pixel values
+
+═══════════════════════════════════
+IMPLEMENTATION NOTES
+═══════════════════════════════════
+- Reuse existing components where possible; only restyle, don't duplicate logic.
+- Implement as CSS variables (or extend Tailwind theme config if the project uses Tailwind) so the palette is centrally controlled and reusable elsewhere in the app.
+- Keep all existing data bindings (deadline countdown calc, docs count, priority/status values) exactly as they are — only the visual presentation changes.
+- Implement incrementally: first the stat row + filter bar, show me the result, then move to card redesign, then country group headers.

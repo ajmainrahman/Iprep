@@ -81,6 +81,29 @@
   --background: 245 20% 97%;
   --foreground: 224 47% 11%;
 
+  /* Applications tracker palette */
+  --apps-bg-page: #F7F8FA;
+  --apps-bg-card: #FFFFFF;
+  --apps-border: #E5E7EF;
+  --apps-text-primary: #14142B;
+  --apps-text-secondary: #6B7280;
+  --apps-text-muted: #9CA3AF;
+  --apps-accent: #6D5CE8;
+  --apps-accent-light: #EDE9FE;
+  --apps-progress-track: #EEF0F5;
+  --apps-priority-high-bg: #FEE2E2;
+  --apps-priority-high: #DC2626;
+  --apps-priority-medium-bg: #FEF3C7;
+  --apps-priority-medium: #D97706;
+  --apps-priority-low-bg: #F1F5F9;
+  --apps-priority-low: #64748B;
+  --apps-deadline-urgent-bg: #FEE2E2;
+  --apps-deadline-urgent-text: #DC2626;
+  --apps-deadline-soon-bg: #FEF3C7;
+  --apps-deadline-soon-text: #B45309;
+  --apps-deadline-normal-bg: #F3F4F6;
+  --apps-deadline-normal-text: #6B7280;
+
   --border: 240 14% 89%;
   --input: 240 14% 89%;
   --ring: 243 75% 59%;
