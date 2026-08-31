@@ -13,6 +13,7 @@ export const scholarshipsTable = pgTable("scholarships", {
   fundingType: text("funding_type").notNull().default("partial"),
   deadline: text("deadline"),
   status: text("status").notNull().default("planning"),
+  priority: text("priority").notNull().default("medium"),
   notes: text("notes"),
   // Pre-existing columns in Neon
   updatedAt: timestamp("updated_at", { withTimezone: true }),

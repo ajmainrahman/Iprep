@@ -1694,12 +1694,17 @@ function ScholarshipsTab() {
   const [expandedSchId, setExpandedSchId] = useState<number | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
   const [notesEditDraft, setNotesEditDraft] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
+  const [countryFilter, setCountryFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
   // inline checklist new-item input per card
   const [newReqText, setNewReqText] = useState<Record<number, string>>({});
 
   const emptyForm = {
     name: '', provider: '', country: '', fundingType: 'Full Scholarship',
-    amount: '', currency: 'USD', deadline: '', status: 'planning', notes: '',
+    amount: '', currency: 'USD', deadline: '', status: 'planning', priority: 'medium', notes: '',
     dateApplied: '', portalUrl: '', requirements: [] as ReqItem[],
   };
   const [form, setForm] = useState(emptyForm);
@@ -1734,6 +1739,7 @@ function ScholarshipsTab() {
       currency:     String(s.currency || 'USD'),
       deadline:     String(s.deadline || ''),
       status:       String(s.status || 'planning'),
+      priority:     String(s.priority || 'medium'),
       notes:        String(s.notes || ''),
       dateApplied:  String(s.dateApplied || ''),
       portalUrl:    String(s.portalUrl || ''),
@@ -1779,19 +1785,187 @@ function ScholarshipsTab() {
     updateMutation.mutate({ id: s.id, data: { requirementsJson: reqs.length ? JSON.stringify(reqs) : null } });
   }
 
+  const scholarshipRows = scholarships as (Record<string, unknown> & { id: number })[];
+  const uniqueCountries = React.useMemo(() => (
+    [...new Set(scholarshipRows.map(s => String(s.country || '').trim()).filter(Boolean))].sort()
+  ), [scholarships]);
+  const scholarshipSummary = React.useMemo(() => {
+    const priorityCounts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
+    const statusCounts: Record<'planning' | 'applying' | 'submitted', number> = {
+      planning: 0, applying: 0, submitted: 0,
+    };
+    let docsCompleted = 0;
+    let docsTotal = 0;
+    let upcomingDeadlines = 0;
+
+    scholarshipRows.forEach(s => {
+      const requirements = parseReqs(s.requirementsJson);
+      docsCompleted += requirements.filter(item => item.done).length;
+      docsTotal += requirements.length;
+
+      const priority = String(s.priority || 'medium') as Priority;
+      priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
+
+      const status = String(s.status || 'planning');
+      if (status === 'planning') statusCounts.planning += 1;
+      else if (status === 'applied') statusCounts.submitted += 1;
+      else statusCounts.applying += 1;
+
+      const days = daysUntil(String(s.deadline || ''));
+      if (days !== null && days >= 0 && days <= 30) upcomingDeadlines += 1;
+    });
+
+    return { docsCompleted, docsTotal, upcomingDeadlines, priorityCounts, statusCounts };
+  }, [scholarships]);
+  const docsCompletion = scholarshipSummary.docsTotal > 0
+    ? Math.round((scholarshipSummary.docsCompleted / scholarshipSummary.docsTotal) * 100)
+    : 0;
+  const priorityTotal = scholarshipRows.length || 1;
+  const filteredScholarships = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return scholarshipRows
+      .filter(s => {
+        if (countryFilter && String(s.country || '') !== countryFilter) return false;
+        if (priorityFilter && String(s.priority || 'medium') !== priorityFilter) return false;
+        if (query) {
+          const searchable = [s.name, s.provider, s.country, s.fundingType]
+            .map(value => String(value || '').toLowerCase()).join(' ');
+          if (!searchable.includes(query)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const da = String(a.deadline || '');
+        const db = String(b.deadline || '');
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da > db ? 1 : -1;
+      });
+  }, [scholarships, countryFilter, priorityFilter, searchQuery]);
+  const groupedScholarships = React.useMemo(() => {
+    const grouped: Record<string, typeof scholarshipRows> = {};
+    filteredScholarships.forEach(s => {
+      const country = String(s.country || 'Other');
+      if (!grouped[country]) grouped[country] = [];
+      grouped[country].push(s);
+    });
+    return grouped;
+  }, [filteredScholarships]);
+  const sortedCountries = Object.keys(groupedScholarships).sort();
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 rounded-2xl p-1" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
+      {/* Summary stat row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipRows.length}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Total Scholarships Tracked</p>
+            </div>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+              <Trophy className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>
+                {scholarshipSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{scholarshipSummary.docsTotal}</span>
+              </p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Requirements/Docs Completed</p>
+              <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>{docsCompletion}% complete</p>
+            </div>
+            <div className="relative h-11 w-11 shrink-0">
+              <svg viewBox="0 0 44 44" className="-rotate-90" role="img" aria-label={`${docsCompletion}% of scholarship requirements completed`}>
+                <circle cx="22" cy="22" r="17" fill="none" stroke="var(--apps-progress-track)" strokeWidth="4" />
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 17} strokeDashoffset={(2 * Math.PI * 17) * (1 - docsCompletion / 100)} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-emerald-600">{docsCompletion}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipSummary.upcomingDeadlines}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Upcoming Deadlines</p>
+              <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>Due within 30 days</p>
+            </div>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: scholarshipSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-bg)' : 'var(--apps-bg-page)', color: scholarshipSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-text)' : 'var(--apps-text-muted)' }}>
+              <CalendarClock className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>By Status</p>
+            <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--apps-progress-track)' }}>
+              {(['planning', 'applying', 'submitted'] as const).map((status, index) => (
+                <div key={status} style={{ width: `${(scholarshipSummary.statusCounts[status] / priorityTotal) * 100}%`, backgroundColor: ['#94a3b8', '#f59e0b', '#3b82f6'][index] }} />
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
+              {([
+                ['planning', 'Planning', '#94a3b8'],
+                ['applying', 'Applying', '#f59e0b'],
+                ['submitted', 'Submitted', '#3b82f6'],
+              ] as const).map(([key, label, color]) => (
+                <span key={key} className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />{label} {scholarshipSummary.statusCounts[key]}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {(scholarships as unknown[]).length} scholarship{(scholarships as unknown[]).length !== 1 ? 's' : ''} tracked
+          {filteredScholarships.length} of {scholarshipRows.length} scholarship{scholarshipRows.length !== 1 ? 's' : ''} tracked
         </p>
-        <Button
-          size="sm"
-          onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}
-          className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white"
-        >
-          <Plus className="w-4 h-4 mr-1" /> Add Scholarship
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--apps-border)' }}>
+            <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
+              <List className="w-3.5 h-3.5" /> List
+            </button>
+            <button onClick={() => setViewMode('timeline')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
+              <GitBranch className="w-3.5 h-3.5" /> Timeline
+            </button>
+          </div>
+          <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }} className="text-white hover:brightness-95" style={{ backgroundColor: 'var(--apps-accent)' }}>
+            <Plus className="w-4 h-4 mr-1" /> Add Scholarship
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="rounded-xl border p-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setCountryFilter(null)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={!countryFilter ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>All</button>
+            {uniqueCountries.map(country => (
+              <button key={country} onClick={() => setCountryFilter(countryFilter === country ? null : country)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={countryFilter === country ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{country}</button>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 xl:ml-auto">
+            <div className="relative min-w-0 sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: 'var(--apps-text-muted)' }} />
+              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search scholarships or providers..." aria-label="Search scholarships or providers" className="h-9 border pl-9 text-xs" style={{ backgroundColor: 'var(--apps-bg-page)', borderColor: 'var(--apps-border)', color: 'var(--apps-text-primary)' }} />
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-medium shrink-0" style={{ color: 'var(--apps-text-secondary)' }}>Priority:</span>
+              {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(priority => (
+                <button key={priority ?? 'all'} onClick={() => setPriorityFilter(priority)} className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors" style={priorityFilter === priority ? priority ? { backgroundColor: priority === 'high' ? '#fee2e2' : priority === 'medium' ? '#ffedd5' : '#f1f5f9', color: priority === 'high' ? '#dc2626' : priority === 'medium' ? '#ea580c' : '#64748b', borderColor: 'transparent' } : { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{priority ? PRIORITY_META[priority].label : 'All'}</button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -1848,6 +2022,17 @@ function ScholarshipsTab() {
                   <SelectContent>
                     {Object.entries(SCH_STATUS_META).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Priority</Label>
+                <Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(['high', 'medium', 'low'] as Priority[]).map(priority => (
+                      <SelectItem key={priority} value={priority}>{PRIORITY_META[priority].label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1994,10 +2179,92 @@ function ScholarshipsTab() {
           <p className="font-semibold">No scholarships yet</p>
           <p className="text-sm mt-1">Track Erasmus+, Nordic grants and other funding opportunities.</p>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {(scholarships as (Record<string, unknown> & { id: number })[]).map(s => {
+      ) : filteredScholarships.length === 0 ? (
+        <div className="text-center py-14 text-muted-foreground">
+          <Search className="w-10 h-10 mx-auto mb-3 opacity-25" />
+          <p className="font-semibold">No scholarships match these filters</p>
+          <p className="text-sm mt-1">Try another country, priority, or search term.</p>
+        </div>
+      ) : viewMode === 'timeline' ? (
+        <div className="relative space-y-4 pl-8">
+          <div className="absolute left-3 top-1 bottom-1 w-0.5 bg-border" />
+          {filteredScholarships.map(s => {
             const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
+            const priorityKey = String(s.priority || 'medium') as Priority;
+            const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
+            const reqs = parseReqs(s.requirementsJson);
+            const doneCount = reqs.filter(r => r.done).length;
+            const days = daysUntil(String(s.deadline || ''));
+            return (
+              <div key={s.id} className="relative">
+                <span className="absolute -left-[1.45rem] top-4 h-3 w-3 rounded-full border-2 border-background bg-amber-400 shadow" />
+                <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label}</span>
+                          <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
+                        </div>
+                        {Boolean(s.provider) && <p className="text-xs text-muted-foreground mt-0.5">{String(s.provider)}</p>}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{String(s.fundingType)}</span>
+                      {Boolean(s.country) && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">🌍 {String(s.country)}</span>}
+                      {Boolean(s.amount) && <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 font-semibold">{Number(s.amount).toLocaleString()} {String(s.currency)}</span>}
+                    </div>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground flex items-center gap-1"><ClipboardList className="w-3 h-3" /> Requirements</span>
+                        <span className={`font-semibold ${doneCount === reqs.length && reqs.length > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>{doneCount}/{reqs.length} reqs done</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${reqs.length ? (doneCount / reqs.length) * 100 : 0}%` }} />
+                      </div>
+                    </div>
+                    <p className={`text-xs mt-3 flex items-center gap-1 ${days !== null && days >= 0 && days <= 14 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                      <CalendarDays className="w-3 h-3" />
+                      Deadline: {s.deadline ? fmtDate(String(s.deadline)) : 'Not set'}
+                      {days !== null && days >= 0 && <span>({days === 0 ? 'Today!' : `${days}d`})</span>}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {sortedCountries.map(country => (
+            <section key={country}>
+              <button
+                type="button"
+                onClick={() => setExpandedCountries(previous => ({ ...previous, [country]: previous[country] === false }))}
+                className="flex w-full items-center gap-2 mb-2 mt-1 text-left"
+                aria-expanded={expandedCountries[country] !== false}
+              >
+                {expandedCountries[country] === false ? <ChevronRight className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{country}</h3>
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">{groupedScholarships[country].length}</span>
+              </button>
+              {expandedCountries[country] !== false && (
+                <div className="space-y-3">
+          {groupedScholarships[country].map(s => {
+            const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
+            const priorityKey = String(s.priority || 'medium') as Priority;
+            const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
             const isExpanded = expandedSchId === s.id;
             const reqs = parseReqs(s.requirementsJson);
             const doneCount = reqs.filter(r => r.done).length;
@@ -2011,6 +2278,7 @@ function ScholarshipsTab() {
                     >
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label}</span>
                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                       </div>
                       {Boolean(s.provider) && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
@@ -2022,10 +2290,10 @@ function ScholarshipsTab() {
                       >
                         {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                       </button>
-                      <button onClick={() => startEdit(s)} className="p-1 rounded hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Edit2 className="w-3.5 h-3.5" />
+                      <button aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteMutation.mutate(s.id)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -2039,25 +2307,27 @@ function ScholarshipsTab() {
                         {Number(s.amount).toLocaleString()} {String(s.currency)}
                       </span>
                     )}
-                    {reqs.length > 0 && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${doneCount === reqs.length ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
-                        ✓ {doneCount}/{reqs.length} reqs
-                      </span>
-                    )}
                   </div>
 
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                    {Boolean(s.deadline) && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CalendarDays className="w-3 h-3" />
-                        Deadline: {fmtDate(s.deadline as string)}
-                        {(() => {
-                          const d = daysUntil(s.deadline as string);
-                          if (d === null || d < 0) return null;
-                          return <span className={`font-semibold ml-1 ${d <= 14 ? 'text-red-500' : 'text-muted-foreground'}`}>({d}d)</span>;
-                        })()}
-                      </p>
-                    )}
+                  <div className="mt-3 space-y-2">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground flex items-center gap-1"><ClipboardList className="w-3 h-3" /> Requirements</span>
+                        <span className={`font-semibold ${doneCount === reqs.length && reqs.length > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>{doneCount}/{reqs.length} reqs done</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${reqs.length ? (doneCount / reqs.length) * 100 : 0}%` }} />
+                      </div>
+                    </div>
+                    <p className={`text-xs text-muted-foreground flex items-center gap-1 ${(() => { const d = daysUntil(String(s.deadline || '')); return d !== null && d >= 0 && d <= 14 ? 'text-red-500 font-semibold' : ''; })()}`}>
+                      <CalendarDays className="w-3 h-3" />
+                      Deadline: {s.deadline ? fmtDate(String(s.deadline)) : 'Not set'}
+                      {(() => {
+                        const d = daysUntil(String(s.deadline || ''));
+                        if (d === null || d < 0) return null;
+                        return <span className="ml-1">({d === 0 ? 'Today!' : `${d}d`})</span>;
+                      })()}
+                    </p>
                     {Boolean(s.dateApplied) && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Check className="w-3 h-3 text-emerald-500" />
@@ -2213,6 +2483,10 @@ function ScholarshipsTab() {
               </Card>
             );
           })}
+                </div>
+              )}
+            </section>
+          ))}
         </div>
       )}
     </div>
