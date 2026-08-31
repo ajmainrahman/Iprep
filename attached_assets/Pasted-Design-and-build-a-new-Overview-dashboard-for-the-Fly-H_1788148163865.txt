@@ -1,0 +1,28 @@
+Design and build a new "Overview" dashboard for the Fly – Higher Study Prep app that merges Applications and Scholarships into a single unified view, with a fresh UI rather than reusing the current Applications page layout.
+
+Data
+
+Treat applications and scholarships as one record type with a Type tag (Application / Scholarship / Both).
+Allow a university application to link to a matching scholarship so the two can optionally be shown as one combined entry.
+Carry over relevant fields from both current pages: Name, Country, University, Program, Deadline, Days Left (auto-calculated), Documents/Requirements Done, Priority, Status, IELTS Score Required, Applied?, Result, Note.
+
+Top of dashboard
+
+A stats overview showing: total applications, total scholarships, combined docs/requirements completed, and deadlines coming up in the next 30 days — pulled from both types together, not shown as two separate dashboards.
+Make upcoming deadlines the most visually prominent element, since that's the highest-risk info (a scholarship deadline shouldn't get missed because it's buried on a separate tab).
+
+Main view
+
+A unified, chronological deadline timeline mixing both applications and scholarships, clearly distinguishable by type (icon or label, not reliant on color alone).
+Group everything by country/region, with each group showing counts of both applications and scholarships inside it.
+Where an application and scholarship are linked, show them as a single combined card with two sub-sections (Application status / Scholarship status) instead of two disconnected cards.
+
+Controls
+
+Filters: record type (All / Application / Scholarship), country/region, priority, and a search bar.
+List and timeline/calendar view toggle.
+
+Design direction
+
+Don't just copy the current Applications page style — propose a cleaner, more scannable layout suited to combining two data types (e.g., a dashboard-first design with the timeline as the hero element, rather than a long card list).
+Keep it minimal and functional — this is a personal tracking tool, not a customer-facing product.
