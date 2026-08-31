@@ -28,6 +28,7 @@ const bodySchema = z.object({
   deadline: z.string().nullable().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
+  linkedApplicationId: z.number().int().nullable().optional(),
   notes: z.string().nullable().optional(),
   dateApplied: z.string().nullable().optional(),
   portalUrl: z.string().nullable().optional(),

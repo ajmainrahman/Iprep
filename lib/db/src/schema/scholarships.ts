@@ -14,6 +14,7 @@ export const scholarshipsTable = pgTable("scholarships", {
   deadline: text("deadline"),
   status: text("status").notNull().default("planning"),
   priority: text("priority").notNull().default("medium"),
+  linkedApplicationId: integer("linked_application_id"),
   notes: text("notes"),
   // Pre-existing columns in Neon
   updatedAt: timestamp("updated_at", { withTimezone: true }),

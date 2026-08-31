@@ -166,7 +166,7 @@ function safeParseReqs(json: string | null | undefined): ReqItem[] {
 export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange: (t: string) => void }) {
   return (
     <>
-      {tab === 'overview'     && <OverviewTab onTabChange={onTabChange} />}
+      {tab === 'overview'     && <UnifiedOverviewTab onTabChange={onTabChange} />}
       {tab === 'applications' && <ApplicationsTab />}
       {tab === 'tests'        && <TestScoresTab />}
       {tab === 'scholarships' && <ScholarshipsTab />}
@@ -278,6 +278,368 @@ function NoticeBoardCard({
 /* ═══════════════════════════════════════════════════════════════════════════
    OVERVIEW TAB
 ═══════════════════════════════════════════════════════════════════════════ */
+function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
+  const { data: apps = [], isLoading: appsLoading } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: schols = [], isLoading: scholarshipsLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: tests = [] } = useQuery({ queryKey: ['other-tests'], queryFn: api.getOtherTestScores });
+
+  const [recordType, setRecordType] = useState<'all' | 'application' | 'scholarship'>('all');
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
+  const [collapsedCountries, setCollapsedCountries] = useState<Record<string, boolean>>({});
+
+  type ApplicationRow = Record<string, unknown> & { id: number };
+  type ScholarshipRow = Record<string, unknown> & { id: number };
+  type UnifiedRecord = {
+    key: string;
+    type: 'application' | 'scholarship' | 'both';
+    country: string;
+    deadline: string | null;
+    priority: Priority;
+    app?: ApplicationRow;
+    scholarship?: ScholarshipRow;
+  };
+
+  const applicationRows = apps as ApplicationRow[];
+  const scholarshipRows = schols as ScholarshipRow[];
+  const applicationById = new Map(applicationRows.map(app => [app.id, app]));
+  const scholarshipByApplicationId = new Map<number, ScholarshipRow>();
+  scholarshipRows.forEach(scholarship => {
+    const linkedId = Number(scholarship.linkedApplicationId);
+    if (linkedId && applicationById.has(linkedId)) scholarshipByApplicationId.set(linkedId, scholarship);
+  });
+
+  const unifiedRecords: UnifiedRecord[] = [
+    ...applicationRows.map(app => {
+      const scholarship = scholarshipByApplicationId.get(app.id);
+      const priority = String(app.priority || scholarship?.priority || 'medium') as Priority;
+      return {
+        key: scholarship ? `both-${app.id}-${scholarship.id}` : `application-${app.id}`,
+        type: scholarship ? ('both' as const) : ('application' as const),
+        country: String(app.country || scholarship?.country || 'Other'),
+        deadline: String(app.deadline || scholarship?.deadline || '') || null,
+        priority: PRIORITY_META[priority] ? priority : 'medium',
+        app,
+        scholarship,
+      };
+    }),
+    ...scholarshipRows
+      .filter(scholarship => {
+        const linkedId = Number(scholarship.linkedApplicationId);
+        return !linkedId || !applicationById.has(linkedId);
+      })
+      .map(scholarship => {
+        const priority = String(scholarship.priority || 'medium') as Priority;
+        return {
+          key: `scholarship-${scholarship.id}`,
+          type: 'scholarship' as const,
+          country: String(scholarship.country || 'Other'),
+          deadline: String(scholarship.deadline || '') || null,
+          priority: PRIORITY_META[priority] ? priority : 'medium',
+          scholarship,
+        };
+      }),
+  ];
+
+  const requirementsFor = (record: UnifiedRecord) => {
+    const appReqs = record.app ? safeParseReqs(record.app.requirementsJson as string) : [];
+    const scholarshipReqs = record.scholarship ? parseReqs(record.scholarship.requirementsJson) : [];
+    return [...appReqs, ...scholarshipReqs];
+  };
+  const countries = [...new Set(unifiedRecords.map(record => record.country).filter(Boolean))].sort();
+  const filteredRecords = unifiedRecords
+    .filter(record => {
+      if (recordType === 'application' && !record.app) return false;
+      if (recordType === 'scholarship' && !record.scholarship) return false;
+      if (countryFilter !== 'all' && record.country !== countryFilter) return false;
+      if (priorityFilter !== 'all' && record.priority !== priorityFilter) return false;
+      const query = searchQuery.trim().toLowerCase();
+      if (query) {
+        const searchable = [
+          record.app?.universityName,
+          record.app?.program,
+          record.scholarship?.name,
+          record.scholarship?.provider,
+          record.country,
+        ].map(value => String(value || '').toLowerCase()).join(' ');
+        if (!searchable.includes(query)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0;
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return a.deadline > b.deadline ? 1 : -1;
+    });
+
+  const groups = filteredRecords.reduce<Record<string, UnifiedRecord[]>>((acc, record) => {
+    if (!acc[record.country]) acc[record.country] = [];
+    acc[record.country].push(record);
+    return acc;
+  }, {});
+  const sortedCountries = Object.keys(groups).sort();
+
+  const totalRequirementItems = unifiedRecords.reduce((total, record) => total + requirementsFor(record).length, 0);
+  const completedRequirementItems = unifiedRecords.reduce((total, record) => total + requirementsFor(record).filter(item => item.done).length, 0);
+  const requirementsPercent = totalRequirementItems ? Math.round((completedRequirementItems / totalRequirementItems) * 100) : 0;
+  const upcomingDeadlines = unifiedRecords
+    .filter(record => {
+      const days = daysUntil(record.deadline || '');
+      return days !== null && days >= 0;
+    })
+    .sort((a, b) => (daysUntil(a.deadline || '') ?? 999) - (daysUntil(b.deadline || '') ?? 999));
+  const next30Days = upcomingDeadlines.filter(record => (daysUntil(record.deadline || '') ?? 999) <= 30);
+  const highPriorityCount = unifiedRecords.filter(record => record.priority === 'high').length;
+  const latestTest = (tests as { id: number; testName: string; totalScore?: number | null; attemptDate: string }[])
+    .slice().sort((a, b) => new Date(b.attemptDate).getTime() - new Date(a.attemptDate).getTime())[0];
+
+  const statusLabel = (value: unknown, type: 'application' | 'scholarship') => {
+    const fallback = type === 'application' ? APP_STATUS_META.researching : SCH_STATUS_META.planning;
+    const meta = type === 'application'
+      ? APP_STATUS_META[String(value) as AppStatus] || fallback
+      : SCH_STATUS_META[String(value) as ScholarshipStatus] || fallback;
+    return meta.label;
+  };
+
+  const recordTitle = (record: UnifiedRecord) => String(record.app?.universityName || record.scholarship?.name || 'Untitled target');
+  const recordSubtitle = (record: UnifiedRecord) => {
+    if (record.type === 'both') return `${String(record.app?.program || 'University application')} · ${String(record.scholarship?.name || 'Linked scholarship')}`;
+    if (record.app) return `${String(record.app.program || 'Program')} · ${String(record.app.degreeType || '')}`;
+    return String(record.scholarship?.provider || record.scholarship?.fundingType || 'Funding opportunity');
+  };
+
+  function TypeMark({ type }: { type: UnifiedRecord['type'] }) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ borderColor: type === 'scholarship' ? '#f4c978' : type === 'both' ? '#a6b7f7' : '#9adfd2', color: type === 'scholarship' ? '#9a6700' : type === 'both' ? '#4654a8' : '#087f73', backgroundColor: type === 'scholarship' ? '#fff8e8' : type === 'both' ? '#f1f3ff' : '#eefbf8' }}>
+        {type === 'scholarship' ? <Trophy className="h-3 w-3" /> : type === 'both' ? <CircleCheckBig className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
+        {type === 'both' ? 'Combined target' : type === 'scholarship' ? 'Scholarship' : 'Application'}
+      </span>
+    );
+  }
+
+  function DeadlineLabel({ deadline }: { deadline: string | null }) {
+    const days = daysUntil(deadline || '');
+    return (
+      <div className={`flex items-center gap-2 text-xs ${days !== null && days >= 0 && days <= 7 ? 'text-red-600' : days !== null && days >= 0 && days <= 30 ? 'text-amber-700' : 'text-muted-foreground'}`}>
+        <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+        <span>{deadline ? fmtDate(deadline) : 'No deadline set'}</span>
+        {days !== null && (
+          <span className="font-bold">{days < 0 ? 'Past' : days === 0 ? 'Today' : `${days}d left`}</span>
+        )}
+      </div>
+    );
+  }
+
+  function UnifiedRecordCard({ record, timeline = false }: { record: UnifiedRecord; timeline?: boolean }) {
+    const reqs = requirementsFor(record);
+    const doneCount = reqs.filter(item => item.done).length;
+    const progress = reqs.length ? Math.round((doneCount / reqs.length) * 100) : 0;
+    const priorityMeta = PRIORITY_META[record.priority];
+    const application = record.app;
+    const scholarship = record.scholarship;
+    return (
+      <article data-testid={`unified-record-${record.key}`} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${timeline ? 'bg-white/90' : 'bg-white'}`} style={{ borderColor: record.type === 'both' ? '#bfc8fa' : 'var(--apps-border)', boxShadow: '0 1px 2px rgba(20, 20, 43, 0.04)' }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <TypeMark type={record.type} />
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] ${priorityMeta.color}`}><span className={`h-1.5 w-1.5 rounded-full ${priorityMeta.dot}`} />{priorityMeta.label} priority</span>
+            </div>
+            <h3 className="mt-2 truncate text-base font-bold tracking-tight" style={{ color: 'var(--apps-text-primary)' }}>{recordTitle(record)}</h3>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{recordSubtitle(record)}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {application && <button type="button" data-testid={`button-open-application-${application.id}`} onClick={() => onTabChange('applications')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#eefbf8] hover:text-[#087f73]" title="Open application" aria-label="Open application"><GraduationCap className="h-4 w-4" /></button>}
+            {scholarship && <button type="button" data-testid={`button-open-scholarship-${scholarship.id}`} onClick={() => onTabChange('scholarships')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#fff8e8] hover:text-[#9a6700]" title="Open scholarship" aria-label="Open scholarship"><Trophy className="h-4 w-4" /></button>}
+          </div>
+        </div>
+
+        {record.type === 'both' && (
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-[#dce5f1] bg-[#f6f9fc] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#5f7187]">Application status</p>
+              <p className="mt-1 text-sm font-semibold text-[#26384c]">{statusLabel(application?.status, 'application')}</p>
+              <p className="mt-1 text-[11px] text-[#6f8194]">{String(application?.universityName || '')}</p>
+            </div>
+            <div className="rounded-xl border border-[#f2e4c8] bg-[#fffaf0] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#8f6f2c]">Scholarship status</p>
+              <p className="mt-1 text-sm font-semibold text-[#654f18]">{statusLabel(scholarship?.status, 'scholarship')}</p>
+              <p className="mt-1 text-[11px] text-[#947c42]">{String(scholarship?.fundingType || 'Funding opportunity')}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1.25fr_1fr_1fr]">
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Deadline</p>
+            <DeadlineLabel deadline={record.deadline} />
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Country / region</p>
+            <p className="flex items-center gap-1.5 truncate text-xs font-semibold text-foreground"><Globe className="h-3.5 w-3.5 text-muted-foreground" />{record.country}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">IELTS required</p>
+            <p className="text-xs font-semibold text-foreground">{String(application?.ieltsScoreRequired || application?.ieltsRequired || 'Not set')}</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground"><ClipboardList className="h-3.5 w-3.5" />Documents / requirements</p>
+            <span className="text-xs font-bold text-foreground">{doneCount}/{reqs.length} done</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-[#edf0f4]"><div className="h-full rounded-full bg-[#12a594] transition-all" style={{ width: `${progress}%` }} /></div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-xs text-muted-foreground" style={{ borderColor: 'var(--apps-border)' }}>
+          <span><strong className="font-semibold text-foreground">Applied?</strong> {application?.appliedDate || scholarship?.dateApplied ? 'Yes' : 'No'}</span>
+          <span><strong className="font-semibold text-foreground">Result</strong> {application ? statusLabel(application.status, 'application') : scholarship ? statusLabel(scholarship.status, 'scholarship') : 'Not set'}</span>
+          {Boolean(scholarship?.amount) && <span><strong className="font-semibold text-foreground">Award</strong> {Number(scholarship?.amount).toLocaleString()} {String(scholarship?.currency || '')}</span>}
+        </div>
+        {Boolean(application?.notes || application?.comments || scholarship?.notes) && (
+          <p className="mt-3 line-clamp-2 text-xs italic text-muted-foreground">{String(application?.notes || application?.comments || scholarship?.notes)}</p>
+        )}
+      </article>
+    );
+  }
+
+  const renderGroup = (country: string, timeline = false) => (
+    <section key={country} data-testid={`unified-country-group-${country}`}>
+      <button type="button" data-testid={`button-toggle-country-${country}`} onClick={() => setCollapsedCountries(previous => ({ ...previous, [country]: !previous[country] }))} className="mb-3 flex w-full items-center gap-2 text-left">
+        {collapsedCountries[country] ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        <span className="text-sm font-bold tracking-tight text-foreground">{country}</span>
+        <span className="rounded-full bg-[#edf0f4] px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{groups[country].length}</span>
+        <span className="text-[10px] text-muted-foreground">{groups[country].filter(record => record.app).length} apps · {groups[country].filter(record => record.scholarship).length} scholarships</span>
+        <div className="ml-2 h-px flex-1 bg-border" />
+      </button>
+      {!collapsedCountries[country] && (
+        <div className={timeline ? 'relative space-y-4 pl-7' : 'space-y-3'}>
+          {timeline && <div className="absolute bottom-3 left-2.5 top-2 w-px bg-[#dce5f1]" />}
+          {groups[country].map(record => timeline ? (
+            <div key={record.key} className="relative">
+              <span className="absolute -left-[1.42rem] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#12a594] shadow-sm" />
+              <UnifiedRecordCard record={record} timeline />
+            </div>
+          ) : <UnifiedRecordCard key={record.key} record={record} />)}
+        </div>
+      )}
+    </section>
+  );
+
+  return (
+    <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
+      <div className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-[0_16px_40px_rgba(31,41,76,0.16)] sm:p-8" style={{ background: 'linear-gradient(115deg, #17223b 0%, #263f63 52%, #147f79 100%)' }}>
+        <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#89e4d7]/15 blur-3xl" />
+        <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-[#f6c976]/10 blur-3xl" />
+        <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <div className="max-w-2xl">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#a7e8df]">Fly · Higher Study</p>
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Everything that moves your future forward.</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/70">One focused view for university applications and funding opportunities, ordered by what needs your attention next.</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" data-testid="button-overview-add-application" onClick={() => onTabChange('applications')} className="border border-white/20 bg-white/10 text-white hover:bg-white/20"><GraduationCap className="mr-1.5 h-3.5 w-3.5" />Add application</Button>
+            <Button size="sm" data-testid="button-overview-add-scholarship" onClick={() => onTabChange('scholarships')} className="bg-[#f6c976] text-[#3f3214] hover:bg-[#f9d998]"><Trophy className="mr-1.5 h-3.5 w-3.5" />Add scholarship</Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#eefbf8', ink: '#087f73', testId: 'total-applications' },
+          { label: 'Scholarships', value: scholarshipRows.length, icon: Trophy, tone: '#fff8e8', ink: '#9a6700', testId: 'total-scholarships' },
+          { label: 'Docs / requirements', value: `${completedRequirementItems}/${totalRequirementItems}`, icon: ClipboardList, tone: '#f1f3ff', ink: '#4654a8', testId: 'completed-requirements' },
+          { label: 'Due in 30 days', value: next30Days.length, icon: CalendarClock, tone: '#fff0ed', ink: '#c64b3c', testId: 'upcoming-deadlines' },
+        ].map(stat => (
+          <div key={stat.label} data-testid={`unified-stat-${stat.testId}`} className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
+            <div className="flex items-start justify-between gap-2">
+              <div><p className="font-heading text-2xl font-bold" style={{ color: 'var(--apps-text-primary)' }}>{stat.value}</p><p className="mt-1 text-[11px] font-medium text-muted-foreground">{stat.label}</p></div>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: stat.tone, color: stat.ink }}><stat.icon className="h-4 w-4" /></span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-[#f2d7a2] bg-[#fffaf0] p-4 shadow-[0_10px_28px_rgba(204,147,45,0.08)] sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 items-start gap-3 lg:w-[31%]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f6c976] text-[#5f4814]"><CalendarClock className="h-5 w-5" /></span>
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9a6700]">Deadline radar</p><h3 className="mt-1 text-lg font-bold tracking-tight text-[#3f3214]">{next30Days.length ? `${next30Days.length} target${next30Days.length === 1 ? '' : 's'} need attention` : 'No urgent deadlines'}</h3><p className="mt-1 text-xs text-[#947c42]">{next30Days.length ? 'The next 30 days, across applications and scholarships.' : 'You have breathing room. Keep adding dates as you find them.'}</p></div>
+          </div>
+          <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
+            {upcomingDeadlines.slice(0, 3).map(record => {
+              const days = daysUntil(record.deadline || '');
+              return <button type="button" data-testid={`button-deadline-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#f1dfbb] bg-white/80 p-3 text-left transition-colors hover:bg-white"><div className="flex items-center justify-between gap-2"><TypeMark type={record.type} /><span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-red-600' : 'text-amber-700'}`}>{days === 0 ? 'Today' : `${days}d`}</span></div><p className="mt-2 truncate text-xs font-bold text-[#3f3214]">{recordTitle(record)}</p><p className="mt-1 truncate text-[10px] text-[#947c42]">{record.deadline ? fmtDate(record.deadline) : 'No deadline'}</p></button>;
+            })}
+            {upcomingDeadlines.length === 0 && <div className="col-span-3 flex items-center justify-center rounded-xl border border-dashed border-[#f1dfbb] p-4 text-xs text-[#947c42]">Add a deadline to see it here.</div>}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border bg-white p-3 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'application', 'scholarship'] as const).map(type => (
+              <button type="button" data-testid={`button-filter-type-${type}`} key={type} onClick={() => setRecordType(type)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors" style={recordType === type ? { borderColor: '#263f63', backgroundColor: '#263f63', color: '#fff' } : { borderColor: 'var(--apps-border)', color: 'var(--apps-text-secondary)' }}>{type === 'all' ? 'All targets' : type === 'application' ? 'Applications' : 'Scholarships'}</button>
+            ))}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row xl:justify-end">
+            <div className="relative min-w-0 sm:w-56">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input data-testid="input-unified-search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Search targets, programs, providers..." className="h-9 border pl-9 text-xs" />
+            </div>
+            <Select value={countryFilter} onValueChange={setCountryFilter}>
+              <SelectTrigger data-testid="select-unified-country" className="h-9 w-full text-xs sm:w-40"><SelectValue placeholder="All countries" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All countries</SelectItem>{countries.map(country => <SelectItem key={country} value={country}>{country}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={priorityFilter} onValueChange={value => setPriorityFilter(value as Priority | 'all')}>
+              <SelectTrigger data-testid="select-unified-priority" className="h-9 w-full text-xs sm:w-32"><SelectValue placeholder="All priority" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All priority</SelectItem><SelectItem value="high">High priority</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
+            </Select>
+            <div className="flex shrink-0 rounded-lg border p-0.5" style={{ borderColor: 'var(--apps-border)' }}>
+              <button type="button" data-testid="button-view-timeline" onClick={() => setViewMode('timeline')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-[#17223b] text-white' : 'text-muted-foreground'}`}><GitBranch className="mr-1 inline h-3.5 w-3.5" />Timeline</button>
+              <button type="button" data-testid="button-view-list" onClick={() => setViewMode('list')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-[#17223b] text-white' : 'text-muted-foreground'}`}><List className="mr-1 inline h-3.5 w-3.5" />List</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.65fr)]">
+        <div className="rounded-2xl border bg-[#fbfcfd] p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+          <div className="mb-5 flex items-end justify-between gap-3">
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#087f73]">Unified deadline stream</p><h3 className="mt-1 text-xl font-bold tracking-tight">Your targets, by region</h3></div>
+            <span className="text-xs text-muted-foreground">{filteredRecords.length} shown</span>
+          </div>
+          {appsLoading || scholarshipsLoading ? <div className="space-y-3"><div className="h-28 animate-pulse rounded-2xl bg-muted" /><div className="h-28 animate-pulse rounded-2xl bg-muted" /></div> : sortedCountries.length === 0 ? <div data-testid="unified-empty-state" className="rounded-2xl border border-dashed border-border bg-white p-10 text-center"><Target className="mx-auto h-8 w-8 text-muted-foreground/50" /><p className="mt-3 text-sm font-semibold">No targets match these filters</p><p className="mt-1 text-xs text-muted-foreground">Try clearing a filter or add a new application or scholarship.</p></div> : <div className="space-y-6">{sortedCountries.map(country => renderGroup(country, viewMode === 'timeline'))}</div>}
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-2xl border bg-white p-5" style={{ borderColor: 'var(--apps-border)' }}>
+            <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#4654a8]">Coverage</p><h3 className="mt-1 text-base font-bold">How ready are you?</h3></div><span className="font-heading text-2xl font-bold text-[#4654a8]">{requirementsPercent}%</span></div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#edf0f4]"><div className="h-full rounded-full bg-[#4654a8]" style={{ width: `${requirementsPercent}%` }} /></div>
+            <p className="mt-2 text-xs text-muted-foreground">{completedRequirementItems} of {totalRequirementItems} documents or requirements completed.</p>
+            <div className="mt-5 space-y-3 border-t pt-4" style={{ borderColor: 'var(--apps-border)' }}>
+              <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">High priority targets</span><strong>{highPriorityCount}</strong></div>
+              <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Countries / regions</span><strong>{countries.length}</strong></div>
+              <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Targets with deadlines</span><strong>{upcomingDeadlines.length}</strong></div>
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-[#17223b] p-5 text-white" style={{ borderColor: '#17223b' }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#a7e8df]">Keep momentum</p>
+            <h3 className="mt-2 text-base font-bold">{latestTest ? `${latestTest.testName} · ${latestTest.totalScore ?? '—'}` : 'Your next best action'}</h3>
+            <p className="mt-2 text-xs leading-5 text-white/65">{latestTest ? `Latest score recorded ${fmtDate(latestTest.attemptDate)}. Keep every deadline and document moving together.` : 'Add a test score or start a checklist so your targets become actionable.'}</p>
+            <button type="button" data-testid="button-overview-tests" onClick={() => onTabChange('tests')} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#a7e8df] hover:text-white">View test scores <ArrowUpRight className="h-3.5 w-3.5" /></button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
   const { data: apps = [] }   = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
   const { data: tests = [] }  = useQuery({ queryKey: ['other-tests'],  queryFn: api.getOtherTestScores });
@@ -1686,6 +2048,7 @@ function ScholarshipsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: scholarships = [], isLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
 
   const { data: customTemplates = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
 
@@ -1704,7 +2067,7 @@ function ScholarshipsTab() {
 
   const emptyForm = {
     name: '', provider: '', country: '', fundingType: 'Full Scholarship',
-    amount: '', currency: 'USD', deadline: '', status: 'planning', priority: 'medium', notes: '',
+    amount: '', currency: 'USD', deadline: '', status: 'planning', priority: 'medium', linkedApplicationId: '', notes: '',
     dateApplied: '', portalUrl: '', requirements: [] as ReqItem[],
   };
   const [form, setForm] = useState(emptyForm);
@@ -1740,6 +2103,7 @@ function ScholarshipsTab() {
       deadline:     String(s.deadline || ''),
       status:       String(s.status || 'planning'),
       priority:     String(s.priority || 'medium'),
+      linkedApplicationId: s.linkedApplicationId ? String(s.linkedApplicationId) : '',
       notes:        String(s.notes || ''),
       dateApplied:  String(s.dateApplied || ''),
       portalUrl:    String(s.portalUrl || ''),
@@ -1757,6 +2121,7 @@ function ScholarshipsTab() {
       dateApplied:      form.dateApplied || null,
       portalUrl:        form.portalUrl || null,
       amount:           form.amount ? Number(form.amount) : null,
+      linkedApplicationId: form.linkedApplicationId ? Number(form.linkedApplicationId) : null,
       requirementsJson: requirements.length ? JSON.stringify(requirements) : null,
     };
     if (editId) updateMutation.mutate({ id: editId, data: payload });
@@ -1989,6 +2354,20 @@ function ScholarshipsTab() {
               <div className="space-y-1">
                 <Label>Country</Label>
                 <Input placeholder="e.g. Finland 🇫🇮" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Link to University Application</Label>
+                <Select value={form.linkedApplicationId || 'none'} onValueChange={v => setForm(p => ({ ...p, linkedApplicationId: v === 'none' ? '' : v }))}>
+                  <SelectTrigger><SelectValue placeholder="No linked application" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No linked application</SelectItem>
+                    {(applications as { id: number; universityName: string; program?: string | null }[]).map(application => (
+                      <SelectItem key={application.id} value={String(application.id)}>
+                        {application.universityName}{application.program ? ` · ${application.program}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label>Funding Type</Label>
