@@ -13,7 +13,7 @@ router.get("/higher-study/scholarships", requireAuth, async (req, res): Promise<
       .orderBy(desc(scholarshipsTable.createdAt));
     res.json(rows ?? []);
   } catch (err: any) {
-    console.error("higher-study/scholarships error:", err?.message, err?.stack);
+    console.error("GET scholarships error:", err?.message, err?.stack);
     res.status(500).json({ error: err?.message ?? "Unknown error" });
   }
 });
@@ -36,32 +36,47 @@ const bodySchema = z.object({
 });
 
 router.post("/higher-study/scholarships", requireAuth, async (req, res): Promise<void> => {
-  const parsed = bodySchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const [row] = await db.insert(scholarshipsTable).values({ ...parsed.data, userId: req.userId }).returning();
-  res.status(201).json(row);
+  try {
+    const parsed = bodySchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+    const [row] = await db.insert(scholarshipsTable).values({ ...parsed.data, userId: req.userId }).returning();
+    res.status(201).json(row);
+  } catch (err: any) {
+    console.error("POST scholarships error:", err?.message, err?.stack);
+    res.status(500).json({ error: err?.message ?? "Unknown error" });
+  }
 });
 
 router.put("/higher-study/scholarships/:id", requireAuth, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const parsed = bodySchema.partial().safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const [row] = await db.update(scholarshipsTable).set(parsed.data)
-    .where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, req.userId!)))
-    .returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  res.json(row);
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const parsed = bodySchema.partial().safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+    const [row] = await db.update(scholarshipsTable).set(parsed.data)
+      .where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, req.userId!)))
+      .returning();
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    res.json(row);
+  } catch (err: any) {
+    console.error("PUT scholarships error:", err?.message, err?.stack);
+    res.status(500).json({ error: err?.message ?? "Unknown error" });
+  }
 });
 
 router.delete("/higher-study/scholarships/:id", requireAuth, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const [deleted] = await db.delete(scholarshipsTable)
-    .where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, req.userId!)))
-    .returning();
-  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
-  res.sendStatus(204);
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const [deleted] = await db.delete(scholarshipsTable)
+      .where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, req.userId!)))
+      .returning();
+    if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
+    res.sendStatus(204);
+  } catch (err: any) {
+    console.error("DELETE scholarships error:", err?.message, err?.stack);
+    res.status(500).json({ error: err?.message ?? "Unknown error" });
+  }
 });
 
 export default router;

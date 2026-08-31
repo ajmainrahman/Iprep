@@ -1,0 +1,1314 @@
+You are a senior product designer, UX architect, and full-stack engineer.
+
+I have an existing web application called:
+
+“Fly — Higher Study Prep”
+
+It is a personal Higher Studies and IELTS preparation management platform.
+
+I want to significantly upgrade the existing application, especially the APPLICATIONS and SCHOLARSHIPS sections, while preserving the existing data, functionality, authentication, routing, and overall product identity.
+
+IMPORTANT:
+DO NOT rebuild the entire application from scratch.
+DO NOT delete existing data.
+DO NOT unnecessarily change working features.
+First inspect the existing codebase, database/schema, components, routes, and current UI. Then implement the upgrade incrementally.
+
+I have provided screenshots of the current Applications interface. Use them as the visual reference for the existing product, but improve the UX substantially.
+
+==================================================
+1. PRODUCT VISION
+==================================================
+
+Transform “Fly” from a basic university tracker into a personal:
+
+“Higher Studies Command Center / Higher Studies OS”
+
+The platform should help me answer three questions immediately:
+
+1. What universities and scholarships am I targeting?
+2. What is the current status of each application?
+3. What should I do next?
+
+The new experience should feel like a premium modern SaaS productivity application combining ideas from:
+
+- Linear
+- Notion
+- modern project-management dashboards
+- application tracking systems
+- academic planning tools
+
+The UI must remain professional, clean, minimal, modern, and highly usable.
+
+==================================================
+2. DESIGN DIRECTION
+==================================================
+
+Keep the existing Fly visual identity:
+
+- Dark purple/navy sidebar
+- Purple primary accent
+- Light neutral background
+- White cards
+- Rounded corners
+- Subtle borders
+- Minimal shadows
+- Modern typography
+- Clean icons
+- Professional academic/productivity aesthetic
+
+However, improve:
+
+- Information hierarchy
+- Density
+- Spacing
+- Card design
+- Navigation
+- Filtering
+- Progress visualization
+- Data organization
+- Responsiveness
+
+The current application cards are too vertically long and create excessive scrolling.
+
+Make the new cards more compact and information-dense.
+
+Avoid:
+- excessive gradients
+- excessive animations
+- huge cards
+- unnecessary illustrations
+- excessive colors
+- clutter
+- overly rounded “toy-like” UI
+
+Use color primarily for:
+- status
+- priority
+- warnings
+- success
+- deadlines
+- important actions
+
+==================================================
+3. NEW APPLICATIONS INFORMATION ARCHITECTURE
+==================================================
+
+Upgrade the Applications section to include:
+
+Applications
+├── Overview
+├── All Applications
+├── Pipeline
+└── Deadlines
+
+Keep the existing List and Timeline views if they already exist, but add:
+
+- List View
+- Kanban/Pipeline View
+- Timeline View
+- Calendar/Deadline View
+
+Users should be able to switch views easily.
+
+==================================================
+4. APPLICATION OVERVIEW DASHBOARD
+==================================================
+
+At the top of Applications, create a compact overview dashboard.
+
+Display:
+
+- Total Universities
+- Shortlisted
+- Preparing
+- Submitted
+- Offers
+- Rejected
+
+Example:
+
+40 Universities
+12 Shortlisted
+7 Preparing
+3 Submitted
+1 Offer
+
+Do not hard-code these numbers.
+
+They must be dynamically calculated from the application database.
+
+Below the statistics, add:
+
+APPLICATION PROGRESS
+
+Show a visual progress indicator based on the overall application pipeline.
+
+Example:
+
+Researching → Shortlisted → Preparing → Submitted → Under Review → Offer
+
+Also display an overall percentage.
+
+==================================================
+5. “TODAY / NEXT ACTIONS” SECTION
+==================================================
+
+This is one of the most important new features.
+
+Create a section called:
+
+“Priority Actions”
+
+or
+
+“Next Actions”
+
+It should automatically identify the most important tasks.
+
+Examples:
+
+🔴 University of Alberta
+Find potential supervisors
+Due in 3 days
+
+🟠 University of Waterloo
+Complete SOP
+Due in 7 days
+
+🟡 University of Manitoba
+Verify IELTS requirement
+Due in 10 days
+
+Each item should have:
+
+- University
+- Task
+- Deadline
+- Priority
+- Status
+- CTA button
+
+Buttons:
+
+[Continue]
+[Mark Complete]
+[View Application]
+
+Prioritize tasks based on:
+
+1. Deadline proximity
+2. Priority
+3. Application status
+4. Incomplete documents
+
+==================================================
+6. APPLICATION PIPELINE
+==================================================
+
+Create the following application lifecycle:
+
+Researching
+↓
+Shortlisted
+↓
+Supervisor Contact
+↓
+Preparing
+↓
+Ready to Apply
+↓
+Submitted
+↓
+Under Review
+↓
+Interview
+↓
+Offer
+↓
+Accepted
+
+Also support:
+
+- Rejected
+- Withdrawn
+- Missed Deadline
+
+Create a Kanban board.
+
+Example:
+
+RESEARCHING | SHORTLISTED | PREPARING | READY | SUBMITTED | OFFER
+
+Each university should appear as a compact card.
+
+Allow drag-and-drop between statuses if technically appropriate.
+
+When status changes, persist it to the database.
+
+==================================================
+7. REDESIGN UNIVERSITY APPLICATION CARD
+==================================================
+
+Replace the current large vertical cards with compact expandable cards.
+
+Collapsed card should show:
+
+Country flag
+University name
+Program
+Priority
+Application status
+Deadline
+Days remaining
+Document progress
+Profile match
+Next action
+
+Example:
+
+------------------------------------------------
+🇨🇦 University of Alberta
+MSc Computer Science
+
+Researching        🟠 Medium
+
+Deadline: Dec 1, 2026
+92 days remaining
+
+Documents: 0/9
+Readiness: 24%
+Profile Match: 86%
+
+Next Action:
+Find 3 potential supervisors
+
+[View Details] [Edit]
+------------------------------------------------
+
+Clicking the card or “View Details” should open an expandable panel or detail drawer.
+
+==================================================
+8. APPLICATION DETAIL PAGE / DRAWER
+==================================================
+
+Create a detailed application view containing:
+
+A. Basic Information
+
+- University
+- Country
+- City
+- Degree
+- Program
+- Faculty/Department
+- Program URL
+- Application URL
+- Application type
+
+B. Status
+
+Show the application pipeline visually.
+
+C. Deadline
+
+Show:
+
+- Exact deadline
+- Days remaining
+- Deadline type
+- Time zone if available
+
+D. Documents
+
+Show checklist:
+
+☐ CV
+☐ SOP
+☐ Transcript
+☐ Recommendation Letter 1
+☐ Recommendation Letter 2
+☐ IELTS
+☐ Passport
+☐ Portfolio
+☐ Other
+
+Allow custom documents.
+
+E. Funding
+
+Show scholarships/funding opportunities linked to this application.
+
+F. Professors
+
+Show potential supervisors linked to this university.
+
+G. Notes
+
+Allow personal notes.
+
+H. Next Action
+
+Every application should have one clearly defined next action.
+
+==================================================
+9. APPLICATION READINESS SCORE
+==================================================
+
+Create an automatically calculated:
+
+“Application Readiness Score”
+
+Example:
+
+72%
+
+Documents       80%
+IELTS           100%
+SOP              60%
+References       50%
+Program Research 90%
+Funding          70%
+
+The score should be calculated dynamically.
+
+Do NOT invent arbitrary values.
+
+Create a configurable scoring system.
+
+For example:
+
+Documents = 30%
+IELTS = 15%
+SOP = 15%
+References = 15%
+Program Research = 10%
+Funding = 10%
+Other = 5%
+
+Allow future adjustment of these weights.
+
+==================================================
+10. PROFILE MATCH SCORE
+==================================================
+
+Add a:
+
+“Profile Match”
+
+for each university/application.
+
+Example:
+
+86% Match
+
+Academic Background      90%
+Research Experience      95%
+Technical Skills         90%
+IELTS                    75%
+Program Fit              100%
+Experience               85%
+
+Also show:
+
+“Potential Weaknesses”
+
+Example:
+
+⚠ IELTS requirement
+⚠ Supervisor alignment
+
+IMPORTANT:
+
+This should be a framework where the user can manually enter or configure criteria initially.
+
+Do NOT make unsupported claims about actual university admission probability.
+
+Label it clearly as:
+
+“Profile Match”
+not
+“Admission Probability”
+
+==================================================
+11. DEADLINE CENTER
+==================================================
+
+Create a dedicated deadline management interface.
+
+Categories:
+
+🔴 Due within 7 days
+🟠 Due within 30 days
+🟡 Due within 60 days
+🟢 Due in 60+ days
+
+Show:
+
+- Application deadline
+- Scholarship deadline
+- IELTS date
+- Document deadline
+- Professor follow-up
+- Custom tasks
+
+Each deadline should support:
+
+- Date
+- Time
+- Priority
+- Related university
+- Related scholarship
+- Task
+- Completion status
+
+==================================================
+12. AUTOMATIC APPLICATION TASKS
+==================================================
+
+When an application deadline is entered, allow the user to generate a preparation checklist.
+
+Example:
+
+Deadline:
+December 1, 2026
+
+Suggested tasks:
+
+November 1
+Finalize SOP
+
+November 10
+Request recommendation letters
+
+November 15
+Finalize CV
+
+November 20
+Upload documents
+
+November 25
+Final application review
+
+November 28
+Submit
+
+December 1
+Application deadline
+
+The user must be able to edit/delete these tasks.
+
+==================================================
+13. APPLICATION COST TRACKING
+==================================================
+
+Add optional cost tracking.
+
+For each application:
+
+Application Fee
+IELTS Cost
+Credential Evaluation
+Transcript
+Courier
+Other
+
+Calculate:
+
+Total Cost
+Paid
+Remaining
+
+Create an overall:
+
+“Application Budget”
+
+dashboard.
+
+Example:
+
+Planned Applications: 12
+Estimated Cost: $1,240
+Spent: $420
+Remaining: $820
+
+Support multiple currencies if practical.
+
+==================================================
+14. SCHOLARSHIP SECTION REDESIGN
+==================================================
+
+Upgrade Scholarships into a proper scholarship management system.
+
+Navigation:
+
+Scholarships
+├── Overview
+├── All Scholarships
+├── Eligible
+├── Applying
+├── Applied
+├── Won
+└── Deadlines
+
+Dashboard statistics:
+
+- Total Scholarships
+- Eligible
+- High Match
+- Applying
+- Applied
+- Won
+
+==================================================
+15. SCHOLARSHIP CARD
+==================================================
+
+Create modern scholarship cards.
+
+Example:
+
+------------------------------------------------
+🎓 Erasmus Mundus Joint Masters
+
+94% Profile Match
+
+🇪🇺 Europe
+Master's
+💰 Fully Funded
+
+Tuition + Living + Travel + Insurance
+
+Deadline:
+January 2027
+
+143 days remaining
+
+Eligibility:
+✓ Bachelor's Degree
+✓ Relevant Background
+✓ Nationality Eligible
+⚠ IELTS requirement
+
+Application:
+██████████████░░ 75%
+
+[View Scholarship]
+[Track Application]
+------------------------------------------------
+
+Make all values dynamic.
+
+==================================================
+16. SCHOLARSHIP MATCH SCORE
+==================================================
+
+Create:
+
+“Scholarship Match”
+
+Example:
+
+94%
+
+Eligibility Criteria
+Academic Background
+Degree
+Research Experience
+English Requirement
+Nationality
+Work Experience
+
+Display:
+
+✓ Meets requirement
+⚠ Needs attention
+✕ Does not meet
+
+Do not claim guaranteed eligibility.
+
+This is a personal tracking/matching tool.
+
+==================================================
+17. SCHOLARSHIP FUNDING BREAKDOWN
+==================================================
+
+Allow scholarship records to contain:
+
+- Tuition coverage
+- Monthly stipend
+- Travel allowance
+- Accommodation
+- Insurance
+- Research funding
+- Other benefits
+
+Display visually:
+
+Tuition       ████████████████████ 100%
+Living        ████████████████████ 100%
+Travel        ████████████████████ 100%
+Insurance     ████████████████████ 100%
+
+Funding type:
+
+Fully Funded
+Partially Funded
+Tuition Waiver
+External Funding
+Self Funded
+
+==================================================
+18. CONNECT UNIVERSITIES AND SCHOLARSHIPS
+==================================================
+
+Applications and Scholarships must not be isolated systems.
+
+Allow:
+
+University → Related Scholarships
+
+and:
+
+Scholarship → Applicable Universities
+
+Example:
+
+University of Alberta
+
+Funding Opportunities:
+
+- Graduate Fellowship
+- Research Assistantship
+- External Scholarship
+
+Each relationship should be stored in the database.
+
+==================================================
+19. DOCUMENT CENTER
+==================================================
+
+Create a new Documents section.
+
+Track:
+
+- CV
+- SOP
+- Motivation Letter
+- Transcript
+- IELTS
+- Recommendation Letters
+- Passport
+- Portfolio
+- Research Proposal
+- Other
+
+Each document should have:
+
+- Name
+- Version
+- Upload date
+- Last modified
+- Status
+- Related applications
+
+Example:
+
+CV_v4.pdf
+Updated Aug 28
+
+Used by:
+Alberta
+Waterloo
+Manitoba
+DTU
+
+If possible, display a warning when an application uses an older document version.
+
+Example:
+
+⚠ 5 applications are using an older CV version.
+
+Do not break existing document functionality if already implemented.
+
+==================================================
+20. PROFESSOR / SUPERVISOR TRACKER
+==================================================
+
+Add:
+
+“Professors”
+
+Track:
+
+- Professor name
+- University
+- Department
+- Research area
+- Email
+- Lab
+- Website
+- Google Scholar URL
+- Research papers
+- Fit score
+- Contact date
+- Response
+- Follow-up date
+- Notes
+
+Statuses:
+
+Not Contacted
+Preparing Email
+Emailed
+Waiting
+Follow-up Required
+Interested
+Not Interested
+
+==================================================
+21. PROFESSOR FOLLOW-UP SYSTEM
+==================================================
+
+Allow follow-up dates.
+
+Example:
+
+Professor contacted:
+August 25
+
+Follow-up:
+September 1
+
+Dashboard should display:
+
+🔔 2 professor follow-ups due this week
+
+Allow:
+
+[Mark Follow-up Done]
+[Reschedule]
+[Open Professor]
+
+==================================================
+22. CALENDAR
+==================================================
+
+Create a unified Higher Studies calendar.
+
+Event types:
+
+🟣 Application
+🟢 Scholarship
+🔵 IELTS
+🟠 Document
+🔴 Deadline
+🟡 Professor Follow-up
+⚪ Custom
+
+Allow:
+
+- Month view
+- Week view
+- Agenda view
+
+Clicking an event should open its related record.
+
+==================================================
+23. APPLICATION STRATEGY
+==================================================
+
+Add a strategic overview.
+
+Classify universities:
+
+Strong Fit
+Good Fit
+Reach
+High Reach
+
+Display a visual distribution.
+
+Example:
+
+Strong Fit: 12
+Good Fit: 15
+Reach: 8
+High Reach: 5
+
+The goal is to help maintain a balanced application portfolio.
+
+Do not call these categories “safe admission” or guarantee acceptance.
+
+==================================================
+24. SEARCH AND FILTERING
+==================================================
+
+Improve search.
+
+Applications:
+
+Search by:
+- University
+- Program
+- Country
+- Professor
+- Status
+
+Filters:
+
+- Country
+- Priority
+- Status
+- Deadline
+- Readiness
+- Profile Match
+- Funding
+- Application Type
+
+Scholarships:
+
+- Country/Region
+- Degree
+- Funding Type
+- Deadline
+- Eligibility
+- Match Score
+- Status
+
+Filters should be fast and easy to clear.
+
+==================================================
+25. BULK ACTIONS
+==================================================
+
+Allow selecting multiple applications.
+
+Possible bulk actions:
+
+- Change status
+- Change priority
+- Add tag
+- Add task
+- Archive
+- Delete
+- Export
+
+Always confirm destructive actions.
+
+==================================================
+26. TAGGING SYSTEM
+==================================================
+
+Allow custom tags.
+
+Examples:
+
+AI
+ML
+Computer Vision
+NLP
+Biomedical
+Research
+Fully Funded
+Erasmus
+Canada
+Denmark
+Finland
+Norway
+
+Tags should be searchable/filterable.
+
+==================================================
+27. NOTIFICATIONS
+==================================================
+
+Add an in-app notification center.
+
+Examples:
+
+🔴 Application deadline in 5 days
+🟠 SOP incomplete
+🟡 Professor follow-up due
+🟢 Scholarship deadline approaching
+⚠ Missing IELTS requirement
+
+Do not implement email/push notifications unless the existing architecture supports them cleanly.
+
+==================================================
+28. EXPORT
+==================================================
+
+Allow users to export:
+
+Applications
+Scholarships
+Deadlines
+Tasks
+Costs
+
+Prefer CSV and PDF where practical.
+
+==================================================
+29. RESPONSIVE DESIGN
+==================================================
+
+The website must work well on:
+
+Desktop
+Laptop
+Tablet
+Mobile
+
+Desktop should prioritize productivity.
+
+Mobile should use:
+
+- compact cards
+- bottom sheets/drawers
+- horizontal scrolling where necessary
+- collapsible filters
+- sticky action buttons
+
+Do not simply shrink the desktop interface.
+
+==================================================
+30. ACCESSIBILITY
+==================================================
+
+Follow good accessibility practices:
+
+- keyboard navigation
+- visible focus states
+- semantic HTML
+- sufficient contrast
+- meaningful labels
+- accessible buttons
+- tooltips where icons are ambiguous
+
+Do not rely on color alone to communicate status.
+
+==================================================
+31. PERFORMANCE
+==================================================
+
+There may be 40–150+ applications/scholarships.
+
+Design for scalability.
+
+Avoid rendering unnecessarily large DOM trees.
+
+Use pagination, virtualization, or efficient rendering if appropriate.
+
+Search/filter operations should remain responsive.
+
+==================================================
+32. DATA SAFETY
+==================================================
+
+CRITICAL:
+
+Do not delete or overwrite existing user data.
+
+Before changing the database:
+
+1. Inspect current schema.
+2. Reuse existing fields where possible.
+3. Add migrations for new fields.
+4. Preserve backward compatibility.
+5. Test existing functionality.
+
+If existing data cannot support a new feature, create optional fields rather than breaking existing records.
+
+==================================================
+33. COMPONENT ARCHITECTURE
+==================================================
+
+Create reusable components such as:
+
+ApplicationCard
+ApplicationPipeline
+ApplicationStats
+ApplicationDetailDrawer
+DeadlineCard
+NextActionCard
+ReadinessScore
+ProfileMatchScore
+DocumentChecklist
+ScholarshipCard
+ScholarshipMatch
+FundingBreakdown
+ProfessorCard
+CalendarView
+FilterBar
+SearchBar
+StatusBadge
+PriorityBadge
+ProgressBar
+EmptyState
+ConfirmationModal
+
+Do not duplicate UI code unnecessarily.
+
+==================================================
+34. UX DETAILS
+==================================================
+
+Use subtle micro-interactions:
+
+- hover states
+- smooth card expansion
+- progress animation
+- status transitions
+- drawer animations
+- success feedback
+- loading skeletons
+
+Keep animations subtle and fast.
+
+Do NOT make the application feel flashy.
+
+==================================================
+35. EMPTY STATES
+==================================================
+
+Design proper empty states.
+
+Examples:
+
+No applications:
+
+“Your application journey starts here.”
+
+[+ Add University]
+
+No scholarships:
+
+“Track funding opportunities for your next degree.”
+
+[+ Add Scholarship]
+
+No upcoming deadlines:
+
+“You’re all clear for now.”
+
+==================================================
+36. DASHBOARD SUMMARY
+==================================================
+
+The main Overview dashboard should eventually show:
+
+--------------------------------------------
+
+GOOD MORNING
+
+Your Higher Studies Progress
+
+Applications
+40 tracked
+
+Shortlisted
+12
+
+Preparing
+7
+
+Submitted
+3
+
+Offers
+1
+
+--------------------------------------------
+
+NEXT ACTIONS
+
+3 tasks require attention
+
+--------------------------------------------
+
+UPCOMING DEADLINES
+
+Next deadline
+University of Alberta
+Dec 1, 2026
+
+--------------------------------------------
+
+APPLICATION PIPELINE
+
+Researching → Shortlisted → Preparing → Submitted → Offer
+
+--------------------------------------------
+
+SCHOLARSHIPS
+
+18 eligible
+6 high match
+
+--------------------------------------------
+
+DOCUMENTS
+
+31 / 150 completed
+
+--------------------------------------------
+
+IELTS
+
+Latest Score
+6.0
+
+Target
+6.5
+
+--------------------------------------------
+
+==================================================
+37. IMPORTANT UI RULE
+==================================================
+
+Do not overload the dashboard.
+
+The user should understand their current situation within approximately 5–10 seconds.
+
+Prioritize:
+
+1. Urgent actions
+2. Deadlines
+3. Application progress
+4. Scholarships
+5. Documents
+6. IELTS
+
+Detailed information belongs inside the relevant pages/drawers.
+
+==================================================
+38. EXISTING FEATURES
+==================================================
+
+Before implementing anything:
+
+Audit the current application.
+
+Identify:
+
+- existing routes
+- components
+- database tables
+- APIs
+- authentication
+- state management
+- styling system
+- existing application fields
+- existing scholarship fields
+- existing IELTS features
+- existing document functionality
+
+Reuse the existing architecture wherever reasonable.
+
+Do not replace a working implementation simply for stylistic reasons.
+
+==================================================
+39. IMPLEMENTATION STRATEGY
+==================================================
+
+Implement in phases.
+
+PHASE 1:
+Application UI redesign
+
+- Application Overview
+- Statistics
+- Next Actions
+- Redesigned Application Cards
+- Better filters
+- Application Detail Drawer
+
+PHASE 2:
+Application management
+
+- Pipeline/Kanban
+- Readiness Score
+- Next Action
+- Deadline Center
+- Task generation
+
+PHASE 3:
+Scholarship redesign
+
+- Scholarship Dashboard
+- Scholarship Cards
+- Match Score
+- Funding Breakdown
+- University ↔ Scholarship relationships
+
+PHASE 4:
+Supporting systems
+
+- Document Center
+- Professor Tracker
+- Follow-ups
+- Calendar
+- Costs
+- Tags
+
+PHASE 5:
+Polish
+
+- Responsive design
+- Accessibility
+- Loading states
+- Empty states
+- Animations
+- Performance optimization
+
+==================================================
+40. DEVELOPMENT RULE
+==================================================
+
+Do NOT attempt to implement every feature blindly in one huge change.
+
+First:
+
+1. Inspect the codebase.
+2. Explain the current architecture briefly.
+3. Identify what can be reused.
+4. Identify database changes required.
+5. Create an implementation plan.
+6. Then implement Phase 1.
+7. Test it.
+8. Continue to Phase 2.
+
+Do not ask me unnecessary questions if the existing codebase already provides the required information.
+
+If a design decision is unclear, choose the option that provides the simplest, most maintainable, professional UX.
+
+==================================================
+41. FINAL QUALITY BAR
+==================================================
+
+The final result should feel like a premium personal Higher Studies management platform rather than a simple CRUD dashboard.
+
+The experience should make the user feel:
+
+“I know exactly where every application stands.”
+
+“I know which deadlines are approaching.”
+
+“I know what I need to do next.”
+
+“I know which scholarships I should prioritize.”
+
+“I know whether each application is ready.”
+
+“I can manage my entire Master's application journey from one place.”
+
+Maintain the name:
+
+FLY
+Higher Study Prep
+
+Do not change the brand name unless explicitly instructed.
+
+Start by inspecting the existing codebase and current UI before making changes.

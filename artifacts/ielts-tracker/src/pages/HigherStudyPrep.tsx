@@ -39,11 +39,11 @@ const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: str
 };
 
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string }> = {
-  planning:       { label: 'Planning',       color: 'text-slate-500' },
-  ready_to_apply: { label: 'Ready to Apply', color: 'text-emerald-600' },
+  planning:       { label: 'Eligible',       color: 'text-slate-600' },
+  ready_to_apply: { label: 'Applying',       color: 'text-amber-600' },
   applied:        { label: 'Applied',        color: 'text-blue-600' },
-  awarded:        { label: 'Awarded 🏆',     color: 'text-green-600' },
-  rejected:       { label: 'Rejected',       color: 'text-red-600' },
+  awarded:        { label: 'Won',            color: 'text-emerald-600' },
+  rejected:       { label: 'Not selected',   color: 'text-red-600' },
 };
 
 const PRIORITY_META: Record<Priority, { label: string; color: string; bg: string; dot: string }> = {
@@ -160,6 +160,47 @@ function safeParseReqs(json: string | null | undefined): ReqItem[] {
     if (!Array.isArray(arr)) return [];
     return arr.filter((x): x is ReqItem => x && typeof x.label === 'string');
   } catch { return []; }
+}
+
+type TrackedRow = Record<string, unknown> & { id: number };
+
+function nextApplicationAction(app: TrackedRow): string {
+  const reqs = safeParseReqs(app.requirementsJson as string);
+  const openReqs = reqs.filter(item => !item.done).length;
+  const days = daysUntil(String(app.deadline || ''));
+  if (days !== null && days >= 0 && days <= 7) return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
+  if (app.status === 'researching') return 'Review programme fit';
+  if (app.status === 'ready_to_apply') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Submit application';
+  if (app.status === 'applied') return 'Watch for updates';
+  if (app.status === 'interview') return 'Prepare for interview';
+  if (app.status === 'waitlisted') return 'Check for updates';
+  return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Keep notes current';
+}
+
+function nextScholarshipAction(scholarship: TrackedRow): string {
+  const reqs = parseReqs(scholarship.requirementsJson);
+  const openReqs = reqs.filter(item => !item.done).length;
+  const days = daysUntil(String(scholarship.deadline || ''));
+  if (days !== null && days >= 0 && days <= 7) return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
+  if (scholarship.status === 'planning') return 'Check eligibility';
+  if (scholarship.status === 'ready_to_apply') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Submit application';
+  if (scholarship.status === 'applied') return 'Watch for updates';
+  if (scholarship.status === 'awarded') return 'Confirm award details';
+  return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Archive or revisit';
+}
+
+function DeadlineCue({ deadline }: { deadline: unknown }) {
+  const date = String(deadline || '');
+  const days = daysUntil(date);
+  const urgent = days !== null && days >= 0 && days <= 7;
+  const soon = days !== null && days > 7 && days <= 30;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-medium ${urgent ? 'text-red-600' : soon ? 'text-amber-700' : 'text-muted-foreground'}`}>
+      <CalendarDays className="h-3.5 w-3.5" />
+      {date ? fmtDate(date) : 'No deadline'}
+      {days !== null && days >= 0 && <span className="font-bold">· {days === 0 ? 'Today' : `${days}d left`}</span>}
+    </span>
+  );
 }
 
 /* ── Main export ─────────────────────────────────────────────────────────── */
@@ -915,17 +956,18 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
 function ApplicationsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { data: apps = [], isLoading } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: apps = [], isLoading, isError, refetch } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
   const { data: customTemplates = [] }  = useQuery({ queryKey: ['templates'],    queryFn: api.getTemplates });
 
   const [showForm,    setShowForm]    = useState(false);
   const [editId,      setEditId]      = useState<number | null>(null);
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
   const [newItemDraft,  setNewItemDraft]  = useState('');
-  const [viewMode,    setViewMode]    = useState<'list' | 'timeline'>('list');
+  const [viewMode,    setViewMode]    = useState<'list' | 'timeline' | 'kanban'>('list');
 
   const [countryFilter,  setCountryFilter]  = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+  const [statusFilter, setStatusFilter] = useState<AppStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const uniqueCountries = React.useMemo(() => {
@@ -1033,6 +1075,10 @@ function ApplicationsTab() {
     setNewItemDraft('');
   }
 
+  function changeApplicationStatus(app: TrackedRow, status: AppStatus) {
+    updateMutation.mutate({ id: app.id, data: { status } });
+  }
+
   const allTemplates = [
     ...DEFAULT_TEMPLATES,
     ...(customTemplates as { id: number; name: string; items: string }[]).map(t => ({
@@ -1046,6 +1092,10 @@ function ApplicationsTab() {
   const applicationRows = apps as (Record<string, unknown> & { id: number })[];
   const applicationSummary = React.useMemo(() => {
     const priorityCounts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
+    const statusCounts = Object.keys(APP_STATUS_META).reduce<Record<string, number>>((acc, status) => {
+      acc[status] = 0;
+      return acc;
+    }, {});
     let docsCompleted = 0;
     let docsTotal = 0;
     let upcomingDeadlines = 0;
@@ -1057,18 +1107,40 @@ function ApplicationsTab() {
 
       const priority = String(app.priority || 'medium') as Priority;
       priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
+      const status = String(app.status || 'researching');
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
 
       const days = daysUntil(String(app.deadline || ''));
       if (days !== null && days >= 0 && days <= 30) upcomingDeadlines += 1;
     });
 
-    return { docsCompleted, docsTotal, upcomingDeadlines, priorityCounts };
+    return { docsCompleted, docsTotal, upcomingDeadlines, priorityCounts, statusCounts };
   }, [apps]);
 
   const docsCompletion = applicationSummary.docsTotal > 0
     ? Math.round((applicationSummary.docsCompleted / applicationSummary.docsTotal) * 100)
     : 0;
   const priorityTotal = applicationRows.length || 1;
+  const filteredApplications = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return applicationRows
+      .filter(app => {
+        if (countryFilter && String(app.country || '') !== countryFilter) return false;
+        if (priorityFilter && String(app.priority || 'medium') !== priorityFilter) return false;
+        if (statusFilter && String(app.status || 'researching') !== statusFilter) return false;
+        if (query && ![app.universityName, app.program, app.country, app.degreeType]
+          .map(value => String(value || '').toLowerCase()).join(' ').includes(query)) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const da = String(a.deadline || '');
+        const db = String(b.deadline || '');
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da > db ? 1 : -1;
+      });
+  }, [applicationRows, countryFilter, priorityFilter, statusFilter, searchQuery]);
 
   return (
     <div className="space-y-5 rounded-2xl p-1" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
@@ -1161,6 +1233,37 @@ function ApplicationsTab() {
         </div>
       </div>
 
+      {/* Status pulse — a compact, live pipeline summary */}
+      <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>Application pulse</p>
+            <p className="mt-0.5 text-[11px]" style={{ color: 'var(--apps-text-muted)' }}>Move a target forward as soon as its next step is clear.</p>
+          </div>
+          <span className="hidden text-[10px] font-bold uppercase tracking-[0.12em] sm:block" style={{ color: 'var(--apps-text-muted)' }}>Live status</span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([status, meta]) => {
+            const count = applicationSummary.statusCounts[status] || 0;
+            const active = statusFilter === status;
+            return (
+              <button
+                key={status}
+                type="button"
+                data-testid={`filter-application-status-${status}`}
+                onClick={() => setStatusFilter(active ? null : status)}
+                aria-pressed={active}
+                className="rounded-lg border px-2.5 py-2 text-left transition-colors hover:border-indigo-300"
+                style={{ borderColor: active ? 'var(--apps-accent)' : 'var(--apps-border)', backgroundColor: active ? 'var(--apps-accent-light)' : 'var(--apps-bg-page)' }}
+              >
+                <span className={`block truncate text-[10px] font-semibold ${meta.color}`}>{meta.label}</span>
+                <span className="mt-1 block text-lg font-bold leading-none" style={{ color: 'var(--apps-text-primary)' }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Top bar */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <p className="text-sm" style={{ color: 'var(--apps-text-secondary)' }}>
@@ -1170,6 +1273,8 @@ function ApplicationsTab() {
           {/* View toggle */}
           <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--apps-border)' }}>
             <button
+              type="button"
+              data-testid="button-applications-view-list"
               onClick={() => setViewMode('list')}
               className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
               style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
@@ -1177,15 +1282,27 @@ function ApplicationsTab() {
               <List className="w-3.5 h-3.5" /> List
             </button>
             <button
+              type="button"
+              data-testid="button-applications-view-timeline"
               onClick={() => setViewMode('timeline')}
               className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
               style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
             >
               <GitBranch className="w-3.5 h-3.5" /> Timeline
             </button>
+            <button
+              type="button"
+              data-testid="button-applications-view-kanban"
+              onClick={() => setViewMode('kanban')}
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'kanban' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
+              style={viewMode === 'kanban' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
+            >
+              <Layers className="w-3.5 h-3.5" /> Board
+            </button>
           </div>
           <Button
             size="sm"
+            data-testid="button-add-application"
             onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }}
             className="text-white hover:brightness-95"
             style={{ backgroundColor: 'var(--apps-accent)' }}
@@ -1201,6 +1318,8 @@ function ApplicationsTab() {
           {uniqueCountries.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <button
+                type="button"
+                data-testid="filter-application-country-all"
                 onClick={() => setCountryFilter(null)}
                 className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors"
                 style={!countryFilter
@@ -1211,6 +1330,8 @@ function ApplicationsTab() {
               </button>
               {uniqueCountries.map(c => (
                 <button
+                  type="button"
+                  data-testid={`filter-application-country-${c}`}
                   key={c}
                   onClick={() => setCountryFilter(countryFilter === c ? null : c)}
                   className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors"
@@ -1240,6 +1361,8 @@ function ApplicationsTab() {
               <span className="text-xs font-medium shrink-0" style={{ color: 'var(--apps-text-secondary)' }}>Priority:</span>
               {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(p => (
                 <button
+                  type="button"
+                  data-testid={`filter-application-priority-${p ?? 'all'}`}
                   key={p ?? 'all'}
                   onClick={() => setPriorityFilter(p)}
                   className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
@@ -1271,6 +1394,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>University Name *</Label>
                 <Input
+                  data-testid="input-application-university"
                   placeholder="e.g. University of Copenhagen"
                   value={formBase.universityName}
                   onChange={e => setFormBase(p => ({ ...p, universityName: e.target.value }))}
@@ -1279,6 +1403,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Country *</Label>
                 <Input
+                  data-testid="input-application-country"
                   placeholder="e.g. Denmark"
                   list="countries-list"
                   value={formBase.country}
@@ -1291,6 +1416,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Program *</Label>
                 <Input
+                  data-testid="input-application-program"
                   placeholder="e.g. Computer Science"
                   value={formBase.program}
                   onChange={e => setFormBase(p => ({ ...p, program: e.target.value }))}
@@ -1299,7 +1425,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Degree Type</Label>
                 <Select value={formBase.degreeType} onValueChange={v => setFormBase(p => ({ ...p, degreeType: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger data-testid="select-application-degree"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['MS', 'MBA', 'PhD', 'MEng', 'MA', 'MFA', 'LLM', 'MPH', 'MPA', 'Undergraduate', 'Other'].map(d => (
                       <SelectItem key={d} value={d}>{d}</SelectItem>
@@ -1310,7 +1436,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Status</Label>
                 <Select value={formBase.status} onValueChange={v => setFormBase(p => ({ ...p, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger data-testid="select-application-form-status"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(APP_STATUS_META).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
@@ -1321,7 +1447,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Priority</Label>
                 <Select value={formBase.priority} onValueChange={v => setFormBase(p => ({ ...p, priority: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger data-testid="select-application-form-priority"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(PRIORITY_META).map(([k, v]) => (
                       <SelectItem key={k} value={k}>
@@ -1334,6 +1460,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Application Deadline</Label>
                 <Input
+                  data-testid="input-application-deadline"
                   type="date"
                   value={formBase.deadline}
                   onChange={e => setFormBase(p => ({ ...p, deadline: e.target.value }))}
@@ -1342,6 +1469,7 @@ function ApplicationsTab() {
               <div className="space-y-1">
                 <Label>Date Applied</Label>
                 <Input
+                  data-testid="input-application-applied-date"
                   type="date"
                   value={formBase.appliedDate}
                   onChange={e => setFormBase(p => ({ ...p, appliedDate: e.target.value }))}
@@ -1350,6 +1478,7 @@ function ApplicationsTab() {
               <div className="space-y-1 sm:col-span-2">
                 <Label>University Portal / Application URL</Label>
                 <Input
+                  data-testid="input-application-portal"
                   type="url"
                   placeholder="https://apply.university.edu"
                   value={formBase.websiteUrl}
@@ -1415,6 +1544,8 @@ function ApplicationsTab() {
                         className="flex-1 h-8 text-sm"
                       />
                       <button
+                        type="button"
+                        data-testid={`button-remove-application-requirement-${i}`}
                         onClick={() => removeReqItem(i)}
                         className="shrink-0 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
                       >
@@ -1429,6 +1560,7 @@ function ApplicationsTab() {
             <div className="space-y-1">
               <Label>Notes</Label>
               <Textarea
+                data-testid="textarea-application-notes"
                 rows={2}
                 placeholder="Funding info, contact person, ranking…"
                 value={formBase.notes}
@@ -1439,6 +1571,7 @@ function ApplicationsTab() {
             <div className="space-y-1">
               <Label>Comments</Label>
               <Textarea
+                data-testid="textarea-application-comments"
                 rows={2}
                 placeholder="Pros/cons, tuition cost, visa notes, personal impressions…"
                 value={formBase.comments}
@@ -1449,6 +1582,7 @@ function ApplicationsTab() {
             <div className="flex gap-2">
               <Button
                 size="sm"
+                data-testid="button-save-application"
                 disabled={!formBase.universityName || !formBase.country || !formBase.program}
                 onClick={saveForm}
                 className="bg-navy hover:bg-navy/90 dark:bg-indigo dark:hover:bg-indigo/90 text-white"
@@ -1459,6 +1593,7 @@ function ApplicationsTab() {
               <Button
                 size="sm"
                 variant="ghost"
+                data-testid="button-cancel-application"
                   onClick={() => { setShowForm(false); setEditId(null); }}
               >
                 <X className="w-4 h-4 mr-1" /> Cancel
@@ -1470,12 +1605,75 @@ function ApplicationsTab() {
 
       {/* ── Application list / timeline ── */}
       {isLoading ? (
-        <p className="text-muted-foreground text-sm py-8 text-center">Loading…</p>
-      ) : (apps as unknown[]).length === 0 ? (
-        <div className="text-center py-14 text-muted-foreground">
+        <div data-testid="applications-loading" className="space-y-3" aria-label="Loading applications">
+          {[1, 2, 3].map(item => <div key={item} className="h-28 animate-pulse rounded-xl" style={{ backgroundColor: 'var(--apps-border)' }} />)}
+        </div>
+      ) : isError ? (
+        <div data-testid="applications-error" className="rounded-xl border border-dashed p-10 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
+          <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>Applications could not load</p>
+          <p className="mt-1 text-sm text-muted-foreground">Your saved targets are still safe. Try the connection again.</p>
+          <Button type="button" size="sm" variant="outline" className="mt-4" data-testid="button-retry-applications" onClick={() => refetch()}>Try again</Button>
+        </div>
+      ) : applicationRows.length === 0 ? (
+        <div data-testid="applications-empty" className="rounded-xl border border-dashed py-14 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
           <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-25" />
-          <p className="font-semibold">No applications yet</p>
+          <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>No applications yet</p>
           <p className="text-sm mt-1">Add your first target university to start tracking.</p>
+          <Button type="button" size="sm" className="mt-4 text-white" data-testid="button-empty-add-application" onClick={() => { setFormBase(emptyBase); setRequirements([]); setEditId(null); setShowForm(true); }} style={{ backgroundColor: 'var(--apps-accent)' }}><Plus className="mr-1 h-4 w-4" /> Add your first target</Button>
+        </div>
+      ) : filteredApplications.length === 0 ? (
+        <div data-testid="applications-filtered-empty" className="rounded-xl border border-dashed py-14 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
+          <Search className="w-10 h-10 mx-auto mb-3 opacity-25" />
+          <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>No applications match these filters</p>
+          <p className="mt-1 text-sm">Clear a filter or search for another university.</p>
+          <Button type="button" size="sm" variant="ghost" className="mt-2" data-testid="button-clear-application-filters" onClick={() => { setCountryFilter(null); setPriorityFilter(null); setStatusFilter(null); setSearchQuery(''); }}>Clear filters</Button>
+        </div>
+      ) : viewMode === 'kanban' ? (
+        <div data-testid="applications-kanban" className="overflow-x-auto pb-2">
+          <div className="grid min-w-[1120px] grid-cols-7 gap-3">
+            {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([status, meta]) => {
+              const columnApps = filteredApplications.filter(app => String(app.status || 'researching') === status);
+              return (
+                <section key={status} data-testid={`kanban-column-${status}`} className="min-h-[260px] rounded-xl border p-2.5" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-page)' }}>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h3 className={`truncate text-[11px] font-bold uppercase tracking-[0.08em] ${meta.color}`}>{meta.label}</h3>
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)' }}>{columnApps.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {columnApps.map(app => {
+                      const reqs = safeParseReqs(app.requirementsJson as string);
+                      const done = reqs.filter(item => item.done).length;
+                      const days = daysUntil(String(app.deadline || ''));
+                      return (
+                        <article key={app.id} data-testid={`kanban-card-application-${app.id}`} className="rounded-lg border p-3 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="line-clamp-2 text-xs font-bold leading-4" style={{ color: 'var(--apps-text-primary)' }}>{String(app.universityName)}</h4>
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_META[String(app.priority || 'medium') as Priority]?.dot || PRIORITY_META.medium.dot}`} title={`${String(app.priority || 'medium')} priority`} />
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{String(app.program || 'Programme')} · {String(app.country || 'Country')}</p>
+                          <div className="mt-2 flex items-center justify-between gap-2 text-[10px]">
+                            <span className={days !== null && days >= 0 && days <= 7 ? 'font-bold text-red-600' : 'text-muted-foreground'}>{app.deadline ? (days !== null && days >= 0 ? `${days}d left` : fmtDate(String(app.deadline))) : 'No deadline'}</span>
+                            <span className="text-muted-foreground">{reqs.length ? `${done}/${reqs.length} docs` : 'No docs'}</span>
+                          </div>
+                          <Select value={status} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
+                            <SelectTrigger data-testid={`select-application-status-${app.id}`} className="mt-2 h-7 w-full text-[10px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <span className="truncate text-[10px] font-medium text-indigo-600">{nextApplicationAction(app)}</span>
+                            <button type="button" data-testid={`button-edit-kanban-application-${app.id}`} aria-label={`Edit ${String(app.universityName)}`} onClick={() => startEdit(app)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Edit2 className="h-3 w-3" /></button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                    {columnApps.length === 0 && <p className="px-1 py-6 text-center text-[10px] text-muted-foreground">No targets here</p>}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
       ) : viewMode === 'timeline' ? (
         /* ── TIMELINE VIEW ── */
@@ -1490,7 +1688,7 @@ function ApplicationsTab() {
             {/* Vertical spine */}
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
             <div className="space-y-4 pl-12">
-              {[...(apps as (Record<string, unknown> & { id: number })[])].sort((a, b) => {
+              {[...filteredApplications].sort((a, b) => {
                 const da = a.deadline as string | null;
                 const db = b.deadline as string | null;
                 if (!da && !db) return 0;
@@ -1563,25 +1761,7 @@ function ApplicationsTab() {
       ) : (
         <div className="space-y-3">
           {(() => {
-            const sortedApps = [...(apps as (Record<string, unknown> & { id: number })[])].filter(app => {
-              if (countryFilter && String(app.country || '') !== countryFilter) return false;
-              if (priorityFilter && String(app.priority || 'medium') !== priorityFilter) return false;
-              if (searchQuery.trim()) {
-                const query = searchQuery.trim().toLowerCase();
-                const searchable = [app.universityName, app.program, app.country]
-                  .map(value => String(value || '').toLowerCase())
-                  .join(' ');
-                if (!searchable.includes(query)) return false;
-              }
-              return true;
-            }).sort((a, b) => {
-              const da = a.deadline as string | null;
-              const db = b.deadline as string | null;
-              if (!da && !db) return 0;
-              if (!da) return 1;
-              if (!db) return -1;
-              return da > db ? 1 : -1;
-            });
+             const sortedApps = filteredApplications;
 
             if (countryFilter) {
               return sortedApps.map(app => renderAppCard(app));
@@ -1623,15 +1803,15 @@ function ApplicationsTab() {
             const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
 
             return (
-              <Card key={app.id} className="overflow-hidden transition-shadow hover:shadow-md">
+              <Card key={app.id} data-testid={`card-application-${app.id}`} className="overflow-hidden transition-shadow hover:shadow-md">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-navy dark:text-white truncate">
+                        <h3 data-testid={`text-application-university-${app.id}`} className="font-semibold text-navy dark:text-white truncate">
                           {String(app.universityName)}
                         </h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>
+                        <span data-testid={`status-application-${app.id}`} className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>
                           {meta.label}
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>
@@ -1643,7 +1823,7 @@ function ApplicationsTab() {
                         <Globe className="w-3 h-3 inline" /> {String(app.country)}
                       </p>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                        {Boolean(app.deadline) && (
+                         {Boolean(app.deadline) && (
                           <span className="flex items-center gap-1">
                             <CalendarDays className="w-3 h-3" />
                             Deadline: {fmtDate(app.deadline as string)}
@@ -1687,24 +1867,45 @@ function ApplicationsTab() {
 
                     <div className="flex items-center gap-1 shrink-0">
                       <button
+                        type="button"
+                        data-testid={`button-expand-application-${app.id}`}
                         onClick={() => setExpandedId(isExpanded ? null : app.id)}
+                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${String(app.universityName)}`}
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
                       <button
+                        type="button"
+                        data-testid={`button-edit-application-${app.id}`}
                         onClick={() => startEdit(app)}
+                        aria-label={`Edit ${String(app.universityName)}`}
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
+                        type="button"
+                        data-testid={`button-delete-application-${app.id}`}
                         onClick={() => deleteMutation.mutate(app.id)}
+                        aria-label={`Delete ${String(app.universityName)}`}
                         className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{ borderColor: 'var(--apps-border)' }}>
+                    <span data-testid={`next-action-application-${app.id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600">
+                      <ArrowUpRight className="h-3.5 w-3.5" /> Next: {nextApplicationAction(app)}
+                    </span>
+                    <Select value={String(app.status || 'researching')} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
+                      <SelectTrigger data-testid={`select-list-application-status-${app.id}`} className="h-7 w-[148px] text-[11px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Progress bar */}
@@ -2047,7 +2248,7 @@ function parseReqs(json: unknown): ReqItem[] {
 function ScholarshipsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { data: scholarships = [], isLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: scholarships = [], isLoading, isError, refetch } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
   const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
 
   const { data: customTemplates = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
@@ -2060,6 +2261,7 @@ function ScholarshipsTab() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ScholarshipStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
   // inline checklist new-item input per card
@@ -2150,14 +2352,18 @@ function ScholarshipsTab() {
     updateMutation.mutate({ id: s.id, data: { requirementsJson: reqs.length ? JSON.stringify(reqs) : null } });
   }
 
+  function changeScholarshipStatus(s: TrackedRow, status: ScholarshipStatus) {
+    updateMutation.mutate({ id: s.id, data: { status } });
+  }
+
   const scholarshipRows = scholarships as (Record<string, unknown> & { id: number })[];
   const uniqueCountries = React.useMemo(() => (
     [...new Set(scholarshipRows.map(s => String(s.country || '').trim()).filter(Boolean))].sort()
   ), [scholarships]);
   const scholarshipSummary = React.useMemo(() => {
     const priorityCounts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
-    const statusCounts: Record<'planning' | 'applying' | 'submitted', number> = {
-      planning: 0, applying: 0, submitted: 0,
+    const statusCounts: Record<ScholarshipStatus, number> = {
+      planning: 0, ready_to_apply: 0, applied: 0, awarded: 0, rejected: 0,
     };
     let docsCompleted = 0;
     let docsTotal = 0;
@@ -2172,9 +2378,7 @@ function ScholarshipsTab() {
       priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
 
       const status = String(s.status || 'planning');
-      if (status === 'planning') statusCounts.planning += 1;
-      else if (status === 'applied') statusCounts.submitted += 1;
-      else statusCounts.applying += 1;
+      if (status in statusCounts) statusCounts[status as ScholarshipStatus] += 1;
 
       const days = daysUntil(String(s.deadline || ''));
       if (days !== null && days >= 0 && days <= 30) upcomingDeadlines += 1;
@@ -2192,6 +2396,7 @@ function ScholarshipsTab() {
       .filter(s => {
         if (countryFilter && String(s.country || '') !== countryFilter) return false;
         if (priorityFilter && String(s.priority || 'medium') !== priorityFilter) return false;
+        if (statusFilter && String(s.status || 'planning') !== statusFilter) return false;
         if (query) {
           const searchable = [s.name, s.provider, s.country, s.fundingType]
             .map(value => String(value || '').toLowerCase()).join(' ');
@@ -2207,7 +2412,7 @@ function ScholarshipsTab() {
         if (!db) return -1;
         return da > db ? 1 : -1;
       });
-  }, [scholarships, countryFilter, priorityFilter, searchQuery]);
+  }, [scholarships, countryFilter, priorityFilter, statusFilter, searchQuery]);
   const groupedScholarships = React.useMemo(() => {
     const grouped: Record<string, typeof scholarshipRows> = {};
     filteredScholarships.forEach(s => {
@@ -2271,19 +2476,15 @@ function ScholarshipsTab() {
           <div className="min-w-0">
             <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>By Status</p>
             <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--apps-progress-track)' }}>
-              {(['planning', 'applying', 'submitted'] as const).map((status, index) => (
-                <div key={status} style={{ width: `${(scholarshipSummary.statusCounts[status] / priorityTotal) * 100}%`, backgroundColor: ['#94a3b8', '#f59e0b', '#3b82f6'][index] }} />
+              {(Object.keys(SCH_STATUS_META) as ScholarshipStatus[]).map(status => (
+                <div key={status} style={{ width: `${(scholarshipSummary.statusCounts[status] / priorityTotal) * 100}%`, backgroundColor: status === 'planning' ? '#94a3b8' : status === 'ready_to_apply' ? '#f59e0b' : status === 'applied' ? '#3b82f6' : status === 'awarded' ? '#10b981' : '#ef4444' }} />
               ))}
             </div>
-            <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
-              {([
-                ['planning', 'Planning', '#94a3b8'],
-                ['applying', 'Applying', '#f59e0b'],
-                ['submitted', 'Submitted', '#3b82f6'],
-              ] as const).map(([key, label, color]) => (
-                <span key={key} className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />{label} {scholarshipSummary.statusCounts[key]}
-                </span>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
+              {(Object.entries(SCH_STATUS_META) as [ScholarshipStatus, typeof SCH_STATUS_META[ScholarshipStatus]][]).map(([status, meta]) => (
+                <button key={status} type="button" data-testid={`filter-scholarship-status-${status}`} onClick={() => setStatusFilter(statusFilter === status ? null : status)} aria-pressed={statusFilter === status} className={`flex items-center gap-1 rounded px-1 py-0.5 transition-colors ${statusFilter === status ? 'bg-muted font-bold' : ''}`}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: status === 'planning' ? '#94a3b8' : status === 'ready_to_apply' ? '#f59e0b' : status === 'applied' ? '#3b82f6' : status === 'awarded' ? '#10b981' : '#ef4444' }} />{meta.label} {scholarshipSummary.statusCounts[status]}
+                </button>
               ))}
             </div>
           </div>
@@ -2296,14 +2497,14 @@ function ScholarshipsTab() {
         </p>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--apps-border)' }}>
-            <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
+            <button type="button" data-testid="button-scholarships-view-list" onClick={() => setViewMode('list')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'list' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
               <List className="w-3.5 h-3.5" /> List
             </button>
-            <button onClick={() => setViewMode('timeline')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
+            <button type="button" data-testid="button-scholarships-view-timeline" onClick={() => setViewMode('timeline')} className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`} style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}>
               <GitBranch className="w-3.5 h-3.5" /> Timeline
             </button>
           </div>
-          <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }} className="text-white hover:brightness-95" style={{ backgroundColor: 'var(--apps-accent)' }}>
+          <Button size="sm" data-testid="button-add-scholarship" onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }} className="text-white hover:brightness-95" style={{ backgroundColor: 'var(--apps-accent)' }}>
             <Plus className="w-4 h-4 mr-1" /> Add Scholarship
           </Button>
         </div>
@@ -2313,9 +2514,9 @@ function ScholarshipsTab() {
       <div className="rounded-xl border p-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
         <div className="flex flex-col xl:flex-row xl:items-center gap-3">
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setCountryFilter(null)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={!countryFilter ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>All</button>
+            <button type="button" data-testid="filter-scholarship-country-all" onClick={() => setCountryFilter(null)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={!countryFilter ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>All</button>
             {uniqueCountries.map(country => (
-              <button key={country} onClick={() => setCountryFilter(countryFilter === country ? null : country)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={countryFilter === country ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{country}</button>
+              <button type="button" key={country} data-testid={`filter-scholarship-country-${country}`} onClick={() => setCountryFilter(countryFilter === country ? null : country)} className="rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors" style={countryFilter === country ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{country}</button>
             ))}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 xl:ml-auto">
@@ -2326,7 +2527,7 @@ function ScholarshipsTab() {
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-medium shrink-0" style={{ color: 'var(--apps-text-secondary)' }}>Priority:</span>
               {([null, 'high', 'medium', 'low'] as (Priority | null)[]).map(priority => (
-                <button key={priority ?? 'all'} onClick={() => setPriorityFilter(priority)} className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors" style={priorityFilter === priority ? priority ? { backgroundColor: priority === 'high' ? '#fee2e2' : priority === 'medium' ? '#ffedd5' : '#f1f5f9', color: priority === 'high' ? '#dc2626' : priority === 'medium' ? '#ea580c' : '#64748b', borderColor: 'transparent' } : { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{priority ? PRIORITY_META[priority].label : 'All'}</button>
+               <button type="button" key={priority ?? 'all'} data-testid={`filter-scholarship-priority-${priority ?? 'all'}`} onClick={() => setPriorityFilter(priority)} className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors" style={priorityFilter === priority ? priority ? { backgroundColor: priority === 'high' ? '#fee2e2' : priority === 'medium' ? '#ffedd5' : '#f1f5f9', color: priority === 'high' ? '#dc2626' : priority === 'medium' ? '#ea580c' : '#64748b', borderColor: 'transparent' } : { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' } : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}>{priority ? PRIORITY_META[priority].label : 'All'}</button>
               ))}
             </div>
           </div>
@@ -2345,20 +2546,20 @@ function ScholarshipsTab() {
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Scholarship Name *</Label>
-                <Input placeholder="e.g. Erasmus+ Scholarship" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                 <Input data-testid="input-scholarship-name" placeholder="e.g. Erasmus+ Scholarship" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Provider / Organisation</Label>
-                <Input placeholder="e.g. European Commission" value={form.provider} onChange={e => setForm(p => ({ ...p, provider: e.target.value }))} />
+                 <Input data-testid="input-scholarship-provider" placeholder="e.g. European Commission" value={form.provider} onChange={e => setForm(p => ({ ...p, provider: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Country</Label>
-                <Input placeholder="e.g. Finland 🇫🇮" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+                 <Input data-testid="input-scholarship-country" placeholder="e.g. Finland" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Link to University Application</Label>
                 <Select value={form.linkedApplicationId || 'none'} onValueChange={v => setForm(p => ({ ...p, linkedApplicationId: v === 'none' ? '' : v }))}>
-                  <SelectTrigger><SelectValue placeholder="No linked application" /></SelectTrigger>
+                   <SelectTrigger data-testid="select-scholarship-linked-application"><SelectValue placeholder="No linked application" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No linked application</SelectItem>
                     {(applications as { id: number; universityName: string; program?: string | null }[]).map(application => (
@@ -2372,7 +2573,7 @@ function ScholarshipsTab() {
               <div className="space-y-1">
                 <Label>Funding Type</Label>
                 <Select value={form.fundingType} onValueChange={v => setForm(p => ({ ...p, fundingType: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                   <SelectTrigger data-testid="select-scholarship-funding-type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['Full Scholarship', 'Partial Scholarship', 'Tuition Waiver', 'Stipend', 'Travel Grant', 'Research Funding', 'Other'].map(t => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
@@ -2383,9 +2584,9 @@ function ScholarshipsTab() {
               <div className="space-y-1">
                 <Label>Amount</Label>
                 <div className="flex gap-2">
-                  <Input type="number" placeholder="0" className="flex-1" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
+                   <Input data-testid="input-scholarship-amount" type="number" placeholder="0" className="flex-1" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
                   <Select value={form.currency} onValueChange={v => setForm(p => ({ ...p, currency: v }))}>
-                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                     <SelectTrigger data-testid="select-scholarship-currency" className="w-24"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {['USD', 'EUR', 'GBP', 'NOK', 'SEK', 'DKK', 'BDT', 'Other'].map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -2396,8 +2597,8 @@ function ScholarshipsTab() {
               </div>
               <div className="space-y-1">
                 <Label>Status</Label>
-                <Select value={form.status} onValueChange={v => setForm(p => ({ ...p, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                 <Select value={form.status} onValueChange={v => setForm(p => ({ ...p, status: v }))}>
+                   <SelectTrigger data-testid="select-scholarship-form-status"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(SCH_STATUS_META).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
@@ -2407,8 +2608,8 @@ function ScholarshipsTab() {
               </div>
               <div className="space-y-1">
                 <Label>Priority</Label>
-                <Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                 <Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}>
+                   <SelectTrigger data-testid="select-scholarship-form-priority"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(['high', 'medium', 'low'] as Priority[]).map(priority => (
                       <SelectItem key={priority} value={priority}>{PRIORITY_META[priority].label}</SelectItem>
@@ -2418,15 +2619,16 @@ function ScholarshipsTab() {
               </div>
               <div className="space-y-1">
                 <Label>Application Deadline</Label>
-                <Input type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
+               <Input data-testid="input-scholarship-deadline" type="date" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Date Applied</Label>
-                <Input type="date" value={form.dateApplied} onChange={e => setForm(p => ({ ...p, dateApplied: e.target.value }))} />
+               <Input data-testid="input-scholarship-applied-date" type="date" value={form.dateApplied} onChange={e => setForm(p => ({ ...p, dateApplied: e.target.value }))} />
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label>University Portal / Application URL</Label>
-                <Input
+                 <Input
+                   data-testid="input-scholarship-portal"
                   type="url"
                   placeholder="https://apply.university.edu/scholarships/…"
                   value={form.portalUrl}
@@ -2536,13 +2738,13 @@ function ScholarshipsTab() {
 
             <div className="space-y-1">
               <Label>Notes</Label>
-              <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Eligibility criteria, contacts, reminders…" />
+               <Textarea data-testid="textarea-scholarship-notes" rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Eligibility criteria, contacts, reminders…" />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" disabled={!form.name} onClick={saveForm} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
+               <Button size="sm" data-testid="button-save-scholarship" disabled={!form.name} onClick={saveForm} className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white">
                 <Check className="w-4 h-4 mr-1" /> {editId ? 'Update' : 'Save'}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setEditId(null); }}>
+               <Button size="sm" variant="ghost" data-testid="button-cancel-scholarship" onClick={() => { setShowForm(false); setEditId(null); }}>
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
@@ -2551,15 +2753,24 @@ function ScholarshipsTab() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div data-testid="scholarships-loading" className="space-y-3" aria-label="Loading scholarships">
+          {[1, 2, 3].map(item => <div key={item} className="h-28 animate-pulse rounded-xl" style={{ backgroundColor: 'var(--apps-border)' }} />)}
+        </div>
+      ) : isError ? (
+        <div data-testid="scholarships-error" className="rounded-xl border border-dashed p-10 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
+          <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>Scholarships could not load</p>
+          <p className="mt-1 text-sm text-muted-foreground">Your saved funding opportunities are still safe. Try again.</p>
+          <Button type="button" size="sm" variant="outline" className="mt-4" data-testid="button-retry-scholarships" onClick={() => refetch()}>Try again</Button>
+        </div>
       ) : (scholarships as unknown[]).length === 0 ? (
-        <div className="text-center py-14 text-muted-foreground">
+        <div data-testid="scholarships-empty" className="rounded-xl border border-dashed py-14 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
           <Trophy className="w-12 h-12 mx-auto mb-3 opacity-25" />
-          <p className="font-semibold">No scholarships yet</p>
+          <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>No scholarships yet</p>
           <p className="text-sm mt-1">Track Erasmus+, Nordic grants and other funding opportunities.</p>
+          <Button type="button" size="sm" className="mt-4 text-white" data-testid="button-empty-add-scholarship" onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }} style={{ backgroundColor: 'var(--apps-accent)' }}><Plus className="mr-1 h-4 w-4" /> Add a funding opportunity</Button>
         </div>
       ) : filteredScholarships.length === 0 ? (
-        <div className="text-center py-14 text-muted-foreground">
+        <div data-testid="scholarships-filtered-empty" className="rounded-xl border border-dashed py-14 text-center" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
           <Search className="w-10 h-10 mx-auto mb-3 opacity-25" />
           <p className="font-semibold">No scholarships match these filters</p>
           <p className="text-sm mt-1">Try another country, priority, or search term.</p>
@@ -2568,31 +2779,32 @@ function ScholarshipsTab() {
         <div className="relative space-y-4 pl-8">
           <div className="absolute left-3 top-1 bottom-1 w-0.5 bg-border" />
           {filteredScholarships.map(s => {
-            const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
+                const meta = SCH_STATUS_META[s.status as ScholarshipStatus] || SCH_STATUS_META.planning;
             const priorityKey = String(s.priority || 'medium') as Priority;
             const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
             const reqs = parseReqs(s.requirementsJson);
             const doneCount = reqs.filter(r => r.done).length;
-            const days = daysUntil(String(s.deadline || ''));
+                const linkedApplication = (applications as { id: number; universityName?: string; program?: string }[]).find(application => application.id === Number(s.linkedApplicationId));
             return (
               <div key={s.id} className="relative">
                 <span className="absolute -left-[1.45rem] top-4 h-3 w-3 rounded-full border-2 border-background bg-amber-400 shadow" />
-                <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                <Card data-testid={`card-scholarship-${s.id}`} className="overflow-hidden hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
+                          <h3 data-testid={`text-scholarship-name-${s.id}`} className="font-semibold text-sm truncate">{String(s.name)}</h3>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label}</span>
                           <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                         </div>
-                        {Boolean(s.provider) && <p className="text-xs text-muted-foreground mt-0.5">{String(s.provider)}</p>}
+                         {Boolean(s.provider) && <p className="text-xs text-muted-foreground mt-0.5">{String(s.provider)}</p>}
+                         {linkedApplication && <p data-testid={`linked-application-scholarship-${s.id}`} className="mt-1 text-[11px] font-medium text-indigo-600">For {linkedApplication.universityName}{linkedApplication.program ? ` · ${linkedApplication.program}` : ''}</p>}
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
+                         <button type="button" data-testid={`button-edit-scholarship-${s.id}`} aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                         <button type="button" data-testid={`button-delete-scholarship-${s.id}`} aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -2601,6 +2813,15 @@ function ScholarshipsTab() {
                       <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{String(s.fundingType)}</span>
                       {Boolean(s.country) && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">🌍 {String(s.country)}</span>}
                       {Boolean(s.amount) && <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 font-semibold">{Number(s.amount).toLocaleString()} {String(s.currency)}</span>}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <span data-testid={`next-action-scholarship-${s.id}`} className="text-xs font-semibold text-indigo-600">{nextScholarshipAction(s)}</span>
+                      <Select value={String(s.status || 'planning')} onValueChange={value => changeScholarshipStatus(s, value as ScholarshipStatus)}>
+                        <SelectTrigger data-testid={`select-scholarship-status-${s.id}`} className="h-7 w-[132px] text-[11px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {(Object.entries(SCH_STATUS_META) as [ScholarshipStatus, typeof SCH_STATUS_META[ScholarshipStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="mt-3 space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
@@ -2611,11 +2832,7 @@ function ScholarshipsTab() {
                         <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${reqs.length ? (doneCount / reqs.length) * 100 : 0}%` }} />
                       </div>
                     </div>
-                    <p className={`text-xs mt-3 flex items-center gap-1 ${days !== null && days >= 0 && days <= 14 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
-                      <CalendarDays className="w-3 h-3" />
-                      Deadline: {s.deadline ? fmtDate(String(s.deadline)) : 'Not set'}
-                      {days !== null && days >= 0 && <span>({days === 0 ? 'Today!' : `${days}d`})</span>}
-                    </p>
+                    <div className="mt-3"><DeadlineCue deadline={s.deadline} /></div>
                   </CardContent>
                 </Card>
               </div>
@@ -2647,8 +2864,9 @@ function ScholarshipsTab() {
             const isExpanded = expandedSchId === s.id;
             const reqs = parseReqs(s.requirementsJson);
             const doneCount = reqs.filter(r => r.done).length;
+            const linkedApplication = (applications as { id: number; universityName?: string; program?: string }[]).find(application => application.id === Number(s.linkedApplicationId));
             return (
-              <Card key={s.id} className="group overflow-hidden hover:shadow-md transition-all">
+              <Card key={s.id} data-testid={`card-scholarship-${s.id}`} className="group overflow-hidden hover:shadow-md transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <button
@@ -2656,23 +2874,27 @@ function ScholarshipsTab() {
                       onClick={() => setExpandedSchId(isExpanded ? null : s.id)}
                     >
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-sm truncate">{String(s.name)}</h3>
+                        <h3 data-testid={`text-scholarship-name-${s.id}`} className="font-semibold text-sm truncate">{String(s.name)}</h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label}</span>
                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                       </div>
                       {Boolean(s.provider) && <p className="text-xs text-muted-foreground">{String(s.provider)}</p>}
+                      {linkedApplication && <p data-testid={`linked-application-scholarship-${s.id}`} className="mt-1 text-[11px] font-medium text-indigo-600">For {linkedApplication.universityName}{linkedApplication.program ? ` · ${linkedApplication.program}` : ''}</p>}
                     </button>
                     <div className="flex gap-1 shrink-0">
                       <button
+                        type="button"
+                        data-testid={`button-expand-scholarship-${s.id}`}
                         onClick={() => setExpandedSchId(isExpanded ? null : s.id)}
+                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${String(s.name)}`}
                         className="p-1 rounded hover:bg-muted text-muted-foreground"
                       >
                         {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                       </button>
-                      <button aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
+                       <button type="button" data-testid={`button-edit-scholarship-${s.id}`} aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                       <button type="button" data-testid={`button-delete-scholarship-${s.id}`} aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -2688,6 +2910,16 @@ function ScholarshipsTab() {
                     )}
                   </div>
 
+                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{ borderColor: 'var(--apps-border)' }}>
+                     <span data-testid={`next-action-scholarship-${s.id}`} className="truncate text-xs font-semibold text-indigo-600">{nextScholarshipAction(s)}</span>
+                     <Select value={String(s.status || 'planning')} onValueChange={value => changeScholarshipStatus(s, value as ScholarshipStatus)}>
+                       <SelectTrigger data-testid={`select-list-scholarship-status-${s.id}`} className="h-7 w-[132px] text-[11px]"><SelectValue /></SelectTrigger>
+                       <SelectContent>
+                         {(Object.entries(SCH_STATUS_META) as [ScholarshipStatus, typeof SCH_STATUS_META[ScholarshipStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                       </SelectContent>
+                     </Select>
+                   </div>
+
                   <div className="mt-3 space-y-2">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
@@ -2698,15 +2930,7 @@ function ScholarshipsTab() {
                         <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${reqs.length ? (doneCount / reqs.length) * 100 : 0}%` }} />
                       </div>
                     </div>
-                    <p className={`text-xs text-muted-foreground flex items-center gap-1 ${(() => { const d = daysUntil(String(s.deadline || '')); return d !== null && d >= 0 && d <= 14 ? 'text-red-500 font-semibold' : ''; })()}`}>
-                      <CalendarDays className="w-3 h-3" />
-                      Deadline: {s.deadline ? fmtDate(String(s.deadline)) : 'Not set'}
-                      {(() => {
-                        const d = daysUntil(String(s.deadline || ''));
-                        if (d === null || d < 0) return null;
-                        return <span className="ml-1">({d === 0 ? 'Today!' : `${d}d`})</span>;
-                      })()}
-                    </p>
+                     <div data-testid={`deadline-scholarship-${s.id}`}><DeadlineCue deadline={s.deadline} /></div>
                     {Boolean(s.dateApplied) && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Check className="w-3 h-3 text-emerald-500" />
