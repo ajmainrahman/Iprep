@@ -222,6 +222,66 @@ function DeadlineCue({ deadline }: { deadline: unknown }) {
   );
 }
 
+/* ── Application readiness score ─────────────────────────────────────────────
+   NOT an admission probability — purely "how prepared is this application"
+   based on (a) how far it has progressed through the lifecycle and
+   (b) how many required documents are done. ──────────────────────────────── */
+const READINESS_STAGES: AppStatus[] = [
+  'researching', 'shortlisted', 'supervisor_contact', 'preparing',
+  'ready_to_apply', 'applied', 'under_review', 'interview', 'offer', 'accepted',
+];
+
+function computeReadiness(app: TrackedRow): number {
+  const reqs = safeParseReqs(app.requirementsJson as string);
+  const docsPct = reqs.length ? (reqs.filter(r => r.done).length / reqs.length) * 100 : 0;
+  const status = String(app.status || 'researching') as AppStatus;
+  const stageIdx = READINESS_STAGES.indexOf(status);
+  // Rejected / withdrawn / waitlisted / deferred / missed_deadline: freeze at whatever the docs say.
+  const stagePct = stageIdx >= 0 ? (stageIdx / (READINESS_STAGES.length - 1)) * 100 : docsPct;
+  const score = reqs.length ? docsPct * 0.65 + stagePct * 0.35 : stagePct * 0.5;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function ReadinessBar({ value, compact = false }: { value: number; compact?: boolean }) {
+  const tone = value >= 70 ? '#16a34a' : value >= 40 ? '#d97706' : '#94a3b8';
+  return (
+    <div className="flex items-center gap-2" data-testid="readiness-bar">
+      <div className={`flex-1 overflow-hidden rounded-full bg-muted ${compact ? 'h-1' : 'h-1.5'}`}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: tone }} />
+      </div>
+      <span className="shrink-0 text-[10px] font-semibold tabular-nums" style={{ color: tone }}>{value}%</span>
+    </div>
+  );
+}
+
+/* ── Deadline urgency (4-tier, text-forward — never color-only) ──────────── */
+type UrgencyTier = 'critical' | 'upcoming' | 'soon' | 'later' | 'none';
+function deadlineUrgency(days: number | null): { tier: UrgencyTier; text: string; className: string } {
+  if (days === null) return { tier: 'none', text: 'No deadline', className: 'text-muted-foreground' };
+  if (days < 0) return { tier: 'critical', text: 'Deadline passed', className: 'text-red-600 font-semibold' };
+  if (days === 0) return { tier: 'critical', text: 'Due today · Critical', className: 'text-red-600 font-semibold' };
+  if (days <= 7) return { tier: 'critical', text: `${days} day${days === 1 ? '' : 's'} left · Critical`, className: 'text-red-600 font-semibold' };
+  if (days <= 30) return { tier: 'upcoming', text: `${days} days left · Upcoming`, className: 'text-orange-600 font-medium' };
+  if (days <= 60) return { tier: 'soon', text: `${days} days left · Soon`, className: 'text-amber-600 font-medium' };
+  return { tier: 'later', text: `${days} days left`, className: 'text-muted-foreground' };
+}
+
+/* ── Country → flag emoji (falls back to a globe if unmapped) ───────────── */
+const COUNTRY_ISO: Record<string, string> = {
+  Australia: 'AU', Austria: 'AT', Belgium: 'BE', Canada: 'CA', China: 'CN',
+  'Czech Republic': 'CZ', Denmark: 'DK', Estonia: 'EE', Finland: 'FI', France: 'FR',
+  Germany: 'DE', Hungary: 'HU', India: 'IN', Ireland: 'IE', Italy: 'IT', Japan: 'JP',
+  Latvia: 'LV', Lithuania: 'LT', Luxembourg: 'LU', Netherlands: 'NL', 'New Zealand': 'NZ',
+  Norway: 'NO', Poland: 'PL', Portugal: 'PT', Romania: 'RO', Singapore: 'SG',
+  Slovakia: 'SK', Slovenia: 'SI', 'South Korea': 'KR', Spain: 'ES', Sweden: 'SE',
+  Switzerland: 'CH', 'United Kingdom': 'GB', 'United States': 'US',
+};
+function countryFlag(country: string): string {
+  const iso = COUNTRY_ISO[country];
+  if (!iso) return '🌐';
+  return iso.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
 /* ── Main export ─────────────────────────────────────────────────────────── */
 export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange: (t: string) => void }) {
   return (
@@ -1040,11 +1100,21 @@ function ApplicationsTab() {
   const [editId,      setEditId]      = useState<number | null>(null);
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
   const [newItemDraft,  setNewItemDraft]  = useState('');
-  const [viewMode,    setViewMode]    = useState<'list' | 'timeline' | 'kanban'>('list');
+  const [viewMode,    setViewMode]    = useState<'list' | 'timeline' | 'kanban'>(() => {
+    try {
+      const saved = sessionStorage.getItem('apps-view-mode');
+      return saved === 'list' || saved === 'timeline' || saved === 'kanban' ? saved : 'list';
+    } catch { return 'list'; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem('apps-view-mode', viewMode); } catch { /* storage unavailable — non-fatal */ }
+  }, [viewMode]);
+  const [detailApp, setDetailApp] = useState<(Record<string, unknown> & { id: number }) | null>(null);
 
   const [countryFilter,  setCountryFilter]  = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
   const [statusFilter, setStatusFilter] = useState<AppStatus | null>(null);
+  const [readinessFilter, setReadinessFilter] = useState<'started' | 'progress' | 'ready' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const uniqueCountries = React.useMemo(() => {
@@ -1205,6 +1275,12 @@ function ApplicationsTab() {
         if (countryFilter && String(app.country || '') !== countryFilter) return false;
         if (priorityFilter && String(app.priority || 'medium') !== priorityFilter) return false;
         if (statusFilter && String(app.status || 'researching') !== statusFilter) return false;
+        if (readinessFilter) {
+          const r = computeReadiness(app);
+          if (readinessFilter === 'started' && r >= 25) return false;
+          if (readinessFilter === 'progress' && (r < 25 || r >= 70)) return false;
+          if (readinessFilter === 'ready' && r < 70) return false;
+        }
         if (query && ![app.universityName, app.program, app.country, app.degreeType]
           .map(value => String(value || '').toLowerCase()).join(' ').includes(query)) return false;
         return true;
@@ -1217,9 +1293,19 @@ function ApplicationsTab() {
         if (!db) return -1;
         return da > db ? 1 : -1;
       });
-  }, [applicationRows, countryFilter, priorityFilter, statusFilter, searchQuery]);
+  }, [applicationRows, countryFilter, priorityFilter, statusFilter, readinessFilter, searchQuery]);
+
+  const hasActiveFilters = Boolean(countryFilter || priorityFilter || statusFilter || readinessFilter || searchQuery.trim());
+  function clearAllFilters() {
+    setCountryFilter(null);
+    setPriorityFilter(null);
+    setStatusFilter(null);
+    setReadinessFilter(null);
+    setSearchQuery('');
+  }
 
   return (
+    <>
     <div className="space-y-5 rounded-2xl p-1" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
       {/* Summary stat row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -1360,6 +1446,15 @@ function ApplicationsTab() {
             </button>
             <button
               type="button"
+              data-testid="button-applications-view-kanban"
+              onClick={() => setViewMode('kanban')}
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'kanban' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
+              style={viewMode === 'kanban' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
+            >
+              <Layers className="w-3.5 h-3.5" /> Pipeline
+            </button>
+            <button
+              type="button"
               data-testid="button-applications-view-timeline"
               onClick={() => setViewMode('timeline')}
               className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
@@ -1367,16 +1462,18 @@ function ApplicationsTab() {
             >
               <GitBranch className="w-3.5 h-3.5" /> Timeline
             </button>
-            <button
-              type="button"
-              data-testid="button-applications-view-kanban"
-              onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'kanban' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
-              style={viewMode === 'kanban' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
-            >
-              <Layers className="w-3.5 h-3.5" /> Kanban
-            </button>
           </div>
+          {hasActiveFilters && (
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid="button-clear-all-application-filters"
+              onClick={clearAllFilters}
+              className="text-xs"
+            >
+              <X className="w-3.5 h-3.5 mr-1" /> Clear Filters
+            </Button>
+          )}
           <Button
             size="sm"
             data-testid="button-add-application"
@@ -1450,6 +1547,28 @@ function ApplicationsTab() {
                     : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}
                 >
                   {p ? PRIORITY_META[p].label : 'All'}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-medium shrink-0" style={{ color: 'var(--apps-text-secondary)' }}>Readiness:</span>
+              {([
+                [null, 'All'],
+                ['started', 'Just started'],
+                ['progress', 'In progress'],
+                ['ready', 'Ready'],
+              ] as [('started' | 'progress' | 'ready' | null), string][]).map(([key, label]) => (
+                <button
+                  type="button"
+                  data-testid={`filter-application-readiness-${key ?? 'all'}`}
+                  key={key ?? 'all'}
+                  onClick={() => setReadinessFilter(key)}
+                  className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={readinessFilter === key
+                    ? { backgroundColor: 'var(--apps-accent)', color: '#fff', borderColor: 'var(--apps-accent)' }
+                    : { backgroundColor: 'var(--apps-bg-card)', color: 'var(--apps-text-secondary)', borderColor: 'var(--apps-border)' }}
+                >
+                  {label}
                 </button>
               ))}
             </div>
@@ -1703,7 +1822,7 @@ function ApplicationsTab() {
           <Search className="w-10 h-10 mx-auto mb-3 opacity-25" />
           <p className="font-semibold" style={{ color: 'var(--apps-text-primary)' }}>No applications match these filters</p>
           <p className="mt-1 text-sm">Clear a filter or search for another university.</p>
-          <Button type="button" size="sm" variant="ghost" className="mt-2" data-testid="button-clear-application-filters" onClick={() => { setCountryFilter(null); setPriorityFilter(null); setStatusFilter(null); setSearchQuery(''); }}>Clear filters</Button>
+          <Button type="button" size="sm" variant="ghost" className="mt-2" data-testid="button-clear-application-filters" onClick={clearAllFilters}>Clear filters</Button>
         </div>
       ) : viewMode === 'kanban' ? (
         <div data-testid="applications-kanban" className="overflow-x-auto pb-2">
@@ -1727,10 +1846,13 @@ function ApplicationsTab() {
                             <h4 className="line-clamp-2 text-xs font-bold leading-4" style={{ color: 'var(--apps-text-primary)' }}>{String(app.universityName)}</h4>
                             <span className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_META[String(app.priority || 'medium') as Priority]?.dot || PRIORITY_META.medium.dot}`} title={`${String(app.priority || 'medium')} priority`} />
                           </div>
-                          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{String(app.program || 'Programme')} · {String(app.country || 'Country')}</p>
+                          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{String(app.program || 'Programme')} · {countryFlag(String(app.country || ''))} {String(app.country || 'Country')}</p>
                           <div className="mt-2 flex items-center justify-between gap-2 text-[10px]">
                             <span className={days !== null && days >= 0 && days <= 7 ? 'font-bold text-red-600' : 'text-muted-foreground'}>{app.deadline ? (days !== null && days >= 0 ? `${days}d left` : fmtDate(String(app.deadline))) : 'No deadline'}</span>
                             <span className="text-muted-foreground">{reqs.length ? `${done}/${reqs.length} docs` : 'No docs'}</span>
+                          </div>
+                          <div className="mt-2">
+                            <ReadinessBar value={computeReadiness(app)} compact />
                           </div>
                           <Select value={status} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
                             <SelectTrigger data-testid={`select-application-status-${app.id}`} className="mt-2 h-7 w-full text-[10px]"><SelectValue /></SelectTrigger>
@@ -1739,7 +1861,7 @@ function ApplicationsTab() {
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
-                            <span className="truncate text-[10px] font-medium text-indigo-600">{nextApplicationAction(app)}</span>
+                            <button type="button" data-testid={`button-view-kanban-application-${app.id}`} onClick={() => setDetailApp(app)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextApplicationAction(app)}</button>
                             <button type="button" data-testid={`button-edit-kanban-application-${app.id}`} aria-label={`Edit ${String(app.universityName)}`} onClick={() => startEdit(app)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Edit2 className="h-3 w-3" /></button>
                           </div>
                         </article>
@@ -1812,14 +1934,14 @@ function ApplicationsTab() {
                             ) : (
                               <p className="text-xs text-muted-foreground italic">No deadline set</p>
                             )}
-                            {days !== null && days >= 0 && (
-                              <p className={`text-xs font-medium ${days <= 7 ? 'text-red-500' : days <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                                {days === 0 ? 'Today!' : `${days} days left`}
-                              </p>
-                            )}
+                            <p className={`text-xs ${deadlineUrgency(days).className}`}>{deadlineUrgency(days).text}</p>
                           </div>
                         </div>
+                        <div className="mt-3 max-w-xs">
+                          <ReadinessBar value={computeReadiness(app)} compact />
+                        </div>
                         <div className="flex items-center gap-2 mt-3">
+                          <Button size="sm" variant="outline" className="h-7 text-[11px] px-2.5" onClick={() => setDetailApp(app)}>View Details</Button>
                           <button onClick={() => startEdit(app)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -1869,6 +1991,14 @@ function ApplicationsTab() {
         </div>
       )}
     </div>
+    <ApplicationDetailDrawer
+      app={detailApp}
+      onClose={() => setDetailApp(null)}
+      onEdit={a => { setDetailApp(null); startEdit(a); }}
+      onToggleReq={(a, idx) => toggleReqInApp(a, idx)}
+      onChangeStatus={(a, status) => changeApplicationStatus(a, status)}
+    />
+    </>
   );
 
   function renderAppCard(app: Record<string, unknown> & { id: number }) {
@@ -1878,13 +2008,17 @@ function ApplicationsTab() {
             const isExpanded = expandedId === app.id;
             const priorityKey = (app.priority || 'medium') as Priority;
             const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
+            const days = daysUntil(String(app.deadline || ''));
+            const urgency = deadlineUrgency(days);
+            const readiness = computeReadiness(app);
 
             return (
               <Card key={app.id} data-testid={`card-application-${app.id}`} className="overflow-hidden transition-shadow hover:shadow-md">
-                <div className="p-4">
+                <div className="p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-base leading-none" aria-hidden="true">{countryFlag(String(app.country || ''))}</span>
                         <h3 data-testid={`text-application-university-${app.id}`} className="font-semibold text-navy dark:text-white truncate">
                           {String(app.universityName)}
                         </h3>
@@ -1896,35 +2030,23 @@ function ApplicationsTab() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {String(app.degreeType)} in {String(app.program)} ·{' '}
-                        <Globe className="w-3 h-3 inline" /> {String(app.country)}
+                        {String(app.degreeType)} · {String(app.program)}
                       </p>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                         {Boolean(app.deadline) && (
-                          <span className="flex items-center gap-1">
-                            <CalendarDays className="w-3 h-3" />
-                            Deadline: {fmtDate(app.deadline as string)}
-                            {(() => {
-                              const d = daysUntil(app.deadline as string);
-                              if (d === null || d < 0) return null;
-                              return (
-                                <span className={`font-semibold ${d <= 7 ? 'text-red-500' : d <= 30 ? 'text-orange-500' : ''}`}>
-                                  {' '}({d === 0 ? 'Today!' : `${d}d`})
-                                </span>
-                              );
-                            })()}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-3 mt-1.5 text-xs flex-wrap">
+                        <span className={`flex items-center gap-1 ${urgency.className}`}>
+                          <CalendarDays className="w-3 h-3" />
+                          {app.deadline ? `${fmtDate(app.deadline as string)} · ${urgency.text}` : urgency.text}
+                        </span>
                         {Boolean(app.appliedDate) && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-muted-foreground">
                             <Check className="w-3 h-3 text-green-500" />
                             Applied: {fmtDate(app.appliedDate as string)}
                           </span>
                         )}
                         {reqs.length > 0 && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-muted-foreground">
                             <FileText className="w-3 h-3" />
-                            {doneCount}/{reqs.length} docs done
+                            {doneCount}/{reqs.length} docs
                           </span>
                         )}
                         {Boolean(app.websiteUrl) && (
@@ -1940,9 +2062,22 @@ function ApplicationsTab() {
                           </a>
                         )}
                       </div>
+                      <div className="mt-2 max-w-xs">
+                        <ReadinessBar value={readiness} compact />
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        data-testid={`button-view-application-${app.id}`}
+                        onClick={() => setDetailApp(app)}
+                        className="h-7 text-[11px] px-2.5"
+                      >
+                        View Details
+                      </Button>
                       <button
                         type="button"
                         data-testid={`button-expand-application-${app.id}`}
@@ -2089,6 +2224,168 @@ function ApplicationsTab() {
               </Card>
             );
   }
+}
+
+/* ── Application Detail Drawer ───────────────────────────────────────────── */
+function ApplicationDetailDrawer({
+  app, onClose, onEdit, onToggleReq, onChangeStatus,
+}: {
+  app: (Record<string, unknown> & { id: number }) | null;
+  onClose: () => void;
+  onEdit: (app: Record<string, unknown> & { id: number }) => void;
+  onToggleReq: (app: Record<string, unknown> & { id: number }, idx: number) => void;
+  onChangeStatus: (app: Record<string, unknown> & { id: number }, status: AppStatus) => void;
+}) {
+  if (!app) return null;
+  const meta = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
+  const reqs = safeParseReqs(app.requirementsJson as string);
+  const doneCount = reqs.filter(r => r.done).length;
+  const priorityKey = (app.priority || 'medium') as Priority;
+  const pMeta = PRIORITY_META[priorityKey] || PRIORITY_META.medium;
+  const days = daysUntil(String(app.deadline || ''));
+  const urgency = deadlineUrgency(days);
+  const readiness = computeReadiness(app);
+  const stageIdx = READINESS_STAGES.indexOf(app.status as AppStatus);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={`${String(app.universityName)} application details`}>
+      {/* Scrim */}
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} data-testid="application-drawer-scrim" />
+      {/* Panel */}
+      <div className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-background shadow-2xl sm:max-w-lg" data-testid="application-detail-drawer">
+        <div className="flex items-start justify-between gap-3 border-b p-4" style={{ borderColor: 'var(--apps-border)' }}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-lg leading-none" aria-hidden="true">{countryFlag(String(app.country || ''))}</span>
+              <h2 className="truncate text-lg font-heading font-bold">{String(app.universityName)}</h2>
+            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">{String(app.degreeType)} · {String(app.program)}</p>
+          </div>
+          <button type="button" data-testid="button-close-application-drawer" onClick={onClose} aria-label="Close details" className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-6 p-4">
+          {/* Basic Information */}
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Basic Information</h3>
+            <dl className="space-y-1.5 text-sm">
+              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">University</dt><dd className="text-right font-medium">{String(app.universityName)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Country</dt><dd className="text-right font-medium">{countryFlag(String(app.country || ''))} {String(app.country)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Degree</dt><dd className="text-right font-medium">{String(app.degreeType)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Program</dt><dd className="text-right font-medium">{String(app.program)}</dd></div>
+              {Boolean(app.websiteUrl) && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Application URL</dt>
+                  <dd className="text-right">
+                    <a href={String(app.websiteUrl)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-indigo hover:underline">
+                      <ExternalLink className="h-3 w-3" /> Portal
+                    </a>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </section>
+
+          {/* Application Status */}
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Application Status</h3>
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>{meta.label}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label} priority</span>
+            </div>
+            <Select value={String(app.status || 'researching')} onValueChange={value => onChangeStatus(app, value as AppStatus)}>
+              <SelectTrigger data-testid="select-drawer-application-status" className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>{value.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {stageIdx >= 0 && (
+              <div className="mt-3 flex items-center gap-1" aria-hidden="true">
+                {READINESS_STAGES.map((s, i) => (
+                  <div key={s} className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: i <= stageIdx ? 'var(--apps-accent)' : 'var(--apps-progress-track)' }} />
+                ))}
+              </div>
+            )}
+            <p className="mt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1.5">
+              <ArrowUpRight className="h-3.5 w-3.5" /> Next: {nextApplicationAction(app)}
+            </p>
+          </section>
+
+          {/* Deadline */}
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deadline</h3>
+            <p className={`text-sm ${urgency.className}`}>
+              {app.deadline ? fmtDate(app.deadline as string) : 'No deadline set'} — {urgency.text}
+            </p>
+          </section>
+
+          {/* Application Readiness */}
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Application Readiness</h3>
+            <ReadinessBar value={readiness} />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">Reflects how prepared this application is — not an admission probability.</p>
+          </section>
+
+          {/* Documents */}
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Documents {reqs.length > 0 && <span className="normal-case font-normal">({doneCount}/{reqs.length})</span>}
+            </h3>
+            {reqs.length === 0 ? (
+              <p className="text-xs italic text-muted-foreground">No requirements added yet. Edit this application to add a checklist.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {reqs.map((r, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    data-testid={`button-drawer-toggle-req-${app.id}-${idx}`}
+                    onClick={() => onToggleReq(app, idx)}
+                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
+                      r.done
+                        ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
+                        : 'bg-muted border-border text-muted-foreground hover:border-indigo/40'
+                    }`}
+                  >
+                    {r.done ? '✓ ' : ''}{r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Funding & Notes */}
+          {Boolean(app.notes) && (
+            <section>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes &amp; Funding</h3>
+              <p className="whitespace-pre-line text-sm text-foreground/80">{String(app.notes)}</p>
+            </section>
+          )}
+          {Boolean(app.comments) && (
+            <section>
+              <h3 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <MessageSquare className="h-3 w-3" /> Comments
+              </h3>
+              <p className="whitespace-pre-line text-sm text-foreground/80">{String(app.comments)}</p>
+            </section>
+          )}
+        </div>
+
+        <div className="flex gap-2 border-t p-4" style={{ borderColor: 'var(--apps-border)' }}>
+          <Button size="sm" data-testid="button-drawer-edit-application" onClick={() => onEdit(app)} className="flex-1">
+            <Edit2 className="mr-1 h-3.5 w-3.5" /> Edit Application
+          </Button>
+          <Button size="sm" variant="ghost" data-testid="button-drawer-close-application" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
