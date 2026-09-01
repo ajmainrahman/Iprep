@@ -23,19 +23,31 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
-type AppStatus = 'researching' | 'ready_to_apply' | 'applied' | 'interview' | 'rejected' | 'waitlisted' | 'deferred';
+type AppStatus =
+  | 'researching' | 'shortlisted' | 'supervisor_contact' | 'preparing'
+  | 'ready_to_apply' | 'applied' | 'under_review' | 'interview'
+  | 'offer' | 'accepted' | 'rejected' | 'waitlisted' | 'deferred'
+  | 'withdrawn' | 'missed_deadline';
 type ScholarshipStatus = 'planning' | 'ready_to_apply' | 'applied' | 'awarded' | 'rejected';
 type Priority = 'high' | 'medium' | 'low';
 type ReqItem = { label: string; done: boolean };
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
   researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  shortlisted:    { label: 'Shortlisted',    color: 'text-cyan-700',    bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  supervisor_contact: { label: 'Supervisor Contact', color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
+  preparing:      { label: 'Preparing',      color: 'text-amber-600',   bg: 'bg-amber-100 dark:bg-amber-900/30' },
   ready_to_apply: { label: 'Ready to Apply', color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  applied:        { label: 'Applied',        color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  applied:        { label: 'Submitted',      color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  under_review:   { label: 'Under Review',   color: 'text-sky-600',     bg: 'bg-sky-100 dark:bg-sky-900/30' },
   interview:      { label: 'Interview',      color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  offer:          { label: 'Offer',          color: 'text-green-700',   bg: 'bg-green-100 dark:bg-green-900/30' },
+  accepted:       { label: 'Accepted',       color: 'text-teal-700',    bg: 'bg-teal-100 dark:bg-teal-900/30' },
   rejected:       { label: 'Rejected',       color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
   waitlisted:     { label: 'Waitlisted',     color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
   deferred:       { label: 'Deferred',       color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  withdrawn:      { label: 'Withdrawn',      color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  missed_deadline:{ label: 'Missed Deadline',color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30' },
 };
 
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string }> = {
@@ -170,10 +182,17 @@ function nextApplicationAction(app: TrackedRow): string {
   const days = daysUntil(String(app.deadline || ''));
   if (days !== null && days >= 0 && days <= 7) return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
   if (app.status === 'researching') return 'Review programme fit';
+  if (app.status === 'shortlisted') return 'Confirm programme requirements';
+  if (app.status === 'supervisor_contact') return 'Find potential supervisors';
+  if (app.status === 'preparing') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Review application';
   if (app.status === 'ready_to_apply') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Submit application';
-  if (app.status === 'applied') return 'Watch for updates';
+  if (app.status === 'applied' || app.status === 'under_review') return 'Watch for updates';
   if (app.status === 'interview') return 'Prepare for interview';
+  if (app.status === 'offer') return 'Review offer details';
+  if (app.status === 'accepted') return 'Plan your next steps';
   if (app.status === 'waitlisted') return 'Check for updates';
+  if (app.status === 'missed_deadline') return 'Review alternate deadlines';
+  if (app.status === 'withdrawn') return 'Revisit when ready';
   return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Keep notes current';
 }
 
@@ -451,6 +470,29 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     if (record.app) return `${String(record.app.program || 'Program')} · ${String(record.app.degreeType || '')}`;
     return String(record.scholarship?.provider || record.scholarship?.fundingType || 'Funding opportunity');
   };
+  const priorityActions = unifiedRecords
+    .filter(record => {
+      const appStatus = String(record.app?.status || '');
+      const scholarshipStatus = String(record.scholarship?.status || '');
+      return !['accepted', 'rejected', 'withdrawn', 'missed_deadline'].includes(appStatus)
+        && !['awarded', 'rejected'].includes(scholarshipStatus);
+    })
+    .map(record => {
+      const requirements = requirementsFor(record);
+      const openRequirements = requirements.filter(item => !item.done).length;
+      const days = daysUntil(record.deadline || '');
+      const priorityWeight = record.priority === 'high' ? 45 : record.priority === 'medium' ? 25 : 10;
+      const deadlineWeight = days === null ? 0 : days < 0 ? 70 : Math.max(8, 70 - days);
+      const taskWeight = openRequirements ? 25 : 0;
+      return {
+        record,
+        task: record.app ? nextApplicationAction(record.app) : nextScholarshipAction(record.scholarship!),
+        score: priorityWeight + deadlineWeight + taskWeight,
+        openRequirements,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
 
   function TypeMark({ type }: { type: UnifiedRecord['type'] }) {
     return (
@@ -619,6 +661,41 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
             {upcomingDeadlines.length === 0 && <div className="col-span-3 flex items-center justify-center rounded-xl border border-dashed border-[#f1dfbb] p-4 text-xs text-[#947c42]">Add a deadline to see it here.</div>}
           </div>
         </div>
+      </div>
+
+      <div data-testid="overview-priority-actions" className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,20,43,0.04)] sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#c64b3c]">Next actions</p>
+            <h3 className="mt-1 text-xl font-bold tracking-tight">Priority actions</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Deadline proximity, priority, status, and incomplete requirements decide what rises to the top.</p>
+          </div>
+          <span className="hidden rounded-full bg-[#fff0ed] px-2.5 py-1 text-[10px] font-bold text-[#c64b3c] sm:block">{priorityActions.length} to review</span>
+        </div>
+        {priorityActions.length === 0 ? (
+          <div data-testid="overview-priority-actions-empty" className="mt-4 rounded-xl border border-dashed border-border bg-[#fbfcfd] p-5 text-center text-xs text-muted-foreground">You’re all clear for now. Add a target or a deadline to keep your plan moving.</div>
+        ) : (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {priorityActions.map(({ record, task, openRequirements }) => (
+              <div key={record.key} data-testid={`priority-action-${record.key}`} className="flex min-w-0 items-center gap-3 rounded-xl border bg-[#fbfcfd] p-3.5" style={{ borderColor: 'var(--apps-border)' }}>
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${record.priority === 'high' ? 'bg-red-500' : record.priority === 'medium' ? 'bg-orange-400' : 'bg-slate-400'}`} title={`${PRIORITY_META[record.priority].label} priority`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-bold text-foreground">{recordTitle(record)}</p>
+                    <TypeMark type={record.type} />
+                  </div>
+                  <p className="mt-1 truncate text-xs font-semibold text-[#4654a8]">{task}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+                    <DeadlineCue deadline={record.deadline} />
+                    <span>{record.app ? statusLabel(record.app.status, 'application') : statusLabel(record.scholarship?.status, 'scholarship')}</span>
+                    {openRequirements > 0 && <span>{openRequirements} incomplete</span>}
+                  </div>
+                </div>
+                <Button type="button" size="sm" variant="outline" data-testid={`button-continue-priority-${record.key}`} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="h-8 shrink-0 px-2.5 text-[11px]">Continue <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border bg-white p-3 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
@@ -1149,7 +1226,7 @@ function ApplicationsTab() {
         <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationRows.length}</p>
+              <p data-testid="stat-applications-total" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationRows.length}</p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Total Tracked</p>
             </div>
             <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--apps-accent-light)', color: 'var(--apps-accent)' }}>
@@ -1162,7 +1239,7 @@ function ApplicationsTab() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>
-                {applicationSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{applicationSummary.docsTotal}</span>
+                <span data-testid="stat-applications-documents">{applicationSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{applicationSummary.docsTotal}</span></span>
               </p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Docs Completed</p>
             </div>
@@ -1189,7 +1266,7 @@ function ApplicationsTab() {
         <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationSummary.upcomingDeadlines}</p>
+              <p data-testid="stat-applications-deadlines" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{applicationSummary.upcomingDeadlines}</p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Upcoming Deadlines</p>
               <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>Due within 30 days</p>
             </div>
@@ -1297,7 +1374,7 @@ function ApplicationsTab() {
               className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'kanban' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
               style={viewMode === 'kanban' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
             >
-              <Layers className="w-3.5 h-3.5" /> Board
+              <Layers className="w-3.5 h-3.5" /> Kanban
             </button>
           </div>
           <Button
@@ -1699,7 +1776,7 @@ function ApplicationsTab() {
                 const meta = APP_STATUS_META[app.status as AppStatus] || APP_STATUS_META.researching;
                 const days = daysUntil(app.deadline as string);
                 const urgent = days !== null && days >= 0 && days <= 7;
-                const dotColor: Record<AppStatus, string> = {
+                const dotColor: Partial<Record<AppStatus, string>> = {
                   researching:    'bg-slate-400',
                   ready_to_apply: 'bg-emerald-500',
                   applied:        'bg-blue-500',
@@ -2431,7 +2508,7 @@ function ScholarshipsTab() {
         <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipRows.length}</p>
+              <p data-testid="stat-scholarships-total" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipRows.length}</p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Total Scholarships Tracked</p>
             </div>
             <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
@@ -2444,7 +2521,7 @@ function ScholarshipsTab() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>
-                {scholarshipSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{scholarshipSummary.docsTotal}</span>
+                <span data-testid="stat-scholarships-documents">{scholarshipSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{scholarshipSummary.docsTotal}</span></span>
               </p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Requirements/Docs Completed</p>
               <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>{docsCompletion}% complete</p>
@@ -2462,7 +2539,7 @@ function ScholarshipsTab() {
         <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipSummary.upcomingDeadlines}</p>
+              <p data-testid="stat-scholarships-deadlines" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipSummary.upcomingDeadlines}</p>
               <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Upcoming Deadlines</p>
               <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>Due within 30 days</p>
             </div>
@@ -2774,6 +2851,7 @@ function ScholarshipsTab() {
           <Search className="w-10 h-10 mx-auto mb-3 opacity-25" />
           <p className="font-semibold">No scholarships match these filters</p>
           <p className="text-sm mt-1">Try another country, priority, or search term.</p>
+          <Button type="button" size="sm" variant="ghost" className="mt-2" data-testid="button-clear-scholarship-filters" onClick={() => { setCountryFilter(null); setPriorityFilter(null); setStatusFilter(null); setSearchQuery(''); }}>Clear filters</Button>
         </div>
       ) : viewMode === 'timeline' ? (
         <div className="relative space-y-4 pl-8">
