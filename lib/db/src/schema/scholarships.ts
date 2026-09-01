@@ -25,6 +25,10 @@ export const scholarshipsTable = pgTable("scholarships", {
   dateApplied: text("date_applied"),
   portalUrl: text("portal_url"),
   requirementsJson: text("requirements_json"),
+  // Phase 2 — Scholarship Core Redesign (additive, nullable — safe for existing rows)
+  degreeLevel: text("degree_level"),
+  profileMatch: real("profile_match"),
+  relatedUniversities: text("related_universities"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

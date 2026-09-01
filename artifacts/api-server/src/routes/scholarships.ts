@@ -32,7 +32,11 @@ const bodySchema = z.object({
   notes: z.string().nullable().optional(),
   dateApplied: z.string().nullable().optional(),
   portalUrl: z.string().nullable().optional(),
+  websiteUrl: z.string().nullable().optional(),
   requirementsJson: z.string().nullable().optional(),
+  degreeLevel: z.string().nullable().optional(),
+  profileMatch: z.number().nullable().optional(),
+  relatedUniversities: z.string().nullable().optional(),
 });
 
 router.post("/higher-study/scholarships", requireAuth, async (req, res): Promise<void> => {
