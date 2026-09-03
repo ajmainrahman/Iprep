@@ -191,7 +191,7 @@
   --sidebar-ring: 243 75% 59%;
 }
 
-/* ── FLY MODE (indigo sidebar override) ──────────────────────────────── */
+/* ── FLY MODE (indigo/violet sidebar — strategic, academic, administrative) */
 .fly-mode {
   --sidebar: 243 47% 12%;
   --sidebar-foreground: 0 0% 100%;
@@ -206,6 +206,46 @@
   --sidebar: 243 47% 10%;
   --sidebar-border: 243 47% 16%;
   --sidebar-accent: 243 47% 16%;
+}
+
+/* ── STUDY MODE (navy/teal sidebar — focused, personal, learning-oriented)
+   Same deep-navy family as Fly so the products read as siblings, but shifted
+   toward teal/blue rather than indigo/violet so they're not identical. ──── */
+.study-mode {
+  --sidebar: 205 55% 11%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 205 45% 18%;
+  --sidebar-primary: 189 75% 45%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 205 45% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 189 75% 45%;
+}
+.study-mode.dark {
+  --sidebar: 205 55% 9%;
+  --sidebar-border: 205 45% 16%;
+  --sidebar-accent: 205 45% 16%;
+}
+
+/* ── SHARED DESIGN TOKENS (section 2) — spacing, shadow, transition scales.
+   Centralised here so components reference tokens instead of ad-hoc values. */
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 4px 8px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 12px 20px rgba(16, 24, 40, 0.08), 0 4px 8px rgba(16, 24, 40, 0.04);
+
+  --transition-fast: 120ms ease-out;
+  --transition-base: 200ms ease-out;
+  --transition-slow: 320ms ease-out;
 }
 
 /* ── BASE LAYER ────────────────────────────────────────────────────────── */
