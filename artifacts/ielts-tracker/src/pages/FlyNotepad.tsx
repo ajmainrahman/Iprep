@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -126,12 +127,12 @@ export function FlyNotepad() {
         ))}
       </div>
 
-      {showForm && (
-        <Card className="border-2 border-indigo/25">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{editId ? 'Edit Entry' : 'New Entry'}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <Dialog open={showForm} onOpenChange={open => { if (!open) { setShowForm(false); setEditId(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">{editId ? 'Edit Entry' : 'New Entry'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Type</Label>
@@ -181,9 +182,9 @@ export function FlyNotepad() {
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

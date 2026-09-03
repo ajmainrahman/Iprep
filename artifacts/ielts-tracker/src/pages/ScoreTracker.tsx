@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -259,15 +260,12 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
             </CardContent>
           </Card>
 
-          {editingScore && (
-            <Card className="shadow-sm border-2 border-teal/30">
-              <CardHeader className="pb-3 bg-teal/5">
-                <CardTitle className="text-base flex items-center justify-between">
-                  <span>Edit Score</span>
-                  <button onClick={() => setEditingScore(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
+          <Dialog open={!!editingScore} onOpenChange={open => { if (!open) setEditingScore(null); }}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-base">Edit Score</DialogTitle>
+              </DialogHeader>
+              {editingScore && (
                 <form onSubmit={handleUpdateScore} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Date</Label>
@@ -301,9 +299,9 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     <Button type="button" size="sm" variant="ghost" onClick={() => setEditingScore(null)}>Cancel</Button>
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
 
           <Card className="shadow-sm overflow-hidden">
             <CardHeader className="pb-2 bg-muted/50 border-b">

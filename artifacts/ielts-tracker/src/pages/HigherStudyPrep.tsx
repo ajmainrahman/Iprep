@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { fmtDate, daysUntil } from '@/lib/utils/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -1173,6 +1175,18 @@ function ApplicationsTab() {
     try { sessionStorage.setItem('apps-view-mode', viewMode); } catch { /* storage unavailable — non-fatal */ }
   }, [viewMode]);
   const [detailApp, setDetailApp] = useState<(Record<string, unknown> & { id: number }) | null>(null);
+  const routeParams = useParams<{ tab?: string; id?: string }>();
+  const [, setLocation] = useLocation();
+  const deepLinkedAppId = routeParams.tab === 'applications' && routeParams.id ? Number(routeParams.id) : null;
+
+  function openAppDetail(app: Record<string, unknown> & { id: number }) {
+    setDetailApp(app);
+    setLocation(`/fly/applications/${app.id}`);
+  }
+  function closeAppDetail() {
+    setDetailApp(null);
+    setLocation('/fly/applications');
+  }
 
   const [countryFilter,  setCountryFilter]  = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
@@ -1300,6 +1314,11 @@ function ApplicationsTab() {
   ];
 
   const applicationRows = apps as (Record<string, unknown> & { id: number })[];
+  useEffect(() => {
+    if (deepLinkedAppId === null || detailApp) return;
+    const found = applicationRows.find(a => a.id === deepLinkedAppId);
+    if (found) setDetailApp(found);
+  }, [deepLinkedAppId, applicationRows]);
   const applicationSummary = React.useMemo(() => {
     const priorityCounts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
     const statusCounts = Object.keys(APP_STATUS_META).reduce<Record<string, number>>((acc, status) => {
@@ -1639,16 +1658,16 @@ function ApplicationsTab() {
         </div>
       </div>
 
-      {/* ── Add / Edit Form ── */}
-      {showForm && (
-        <Card className="border-2 border-indigo/25 dark:border-indigo/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+      {/* ── Add / Edit Form — modal, so editing item #25 never jumps the page to the top ── */}
+      <Dialog open={showForm} onOpenChange={open => { if (!open) { setShowForm(false); setEditId(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
               <GraduationCap className="w-4 h-4 text-indigo" />
               {editId ? 'Edit Application' : 'New University Application'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>University Name *</Label>
@@ -1858,9 +1877,9 @@ function ApplicationsTab() {
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Application list / timeline ── */}
       {isLoading ? (
@@ -1924,7 +1943,7 @@ function ApplicationsTab() {
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
-                            <button type="button" data-testid={`button-view-kanban-application-${app.id}`} onClick={() => setDetailApp(app)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextApplicationAction(app)}</button>
+                            <button type="button" data-testid={`button-view-kanban-application-${app.id}`} onClick={() => openAppDetail(app)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextApplicationAction(app)}</button>
                             <button type="button" data-testid={`button-edit-kanban-application-${app.id}`} aria-label={`Edit ${String(app.universityName)}`} onClick={() => startEdit(app)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Edit2 className="h-3 w-3" /></button>
                           </div>
                         </article>
@@ -2004,7 +2023,7 @@ function ApplicationsTab() {
                           <ReadinessBar value={computeReadiness(app)} compact />
                         </div>
                         <div className="flex items-center gap-2 mt-3">
-                          <Button size="sm" variant="outline" className="h-7 text-[11px] px-2.5" onClick={() => setDetailApp(app)}>View Details</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-[11px] px-2.5" onClick={() => openAppDetail(app)}>View Details</Button>
                           <button onClick={() => startEdit(app)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -2056,8 +2075,8 @@ function ApplicationsTab() {
     </div>
     <ApplicationDetailDrawer
       app={detailApp}
-      onClose={() => setDetailApp(null)}
-      onEdit={a => { setDetailApp(null); startEdit(a); }}
+      onClose={closeAppDetail}
+      onEdit={a => { closeAppDetail(); startEdit(a); }}
       onToggleReq={(a, idx) => toggleReqInApp(a, idx)}
       onChangeStatus={(a, status) => changeApplicationStatus(a, status)}
     />
@@ -2136,7 +2155,7 @@ function ApplicationsTab() {
                         size="sm"
                         variant="outline"
                         data-testid={`button-view-application-${app.id}`}
-                        onClick={() => setDetailApp(app)}
+                        onClick={() => openAppDetail(app)}
                         className="h-7 text-[11px] px-2.5"
                       >
                         View Details
@@ -2537,15 +2556,15 @@ function TestScoresTab() {
         </Button>
       </div>
 
-      {showForm && (
-        <Card className="border-2 border-indigo/25">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+      <Dialog open={showForm} onOpenChange={open => { if (!open) { setShowForm(false); setEditId(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
               <BookMarked className="w-4 h-4 text-indigo" />
               {editId ? 'Edit Test Score' : 'Record Test Score'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Test</Label>
@@ -2602,9 +2621,9 @@ function TestScoresTab() {
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
@@ -2705,6 +2724,18 @@ function ScholarshipsTab() {
   const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
   const [notesEditDraft, setNotesEditDraft] = useState('');
   const [detailSch, setDetailSch] = useState<(Record<string, unknown> & { id: number }) | null>(null);
+  const schRouteParams = useParams<{ tab?: string; id?: string }>();
+  const [, setSchLocation] = useLocation();
+  const deepLinkedSchId = schRouteParams.tab === 'scholarships' && schRouteParams.id ? Number(schRouteParams.id) : null;
+
+  function openSchDetail(s: Record<string, unknown> & { id: number }) {
+    setDetailSch(s);
+    setSchLocation(`/fly/scholarships/${s.id}`);
+  }
+  function closeSchDetail() {
+    setDetailSch(null);
+    setSchLocation('/fly/scholarships');
+  }
 
   const [viewMode, setViewMode] = useState<'list' | 'pipeline' | 'timeline'>(() => {
     try {
@@ -2830,6 +2861,11 @@ function ScholarshipsTab() {
   }
 
   const scholarshipRows = scholarships as (Record<string, unknown> & { id: number })[];
+  useEffect(() => {
+    if (deepLinkedSchId === null || detailSch) return;
+    const found = scholarshipRows.find(s => s.id === deepLinkedSchId);
+    if (found) setDetailSch(found);
+  }, [deepLinkedSchId, scholarshipRows]);
   const uniqueCountries = React.useMemo(() => (
     [...new Set(scholarshipRows.map(s => String(s.country || '').trim()).filter(Boolean))].sort()
   ), [scholarships]);
@@ -3094,15 +3130,15 @@ function ScholarshipsTab() {
         </div>
       </div>
 
-      {showForm && (
-        <Card className="border-2 border-indigo/25">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+      <Dialog open={showForm} onOpenChange={open => { if (!open) { setShowForm(false); setEditId(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
               <Trophy className="w-4 h-4 text-yellow-500" />
               {editId ? 'Edit Scholarship' : 'New Scholarship'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Scholarship Name *</Label>
@@ -3351,9 +3387,9 @@ function ScholarshipsTab() {
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div data-testid="scholarships-loading" className="space-y-3" aria-label="Loading scholarships">
@@ -3415,7 +3451,7 @@ function ScholarshipsTab() {
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
-                            <button type="button" data-testid={`button-view-pipeline-scholarship-${s.id}`} onClick={() => setDetailSch(s)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextScholarshipAction(s)}</button>
+                            <button type="button" data-testid={`button-view-pipeline-scholarship-${s.id}`} onClick={() => openSchDetail(s)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextScholarshipAction(s)}</button>
                             <button type="button" data-testid={`button-edit-pipeline-scholarship-${s.id}`} aria-label={`Edit ${String(s.name)}`} onClick={() => startEdit(s)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Edit2 className="h-3 w-3" /></button>
                           </div>
                         </article>
@@ -3468,8 +3504,8 @@ function ScholarshipsTab() {
     <ScholarshipDetailDrawer
       sch={detailSch}
       applications={applications as { id: number; universityName?: string; program?: string }[]}
-      onClose={() => setDetailSch(null)}
-      onEdit={s => { setDetailSch(null); startEdit(s); }}
+      onClose={closeSchDetail}
+      onEdit={s => { closeSchDetail(); startEdit(s); }}
       onToggleReq={(s, idx) => toggleReq(s, idx)}
       onChangeStatus={(s, status) => changeScholarshipStatus(s, status)}
     />
@@ -3497,7 +3533,7 @@ function ScholarshipsTab() {
           <div className="flex items-start justify-between gap-2 mb-2">
             <button
               className="flex-1 text-left min-w-0"
-              onClick={() => opts?.timeline ? setDetailSch(s) : setExpandedSchId(isExpanded ? null : s.id)}
+              onClick={() => opts?.timeline ? openSchDetail(s) : setExpandedSchId(isExpanded ? null : s.id)}
             >
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 data-testid={`text-scholarship-name-${s.id}`} className="font-semibold text-sm truncate">🎓 {String(s.name)}</h3>
@@ -3515,7 +3551,7 @@ function ScholarshipsTab() {
               {linkedApplication && <p data-testid={`linked-application-scholarship-${s.id}`} className="mt-1 text-[11px] font-medium text-indigo-600">For {linkedApplication.universityName}{linkedApplication.program ? ` · ${linkedApplication.program}` : ''}</p>}
             </button>
             <div className="flex gap-1 shrink-0">
-              <button type="button" data-testid={`button-view-scholarship-${s.id}`} aria-label={`View ${String(s.name)}`} title="View scholarship" onClick={() => setDetailSch(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
+              <button type="button" data-testid={`button-view-scholarship-${s.id}`} aria-label={`View ${String(s.name)}`} title="View scholarship" onClick={() => openSchDetail(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
               {!opts?.timeline && (
@@ -3963,7 +3999,6 @@ function ChecklistTemplates() {
     setFormDegree(tmpl.degreeType);
     setFormItems(tmpl.items.length ? [...tmpl.items] : ['']);
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function startEditTemplate(tmpl: { id: number; name: string; degreeType?: string | null; itemsParsed: string[] }) {
@@ -3995,15 +4030,15 @@ function ChecklistTemplates() {
       </div>
 
       {/* Create form */}
-      {showForm && (
-        <Card className="border-2 border-indigo/25">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+      <Dialog open={showForm} onOpenChange={open => { if (!open) { setShowForm(false); setEditTemplateId(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
               <ClipboardList className="w-4 h-4 text-indigo" />
               {editTemplateId ? 'Edit Custom Template' : 'New Custom Template'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Template Name *</Label>
@@ -4055,9 +4090,9 @@ function ChecklistTemplates() {
                 <X className="w-4 h-4 mr-1" /> Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Default templates */}
       <div>
