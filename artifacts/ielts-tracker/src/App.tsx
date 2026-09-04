@@ -22,7 +22,6 @@ import {
   type LucideIcon, ArrowLeft, Menu, PanelLeftClose, PanelLeftOpen, LogOut, Plane, BookOpenCheck,
   LayoutDashboard, GraduationCap, BarChart3, Trophy, FileText, NotebookPen,
   Home, TrendingUp, BookOpen, Target, BookMarked, Compass, CalendarClock,
-  Flame, CircleCheckBig, ChevronRight, Plus, ArrowUpRight,
 } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
@@ -117,308 +116,186 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 /* ─── LANDING PAGE ──────────────────────────────────────────────────────── */
-function StatBlock({
-  icon: Icon, label, value, accent, onClick,
-}: { icon: LucideIcon; label: string; value: string; accent: 'orange' | 'indigo' | 'teal'; onClick?: () => void }) {
-  const accentColor = accent === 'orange' ? '#EA580C' : accent === 'indigo' ? 'var(--apps-accent)' : '#0D9488';
-  const Comp = onClick ? 'button' : 'div';
-  return (
-    <Comp
-      onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${onClick ? 'hover:bg-muted/40 cursor-pointer' : ''}`}
-      style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}
-    >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${accentColor}1A`, color: accentColor }}>
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="text-[17px] font-heading font-bold leading-tight" style={{ color: 'var(--apps-text-primary, inherit)' }}>{value}</p>
-      </div>
-    </Comp>
-  );
-}
-
-function ModuleCard({
-  icon: Icon, name, description, metrics, cta, accentColor, onClick,
-}: { icon: LucideIcon; name: string; description: string; metrics: string[]; cta: string; accentColor: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="group flex flex-col items-start rounded-xl border p-5 text-left transition-colors hover:bg-muted/30"
-      style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)', borderLeftWidth: 3, borderLeftColor: accentColor }}
-    >
-      <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${accentColor}1A`, color: accentColor }}>
-        <Icon className="h-4.5 w-4.5" />
-      </span>
-      <h2 className="font-heading font-bold text-[16px] mb-1">{name}</h2>
-      <p className="text-[13px] leading-relaxed text-muted-foreground mb-3">{description}</p>
-      {metrics.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {metrics.map(m => (
-            <span key={m} className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: `${accentColor}14`, color: accentColor }}>{m}</span>
-          ))}
-        </div>
-      )}
-      <span className="mt-auto flex items-center gap-1 text-[13px] font-bold" style={{ color: accentColor }}>
-        {cta}
-        <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-      </span>
-    </button>
-  );
-}
-
-function QuickActionButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-muted"
-      style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}
-    >
-      <Icon className="h-3.5 w-3.5" style={{ color: 'var(--apps-accent)' }} />
-      {label}
-    </button>
-  );
-}
-
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
-  const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
-  const { data: scholarships = [] } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
   const { data: studySessions = [] } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
-  const { data: scores = [] } = useQuery({ queryKey: ['scores'], queryFn: api.getScores });
 
   const examDays = daysUntil((settings as any)?.examDate);
   const streak = calcStreak(studySessions as any[]);
 
-  // Single source of truth: the SAME `applications` query + SAME `daysUntil` date-only
-  // helper that Fly → Applications itself renders from. Nothing here is a separate/
-  // duplicated deadline value, so the homepage can never drift out of sync with Fly.
-  const upcomingApplications = (applications as any[])
-    .map((a: any) => ({ ...a, days: daysUntil(a.deadline) }))
-    .filter((a) => a.days !== null && a.days >= 0)
-    .sort((a, b) => a.days - b.days);
-  const nextDeadline = upcomingApplications[0] ?? null;
-  const upcomingDeadlineCount = upcomingApplications.filter((a) => a.days <= 30).length;
+  const nextDeadline = (applications as any[])
+    .map((a: any) => ({ name: a.universityName, days: daysUntil(a.deadline) }))
+    .filter(a => a.days !== null && a.days >= 0)
+    .sort((a, b) => (a.days as number) - (b.days as number))[0] ?? null;
 
-  const upcomingScholarships = (scholarships as any[])
-    .map((s: any) => ({ ...s, days: daysUntil(s.deadline) }))
-    .filter((s) => s.days !== null && s.days >= 0)
-    .sort((a, b) => a.days - b.days);
-
-  // Current IELTS band — the same "latest score per module, averaged" logic the
-  // Study dashboard itself uses, so this metric matches what's shown inside Study.
-  const currentBand = React.useMemo(() => {
-    const modules = ['Reading', 'Listening', 'Writing', 'Speaking'];
-    const latest: number[] = [];
-    modules.forEach((mod) => {
-      const modScores = (scores as any[]).filter((s) => s.module === mod).sort((a, b) => (a.date < b.date ? 1 : -1));
-      if (modScores.length) latest.push(modScores[0].band);
-    });
-    return latest.length ? latest.reduce((a, b) => a + b, 0) / latest.length : null;
-  }, [scores]);
-
-  const fmtDays = (d: number) => (d === 0 ? 'Today' : d === 1 ? '1 day' : `${d} days`);
-
-  // "What needs your attention" — built entirely from real, already-fetched data.
-  // Nothing here is fabricated; if nothing qualifies, the section shows "All caught up."
-  type Attention = { label: string; sub: string; onClick: () => void; urgent?: boolean };
-  const attentionItems: Attention[] = [];
-  if (examDays !== null && examDays >= 0 && examDays <= 14) {
-    attentionItems.push({
-      label: 'IELTS exam approaching',
-      sub: `${fmtDays(examDays)} left to prepare`,
-      onClick: () => setLocation('/study/scores'),
-      urgent: examDays <= 3,
-    });
-  }
-  if (nextDeadline) {
-    attentionItems.push({
-      label: 'University application deadline approaching',
-      sub: `${nextDeadline.universityName} · ${fmtDays(nextDeadline.days)} left`,
-      onClick: () => setLocation(`/fly/applications/${nextDeadline.id}`),
-      urgent: nextDeadline.days <= 7,
-    });
-    const reqs: { done?: boolean }[] = (() => { try { return JSON.parse(nextDeadline.requirementsJson || '[]'); } catch { return []; } })();
-    const incomplete = reqs.filter((r) => !r.done).length;
-    if (incomplete > 0) {
-      attentionItems.push({
-        label: 'Missing application documents',
-        sub: `${incomplete} item${incomplete > 1 ? 's' : ''} left for ${nextDeadline.universityName}`,
-        onClick: () => setLocation(`/fly/applications/${nextDeadline.id}`),
-      });
-    }
-  }
-  if (upcomingScholarships[0] && upcomingScholarships[0].days <= 14) {
-    attentionItems.push({
-      label: 'Scholarship deadline approaching',
-      sub: `${upcomingScholarships[0].name} · ${fmtDays(upcomingScholarships[0].days)} left`,
-      onClick: () => setLocation(`/fly/scholarships/${upcomingScholarships[0].id}`),
-      urgent: upcomingScholarships[0].days <= 7,
-    });
-  }
-  if (streak === 0 && (studySessions as any[]).length > 0) {
-    attentionItems.push({
-      label: 'Study streak broken',
-      sub: 'Log a session today to start a new streak',
-      onClick: () => setLocation('/study/study'),
-    });
-  }
-
-  const appCount = (applications as any[]).length;
+  const hasCountdowns = examDays !== null || nextDeadline !== null || streak > 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
-      {/* Header — compact, existing brand identity preserved */}
-      <header className="border-b" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-              <defs>
-                <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#4338CA" />
-                  <stop offset="100%" stopColor="#7C3AED" />
-                </linearGradient>
-              </defs>
-              <rect width="64" height="64" rx="16" fill="url(#navbg)" />
-              <path d="M46 12 L18 29 L25 32 L21 47 L28 40 L33 43 L54 20 Z" fill="white" opacity="0.95" />
-            </svg>
-            <span className="font-heading font-bold text-[15px] tracking-tight">Within a Few Weeks</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-[13px] font-medium text-muted-foreground">{user?.name}</span>
-            <button
-              onClick={logout}
-              className="text-[12.5px] font-medium px-3.5 py-1.5 rounded-full border transition-colors hover:bg-muted"
-              style={{ borderColor: 'var(--apps-border)' }}
-            >
-              Sign out
-            </button>
-          </div>
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#F6F7FB' }}>
+
+      {/* Decorative background shapes */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(circle, #c4b5fd 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(circle, #bae6fd 0%, transparent 70%)' }} />
+        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6366f1" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
+      {/* Top nav bar */}
+      <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
+        <div className="flex items-center gap-3">
+          {/* Logo mark */}
+          <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 shadow-sm">
+            <defs>
+              <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#4338CA"/>
+                <stop offset="100%" stopColor="#7C3AED"/>
+              </linearGradient>
+            </defs>
+            <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
+            <path d="M46 12 L18 29 L25 32 L21 47 L28 40 L33 43 L54 20 Z" fill="white" opacity="0.95"/>
+            <circle cx="17" cy="49" r="2.5" fill="white" opacity="0.4"/>
+            <circle cx="11" cy="54" r="1.5" fill="white" opacity="0.25"/>
+          </svg>
+          <span className="font-bold text-[17px] tracking-tight text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            Within a Few Weeks
+          </span>
         </div>
-      </header>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:block text-[13px] font-medium text-muted-foreground">{user?.name}</span>
+          <button
+            onClick={logout}
+            className="text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors hover:bg-muted bg-white border border-border text-muted-foreground hover:text-foreground shadow-sm"
+          >
+            Sign out
+          </button>
+        </div>
+      </nav>
 
-      <main className="flex-1">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 py-7 sm:py-9 space-y-7">
+      {/* Hero */}
+      <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-5 sm:px-8 pt-10 pb-4 text-center">
 
-          {/* Hero — personal, not a marketing landing page */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: 'var(--apps-accent)' }}>
-              Your Higher-Study Journey
-            </p>
-            <h1 className="font-heading font-bold text-[28px] sm:text-[32px] leading-tight tracking-tight mb-2">
-              Within a Few Weeks
-            </h1>
-            <p className="text-[14px] text-muted-foreground max-w-xl">
-              One place to prepare for IELTS, manage university applications, and stay on track toward your next academic goal.
-            </p>
-          </div>
+        {/* Eyebrow badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-[11px] font-bold tracking-widest uppercase"
+          style={{ background: '#eef2ff', color: '#4338ca', border: '1px solid #e0e7ff' }}>
+          <span>🎯</span> Your IELTS &amp; Higher Study Platform
+        </div>
 
-          {/* Your Timeline — compact, real countdowns only */}
-          <section>
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2.5">Your Timeline</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <StatBlock
-                icon={Flame}
-                label="Study Streak"
-                value={streak > 0 ? `${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start today'}
-                accent="orange"
-                onClick={() => setLocation('/study/study')}
-              />
-              <StatBlock
-                icon={CalendarClock}
-                label="IELTS Exam"
-                value={examDays === null ? 'Not set' : examDays < 0 ? 'Passed' : fmtDays(examDays)}
-                accent="indigo"
-                onClick={() => setLocation('/study/scores')}
-              />
-              <StatBlock
-                icon={GraduationCap}
-                label={nextDeadline ? `Apply · ${String(nextDeadline.universityName).slice(0, 18)}${String(nextDeadline.universityName).length > 18 ? '…' : ''}` : 'Next Deadline'}
-                value={!nextDeadline ? 'None upcoming' : fmtDays(nextDeadline.days)}
-                accent="teal"
-                onClick={() => nextDeadline ? setLocation(`/fly/applications/${nextDeadline.id}`) : setLocation('/fly/applications')}
-              />
-            </div>
-          </section>
+        {/* Main headline */}
+        <h1 className="font-black leading-[1.1] mb-6 max-w-2xl"
+          style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.4rem, 6vw, 4rem)', letterSpacing: '-0.02em' }}>
+          <span style={{
+            background: 'linear-gradient(135deg, #4338CA 0%, #7C3AED 50%, #0EA5E9 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            Within a Few Weeks
+          </span>
+        </h1>
 
-          {/* Fly + Study — two modules of one ecosystem */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ModuleCard
-              icon={Plane}
-              name="Fly — Higher Study"
-              description="Manage your university applications, scholarships, deadlines and application documents."
-              metrics={[
-                `${appCount} Application${appCount === 1 ? '' : 's'}`,
-                ...(upcomingDeadlineCount > 0 ? [`${upcomingDeadlineCount} Upcoming Deadline${upcomingDeadlineCount === 1 ? '' : 's'}`] : []),
-              ]}
-              cta="Open Fly"
-              accentColor="#6D5CE8"
-              onClick={onFly}
-            />
-            <ModuleCard
-              icon={BookOpenCheck}
-              name="Study Journey"
-              description="Prepare for IELTS with structured practice, progress tracking and vocabulary building."
-              metrics={[
-                ...(currentBand !== null ? [`Band ${currentBand.toFixed(1)}`] : []),
-                ...(streak > 0 ? [`${streak}-day streak`] : []),
-              ]}
-              cta="Open Study"
-              accentColor="#0D9488"
-              onClick={onStudy}
-            />
-          </section>
-
-          {/* What needs your attention — real data only, never fabricated */}
-          <section>
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2.5">What needs your attention</h2>
-            {attentionItems.length === 0 ? (
-              <div
-                className="rounded-xl border px-4 py-3 text-[13px] text-muted-foreground flex items-center gap-2"
-                style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}
-              >
-                <CircleCheckBig className="h-4 w-4 text-emerald-500 shrink-0" /> All caught up.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {attentionItems.map((item, i) => (
-                  <button
-                    key={i}
-                    onClick={item.onClick}
-                    className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left transition-colors hover:bg-muted/40"
-                    style={{ borderColor: item.urgent ? 'var(--apps-deadline-urgent-text)' : 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold truncate">{item.label}</p>
-                      <p className="text-[12px] text-muted-foreground truncate">{item.sub}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </button>
-                ))}
+        {/* Countdown timers + Streak */}
+        {hasCountdowns && (
+          <div className="flex flex-wrap justify-center gap-4 mb-10">
+            {/* Study streak badge */}
+            {streak > 0 && (
+              <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px] bg-white"
+                style={{ border: '1px solid #ffedd5', boxShadow: '0 2px 10px rgba(234, 88, 12, 0.05)' }}>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-600">
+                  Study Streak
+                </span>
+                <span className="text-2xl font-black leading-none text-orange-600">
+                  🔥 {streak} {streak === 1 ? 'day' : 'days'}
+                </span>
               </div>
             )}
-          </section>
+            {examDays !== null && (
+              <CountdownBadge
+                label="IELTS Exam"
+                days={examDays}
+                color={examDays <= 7 ? 'amber' : 'indigo'}
+              />
+            )}
+            {nextDeadline && (
+              <CountdownBadge
+                label={`Apply · ${(nextDeadline.name as string).slice(0, 18)}${(nextDeadline.name as string).length > 18 ? '…' : ''}`}
+                days={nextDeadline.days as number}
+                color={(nextDeadline.days as number) <= 7 ? 'amber' : 'teal'}
+              />
+            )}
+          </div>
+        )}
 
-          {/* Quick Actions — only actions that already exist in the app */}
-          <section>
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2.5">Quick Actions</h2>
-            <div className="flex flex-wrap gap-2">
-              <QuickActionButton icon={Plus} label="Add Application" onClick={() => setLocation('/fly/applications')} />
-              <QuickActionButton icon={BookOpen} label="Log Study Session" onClick={() => setLocation('/study/study')} />
-              <QuickActionButton icon={BookMarked} label="Add Vocabulary" onClick={() => setLocation('/study/vocab')} />
-              <QuickActionButton icon={Trophy} label="View Scholarships" onClick={() => setLocation('/fly/scholarships')} />
+        {/* Cards */}
+        <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-12">
+
+          {/* Fly card */}
+          <button
+            onClick={onFly}
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#6366F1] shadow-sm hover:shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #e0e7ff, #ede9fe)' }}>
+              ✈️
             </div>
-          </section>
 
+            <h2 className="text-xl font-bold mb-2.5 text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              Fly — Higher Study
+            </h2>
+            <p className="text-[13px] leading-relaxed mb-6 text-muted-foreground">
+              University applications, scholarships, standardised test scores &amp; Erasmus-ready document templates.
+            </p>
+
+            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#6366F1]">
+              Start tracking
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Study Journey card */}
+          <button
+            onClick={onStudy}
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#0EA5E9] shadow-sm hover:shadow-[0_8px_30px_rgba(14,165,233,0.12)]"
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #e0f2fe, #ccfbf1)' }}>
+              📚
+            </div>
+
+            <h2 className="text-xl font-bold mb-2.5 text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              Study Journey
+            </h2>
+            <p className="text-[13px] leading-relaxed mb-6 text-muted-foreground">
+              Smart IELTS score tracking, structured practice logs, 1,000-word vocab bank &amp; daily mindset coaching.
+            </p>
+
+            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#0EA5E9]">
+              Begin journey
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </button>
         </div>
+
       </main>
 
-      <footer className="py-5 text-center">
-        <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground/50">
-          Within a Few Weeks
+      {/* Footer */}
+      <footer className="relative z-10 text-center py-6">
+        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+          Within a Few Weeks <span className="mx-2 text-muted-foreground/40">·</span> Erasmus <span className="mx-2 text-muted-foreground/40">·</span> Europe <span className="mx-2 text-muted-foreground/40">·</span> Beyond
         </p>
       </footer>
     </div>
