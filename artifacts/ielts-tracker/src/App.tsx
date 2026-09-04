@@ -133,29 +133,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   const hasCountdowns = examDays !== null || nextDeadline !== null || streak > 0;
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#F6F7FB' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F7FB' }}>
 
-      {/* Decorative background shapes */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 -right-48 w-[600px] h-[600px] rounded-full opacity-30"
-          style={{ background: 'radial-gradient(circle, #c4b5fd 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-30"
-          style={{ background: 'radial-gradient(circle, #bae6fd 0%, transparent 70%)' }} />
-        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6366f1" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
-
-      {/* Top nav bar */}
-      <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-6 pb-2">
+      {/* Top nav bar — sits above the hero image, always legible */}
+      <nav className="flex items-center justify-between px-6 sm:px-10 py-3.5 bg-white border-b border-border">
         <div className="flex items-center gap-3">
-          {/* Logo mark */}
-          <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 shadow-sm">
+          <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
             <defs>
               <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stopColor="#4338CA"/>
@@ -164,10 +147,8 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             </defs>
             <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
             <path d="M46 12 L18 29 L25 32 L21 47 L28 40 L33 43 L54 20 Z" fill="white" opacity="0.95"/>
-            <circle cx="17" cy="49" r="2.5" fill="white" opacity="0.4"/>
-            <circle cx="11" cy="54" r="1.5" fill="white" opacity="0.25"/>
           </svg>
-          <span className="font-bold text-[17px] tracking-tight text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <span className="font-bold text-[16px] tracking-tight text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
             Within a Few Weeks
           </span>
         </div>
@@ -175,42 +156,48 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           <span className="hidden sm:block text-[13px] font-medium text-muted-foreground">{user?.name}</span>
           <button
             onClick={logout}
-            className="text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors hover:bg-muted bg-white border border-border text-muted-foreground hover:text-foreground shadow-sm"
+            className="text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors hover:bg-muted bg-white border border-border text-muted-foreground hover:text-foreground"
           >
             Sign out
           </button>
         </div>
       </nav>
 
-      {/* Hero */}
-      <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-5 sm:px-8 pt-10 pb-4 text-center">
+      {/* Hero — the Nordic desk/fjord photo, with headline + countdowns overlaid */}
+      <div className="relative w-full overflow-hidden" style={{ height: 'clamp(320px, 48vw, 460px)' }}>
+        <img
+          src="/images/hero-nordic.jpg"
+          alt="A study desk overlooking a Nordic fjord town at sunset, with mountains, national flags, and a journal reading Plan: Learn, Explore, Grow, Inspire"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Gradient scrim for text legibility — darkest at the bottom, where the copy sits */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(8,10,26,0.92) 0%, rgba(8,10,26,0.55) 38%, rgba(8,10,26,0.05) 70%, rgba(8,10,26,0) 100%)' }}
+        />
 
-        {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-[11px] font-bold tracking-widest uppercase"
-          style={{ background: '#eef2ff', color: '#4338ca', border: '1px solid #e0e7ff' }}>
-          <span>🎯</span> Your IELTS &amp; Higher Study Platform
-        </div>
-
-        {/* Main headline */}
-        <h1 className="font-black leading-[1.1] mb-6 max-w-2xl"
-          style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.4rem, 6vw, 4rem)', letterSpacing: '-0.02em' }}>
-          <span style={{
-            background: 'linear-gradient(135deg, #4338CA 0%, #7C3AED 50%, #0EA5E9 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}>
+        <div className="relative z-10 flex h-full flex-col justify-end px-6 sm:px-10 pb-7 sm:pb-9">
+          <div className="inline-flex w-fit items-center gap-2 px-3.5 py-1 rounded-full mb-3 text-[10.5px] font-bold tracking-widest uppercase"
+            style={{ background: 'rgba(255,255,255,0.12)', color: '#E9E3FF', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(4px)' }}>
+            <span>🎯</span> Your IELTS &amp; Higher Study Platform
+          </div>
+          <h1 className="font-black leading-[1.08] mb-2 max-w-xl text-white"
+            style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2rem, 5vw, 3.2rem)', letterSpacing: '-0.02em', textShadow: '0 2px 20px rgba(0,0,0,0.35)' }}>
             Within a Few Weeks
-          </span>
-        </h1>
+          </h1>
+          <p className="max-w-md text-[13.5px] sm:text-[14px] leading-relaxed text-white/80">
+            One place to prepare for IELTS, manage university applications, and stay on track toward your next academic goal.
+          </p>
+        </div>
+      </div>
 
-        {/* Countdown timers + Streak */}
+      {/* Countdown strip — sits just below the hero, on the clean background */}
+      <main className="flex-1 flex flex-col items-center px-5 sm:px-8 pt-7 pb-4">
         {hasCountdowns && (
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
-            {/* Study streak badge */}
+          <div className="flex flex-wrap justify-center gap-4 -mt-2 mb-10">
             {streak > 0 && (
               <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl min-w-[120px] bg-white"
-                style={{ border: '1px solid #ffedd5', boxShadow: '0 2px 10px rgba(234, 88, 12, 0.05)' }}>
+                style={{ border: '1px solid #ffedd5', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-600">
                   Study Streak
                 </span>
@@ -293,7 +280,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-6">
+      <footer className="text-center py-6">
         <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
           Within a Few Weeks <span className="mx-2 text-muted-foreground/40">·</span> Erasmus <span className="mx-2 text-muted-foreground/40">·</span> Europe <span className="mx-2 text-muted-foreground/40">·</span> Beyond
         </p>
