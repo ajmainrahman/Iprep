@@ -138,16 +138,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       {/* Top nav bar — sits above the hero image, always legible */}
       <nav className="flex items-center justify-between px-6 sm:px-10 py-3.5 bg-white border-b border-border">
         <div className="flex items-center gap-3">
-          <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-            <defs>
-              <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#684888"/>
-                <stop offset="100%" stopColor="#9B4FB8"/>
-              </linearGradient>
-            </defs>
-            <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
-            <path d="M46 12 L18 29 L25 32 L21 47 L28 40 L33 43 L54 20 Z" fill="white" opacity="0.95"/>
-          </svg>
+          <img src="/images/logo-mark.png" alt="Within a Few Weeks" width="34" height="34" className="shrink-0" />
           <span className="font-bold text-[16px] tracking-tight text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
             Within a Few Weeks
           </span>
