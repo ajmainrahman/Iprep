@@ -76,8 +76,8 @@ function CountdownBadge({
   label, days, color,
 }: { label: string; days: number; color: 'indigo' | 'teal' | 'amber' }) {
   const palettes = {
-    indigo: { bg: '#ffffff', border: '#e0e7ff', text: '#4338ca', shadow: '0 2px 10px rgba(67, 56, 202, 0.05)' },
-    teal:   { bg: '#ffffff', border: '#e0f2fe', text: '#0284c7', shadow: '0 2px 10px rgba(2, 132, 199, 0.05)' },
+    indigo: { bg: '#ffffff', border: '#EAD4FB', text: '#684888', shadow: '0 2px 10px rgba(104, 72, 136, 0.08)' },
+    teal:   { bg: '#ffffff', border: '#C2F8F1', text: '#108888', shadow: '0 2px 10px rgba(16, 136, 136, 0.08)' },
     amber:  { bg: '#ffffff', border: '#fef3c7', text: '#d97706', shadow: '0 2px 10px rgba(217, 119, 6, 0.05)' },
   };
   const p = palettes[color];
@@ -141,8 +141,8 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
             <defs>
               <linearGradient id="navbg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#4338CA"/>
-                <stop offset="100%" stopColor="#7C3AED"/>
+                <stop offset="0%" stopColor="#684888"/>
+                <stop offset="100%" stopColor="#9B4FB8"/>
               </linearGradient>
             </defs>
             <rect width="64" height="64" rx="16" fill="url(#navbg)"/>
