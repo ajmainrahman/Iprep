@@ -133,7 +133,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   const hasCountdowns = examDays !== null || nextDeadline !== null || streak > 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F7FB' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #FCF6FF 0%, #F6F7FB 45%)' }}>
 
       {/* Top nav bar — sits above the hero image, always legible */}
       <nav className="flex items-center justify-between px-6 sm:px-10 py-3.5 bg-white border-b border-border">
@@ -226,13 +226,16 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         {/* Cards */}
         <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-12">
 
-          {/* Fly card */}
+          {/* Fly card — Attention (purple) → Happiness (pink), from your reference image */}
           <button
             onClick={onFly}
-            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#6366F1] shadow-sm hover:shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border shadow-sm"
+            style={{ borderLeftWidth: 4, borderLeftColor: '#684888' }}
+            onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(136,8,128,0.14)')}
+            onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #e0e7ff, #ede9fe)' }}>
+              style={{ background: 'linear-gradient(135deg, #D8B0F8, #F8B8F8)' }}>
               ✈️
             </div>
 
@@ -243,7 +246,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
               University applications, scholarships, standardised test scores &amp; Erasmus-ready document templates.
             </p>
 
-            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#6366F1]">
+            <div className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#684888' }}>
               Start tracking
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -251,13 +254,16 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             </div>
           </button>
 
-          {/* Study Journey card */}
+          {/* Study Journey card — Energy (teal), from your reference image */}
           <button
             onClick={onStudy}
-            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border border-l-4 border-l-[#0EA5E9] shadow-sm hover:shadow-[0_8px_30px_rgba(14,165,233,0.12)]"
+            className="group relative text-left bg-white rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-y border-r border-border shadow-sm"
+            style={{ borderLeftWidth: 4, borderLeftColor: '#108888' }}
+            onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(16,136,136,0.14)')}
+            onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #e0f2fe, #ccfbf1)' }}>
+              style={{ background: 'linear-gradient(135deg, #78F0E0, #C8FBF2)' }}>
               📚
             </div>
 
@@ -268,7 +274,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
               Smart IELTS score tracking, structured practice logs, 1,000-word vocab bank &amp; daily mindset coaching.
             </p>
 
-            <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#0EA5E9]">
+            <div className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#108888' }}>
               Begin journey
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
