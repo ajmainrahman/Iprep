@@ -2626,67 +2626,112 @@ function TestScoresTab() {
       </Dialog>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="space-y-3" aria-label="Loading test scores">
+          {[1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}
+        </div>
       ) : (scores as unknown[]).length === 0 ? (
-        <div className="text-center py-14 text-muted-foreground">
+        <div className="text-center py-14 text-muted-foreground rounded-xl border border-dashed">
           <BookMarked className="w-12 h-12 mx-auto mb-3 opacity-25" />
-          <p className="font-semibold">No test scores yet</p>
-          <p className="text-sm mt-1">Record your GRE, GMAT, TOEFL or other test scores.</p>
+          <p className="font-semibold text-foreground">No test scores yet</p>
+          <p className="text-sm mt-1 mb-4">Record your GRE, GMAT, TOEFL or other test scores to track your progress.</p>
+          <Button size="sm" className="bg-navy hover:bg-navy/90 dark:bg-indigo text-white" onClick={() => { setEditId(null); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Record First Score
+          </Button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {(scores as {
-            id: number; testName: string; totalScore?: number | null;
-            attemptDate: string; sectionsJson?: string | null; notes?: string | null;
-          }[]).map(s => {
-            let sectionData: Record<string, string> = {};
-            try { if (s.sectionsJson) sectionData = JSON.parse(s.sectionsJson); } catch { /* ignore */ }
+        <div className="space-y-5">
+          {(() => {
+            type TestScoreRow = { id: number; testName: string; totalScore?: number | null; attemptDate: string; sectionsJson?: string | null; notes?: string | null };
+            const rows = scores as TestScoreRow[];
+            const byTest = new Map<string, TestScoreRow[]>();
+            rows.forEach(s => {
+              const list = byTest.get(s.testName) || [];
+              list.push(s);
+              byTest.set(s.testName, list);
+            });
+            // Most recently active test first
+            const testNames = [...byTest.keys()].sort((a, b) => {
+              const latestA = byTest.get(a)![0]?.attemptDate ?? '';
+              const latestB = byTest.get(b)![0]?.attemptDate ?? '';
+              return latestB.localeCompare(latestA);
+            });
 
-            return (
-              <Card key={s.id} className="relative group overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-bold text-lg text-navy dark:text-teal">{s.totalScore ?? '–'}</p>
-                      <p className="text-sm font-semibold">{s.testName}</p>
-                      <p className="text-xs text-muted-foreground">{fmtDate(s.attemptDate)}</p>
+            return testNames.map(name => {
+              const attempts = [...byTest.get(name)!].sort((a, b) => b.attemptDate.localeCompare(a.attemptDate));
+              const scored = attempts.filter(a => a.totalScore != null);
+              const best = scored.length ? scored.reduce((b, a) => (a.totalScore! > b.totalScore! ? a : b)) : null;
+              const latest = attempts[0];
+              const definedSections = TEST_SECTIONS[name];
+
+              return (
+                <section key={name} className="rounded-xl border overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-muted/40 border-b">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-sm">{name}</h3>
+                      <span className="text-xs text-muted-foreground">{attempts.length} attempt{attempts.length !== 1 ? 's' : ''}</span>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button
-                        onClick={() => startEdit(s)}
-                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteMutation.mutate(s.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center gap-4 text-xs">
+                      {latest && (
+                        <span className="text-muted-foreground">Latest: <strong className="text-foreground">{latest.totalScore ?? '–'}</strong></span>
+                      )}
+                      {best && (
+                        <span className="text-muted-foreground">Best: <strong className="text-emerald-600 dark:text-emerald-400">{best.totalScore}</strong></span>
+                      )}
                     </div>
                   </div>
-                  {(() => {
-                    const definedSections = TEST_SECTIONS[s.testName];
-                    const entries: [string, string][] = definedSections
-                      ? definedSections.map(k => [k, sectionData[k] || ''])
-                      : Object.entries(sectionData).filter(([, v]) => v);
-                    if (entries.length === 0) return null;
-                    return (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {entries.map(([k, v]) => (
-                          <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {k}: <strong>{v || '–'}</strong>
-                          </span>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                  {s.notes && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{s.notes}</p>}
-                </CardContent>
-              </Card>
-            );
-          })}
+
+                  <div className="divide-y">
+                    {attempts.map(s => {
+                      let sectionData: Record<string, string> = {};
+                      try { if (s.sectionsJson) sectionData = JSON.parse(s.sectionsJson); } catch { /* ignore */ }
+                      const entries: [string, string][] = definedSections
+                        ? definedSections.map(k => [k, sectionData[k] || ''])
+                        : Object.entries(sectionData).filter(([, v]) => v);
+                      const isBest = best && s.id === best.id && scored.length > 1;
+
+                      return (
+                        <div key={s.id} className="flex items-start gap-3 px-4 py-3">
+                          <div className="w-16 shrink-0 text-center">
+                            <p className="text-xl font-bold text-navy dark:text-teal leading-none">{s.totalScore ?? '–'}</p>
+                            {isBest && <span className="mt-1 inline-block text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Best</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{fmtDate(s.attemptDate)}</p>
+                            {entries.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {entries.map(([k, v]) => (
+                                  <span key={k} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                    {k}: <strong className="text-foreground">{v || '–'}</strong>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {s.notes && <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{s.notes}</p>}
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => startEdit(s)}
+                              aria-label={`Edit ${name} score from ${fmtDate(s.attemptDate)}`}
+                              className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteMutation.mutate(s.id)}
+                              aria-label={`Delete ${name} score from ${fmtDate(s.attemptDate)}`}
+                              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            });
+          })()}
         </div>
       )}
     </div>
