@@ -40,7 +40,26 @@ type ScholarshipStatus =
   | 'rejected' | 'expired' | 'not_eligible';
 type Priority = 'high' | 'medium' | 'low';
 type ReqCategory = 'requirement' | 'document' | 'application';
-type ReqItem = { label: string; done: boolean; category?: ReqCategory };
+type DocStatus = 'missing' | 'draft' | 'ready' | 'uploaded' | 'verified';
+/** `status` is additive — existing items only ever had `done`, so any item
+ *  without a stored status is treated as 'verified' (if done) or 'missing'
+ *  (if not), keeping every prior checklist's data meaningful automatically. */
+type ReqItem = { label: string; done: boolean; category?: ReqCategory; status?: DocStatus };
+
+const DOC_STATUS_META: Record<DocStatus, { label: string; color: string; bg: string; dot: string }> = {
+  missing:  { label: 'Missing',  color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800',      dot: 'bg-slate-400' },
+  draft:    { label: 'Draft',    color: 'text-amber-700',   bg: 'bg-amber-100 dark:bg-amber-900/30',   dot: 'bg-amber-500' },
+  ready:    { label: 'Ready',    color: 'text-blue-700',    bg: 'bg-blue-100 dark:bg-blue-900/30',     dot: 'bg-blue-500' },
+  uploaded: { label: 'Uploaded', color: 'text-teal-700',    bg: 'bg-teal-100 dark:bg-teal-900/30',     dot: 'bg-teal-500' },
+  verified: { label: 'Verified', color: 'text-emerald-700', bg: 'bg-emerald-100 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
+};
+const DOC_STATUS_ORDER: DocStatus[] = ['missing', 'draft', 'ready', 'uploaded', 'verified'];
+function reqStatus(item: ReqItem): DocStatus {
+  return item.status ?? (item.done ? 'verified' : 'missing');
+}
+function reqIsDone(status: DocStatus): boolean {
+  return status === 'uploaded' || status === 'verified';
+}
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
   researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
@@ -1280,11 +1299,18 @@ function ApplicationsTab() {
     else addMutation.mutate(payload);
   }
 
-  function toggleReqInApp(app: Record<string, unknown> & { id: number }, idx: number) {
+  function setReqStatusInApp(app: Record<string, unknown> & { id: number }, idx: number, status: DocStatus) {
     const reqs = safeParseReqs(app.requirementsJson as string);
     if (!reqs[idx]) return;
-    reqs[idx] = { ...reqs[idx], done: !reqs[idx].done };
+    reqs[idx] = { ...reqs[idx], status, done: reqIsDone(status) };
     updateMutation.mutate({ id: app.id, data: { requirementsJson: JSON.stringify(reqs) } });
+  }
+  function cycleReqStatusInApp(app: Record<string, unknown> & { id: number }, idx: number) {
+    const reqs = safeParseReqs(app.requirementsJson as string);
+    if (!reqs[idx]) return;
+    const current = reqStatus(reqs[idx]);
+    const next = DOC_STATUS_ORDER[(DOC_STATUS_ORDER.indexOf(current) + 1) % DOC_STATUS_ORDER.length];
+    setReqStatusInApp(app, idx, next);
   }
 
   function removeReqFromApp(app: Record<string, unknown> & { id: number }, idx: number) {
@@ -2077,7 +2103,7 @@ function ApplicationsTab() {
       app={detailApp}
       onClose={closeAppDetail}
       onEdit={a => { closeAppDetail(); startEdit(a); }}
-      onToggleReq={(a, idx) => toggleReqInApp(a, idx)}
+      onSetReqStatus={(a, idx, status) => setReqStatusInApp(a, idx, status)}
       onChangeStatus={(a, status) => changeApplicationStatus(a, status)}
     />
     </>
@@ -2218,35 +2244,45 @@ function ApplicationsTab() {
                   {/* Expanded content */}
                   {isExpanded && (
                     <div className="mt-4 pt-4 border-t space-y-4">
-                      {/* Requirements with add/remove */}
+                      {/* Document tracker — Document / Status / Required For / Last Updated */}
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-                          Requirements Checklist
+                          Documents &amp; Requirements
                         </p>
                         {reqs.length === 0 ? (
                           <p className="text-xs text-muted-foreground italic">No requirements added yet.</p>
                         ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {reqs.map((r, idx) => (
-                              <div key={idx} className="group relative inline-flex items-center">
-                                <button
-                                  onClick={() => toggleReqInApp(app, idx)}
-                                  className={`text-xs px-3 py-1 rounded-full border transition-all font-medium pr-5 ${
-                                    r.done
-                                      ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
-                                      : 'bg-muted border-border text-muted-foreground hover:border-indigo/40'
-                                  }`}
-                                >
-                                  {r.done ? '✓ ' : ''}{r.label}
-                                </button>
-                                <button
-                                  onClick={() => removeReqFromApp(app, idx)}
-                                  className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
-                                >
-                                  <X className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            ))}
+                          <div className="rounded-lg border divide-y overflow-hidden">
+                            {reqs.map((r, idx) => {
+                              const status = reqStatus(r);
+                              const meta = DOC_STATUS_META[status];
+                              return (
+                                <div key={idx} className="flex items-center gap-2 px-3 py-2 group/doc">
+                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                                  <span className="text-xs font-medium flex-1 min-w-0 truncate" title={r.label}>{r.label}</span>
+                                  <span className="text-[10px] text-muted-foreground shrink-0 hidden sm:inline">
+                                    Required for {String(app.universityName || 'this application')}
+                                  </span>
+                                  <Select value={status} onValueChange={v => setReqStatusInApp(app, idx, v as DocStatus)}>
+                                    <SelectTrigger className={`h-6 w-[92px] text-[10px] border-0 ${meta.bg} ${meta.color} shrink-0`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {DOC_STATUS_ORDER.map(s => (
+                                        <SelectItem key={s} value={s} className="text-xs">{DOC_STATUS_META[s].label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <button
+                                    onClick={() => removeReqFromApp(app, idx)}
+                                    className="opacity-0 group-hover/doc:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0"
+                                    aria-label={`Remove ${r.label}`}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
@@ -2310,12 +2346,12 @@ function ApplicationsTab() {
 
 /* ── Application Detail Drawer ───────────────────────────────────────────── */
 function ApplicationDetailDrawer({
-  app, onClose, onEdit, onToggleReq, onChangeStatus,
+  app, onClose, onEdit, onSetReqStatus, onChangeStatus,
 }: {
   app: (Record<string, unknown> & { id: number }) | null;
   onClose: () => void;
   onEdit: (app: Record<string, unknown> & { id: number }) => void;
-  onToggleReq: (app: Record<string, unknown> & { id: number }, idx: number) => void;
+  onSetReqStatus: (app: Record<string, unknown> & { id: number }, idx: number, status: DocStatus) => void;
   onChangeStatus: (app: Record<string, unknown> & { id: number }, status: AppStatus) => void;
 }) {
   if (!app) return null;
@@ -2420,22 +2456,27 @@ function ApplicationDetailDrawer({
             {reqs.length === 0 ? (
               <p className="text-xs italic text-muted-foreground">No requirements added yet. Edit this application to add a checklist.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {reqs.map((r, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    data-testid={`button-drawer-toggle-req-${app.id}-${idx}`}
-                    onClick={() => onToggleReq(app, idx)}
-                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
-                      r.done
-                        ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
-                        : 'bg-muted border-border text-muted-foreground hover:border-indigo/40'
-                    }`}
-                  >
-                    {r.done ? '✓ ' : ''}{r.label}
-                  </button>
-                ))}
+              <div className="rounded-lg border divide-y overflow-hidden">
+                {reqs.map((r, idx) => {
+                  const status = reqStatus(r);
+                  const meta = DOC_STATUS_META[status];
+                  return (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2">
+                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                      <span className="text-xs font-medium flex-1 min-w-0 truncate" title={r.label}>{r.label}</span>
+                      <Select value={status} onValueChange={v => onSetReqStatus(app, idx, v as DocStatus)}>
+                        <SelectTrigger data-testid={`select-drawer-req-status-${app.id}-${idx}`} className={`h-6 w-[92px] text-[10px] border-0 ${meta.bg} ${meta.color} shrink-0`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DOC_STATUS_ORDER.map(s => (
+                            <SelectItem key={s} value={s} className="text-xs">{DOC_STATUS_META[s].label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -2877,10 +2918,11 @@ function ScholarshipsTab() {
     else addMutation.mutate(payload);
   }
 
-  // Toggle a checklist item directly on a card (inline, immediate save)
-  function toggleReq(s: Record<string, unknown> & { id: number }, idx: number) {
+  // Set a checklist item's document status directly on a card (inline, immediate save)
+  function setReqStatus(s: Record<string, unknown> & { id: number }, idx: number, status: DocStatus) {
     const reqs = parseReqs(s.requirementsJson);
-    reqs[idx] = { ...reqs[idx], done: !reqs[idx].done };
+    if (!reqs[idx]) return;
+    reqs[idx] = { ...reqs[idx], status, done: reqIsDone(status) };
     updateMutation.mutate({ id: s.id, data: { requirementsJson: JSON.stringify(reqs) } });
   }
 
@@ -3514,7 +3556,7 @@ function ScholarshipsTab() {
       applications={applications as { id: number; universityName?: string; program?: string }[]}
       onClose={closeSchDetail}
       onEdit={s => { closeSchDetail(); startEdit(s); }}
-      onToggleReq={(s, idx) => toggleReq(s, idx)}
+      onSetReqStatus={(s, idx, status) => setReqStatus(s, idx, status)}
       onChangeStatus={(s, status) => changeScholarshipStatus(s, status)}
     />
     </>
@@ -3676,24 +3718,34 @@ function ScholarshipsTab() {
                 </p>
                 {reqs.length > 0 && (
                   <div className="space-y-1.5 mb-2">
-                    {reqs.map((r, i) => (
-                      <div key={i} className="flex items-center gap-2 group/req">
-                        <button
-                          onClick={() => toggleReq(s, i)}
-                          className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background hover:border-emerald-400'}`}
-                        >
-                          {r.done && <Check className="w-2.5 h-2.5" />}
-                        </button>
-                        <span className={`text-sm flex-1 ${r.done ? 'line-through text-muted-foreground' : ''}`}>{r.label}</span>
-                        <span className="text-[10px] shrink-0 rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground">{REQ_CATEGORY_META[r.category || 'requirement'].short}</span>
-                        <button
-                          onClick={() => removeReq(s, i)}
-                          className="opacity-0 group-hover/req:opacity-100 p-0.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                    {reqs.map((r, i) => {
+                      const status = reqStatus(r);
+                      const meta = DOC_STATUS_META[status];
+                      return (
+                        <div key={i} className="flex items-center gap-2 group/req">
+                          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                          <span className="text-sm flex-1 min-w-0 truncate">{r.label}</span>
+                          <span className="text-[10px] shrink-0 rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground">{REQ_CATEGORY_META[r.category || 'requirement'].short}</span>
+                          <Select value={status} onValueChange={v => setReqStatus(s, i, v as DocStatus)}>
+                            <SelectTrigger className={`h-6 w-[92px] text-[10px] border-0 ${meta.bg} ${meta.color} shrink-0`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DOC_STATUS_ORDER.map(ds => (
+                                <SelectItem key={ds} value={ds} className="text-xs">{DOC_STATUS_META[ds].label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <button
+                            onClick={() => removeReq(s, i)}
+                            className="opacity-0 group-hover/req:opacity-100 p-0.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-opacity shrink-0"
+                            aria-label={`Remove ${r.label}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 <div className="flex gap-2">
@@ -3757,13 +3809,13 @@ function ScholarshipsTab() {
 
 /* ── Scholarship Detail Drawer (section 4) ───────────────────────────────── */
 function ScholarshipDetailDrawer({
-  sch, applications, onClose, onEdit, onToggleReq, onChangeStatus,
+  sch, applications, onClose, onEdit, onSetReqStatus, onChangeStatus,
 }: {
   sch: (Record<string, unknown> & { id: number }) | null;
   applications: { id: number; universityName?: string; program?: string }[];
   onClose: () => void;
   onEdit: (sch: Record<string, unknown> & { id: number }) => void;
-  onToggleReq: (sch: Record<string, unknown> & { id: number }, idx: number) => void;
+  onSetReqStatus: (sch: Record<string, unknown> & { id: number }, idx: number, status: DocStatus) => void;
   onChangeStatus: (sch: Record<string, unknown> & { id: number }, status: ScholarshipStatus) => void;
 }) {
   if (!sch) return null;
@@ -3892,18 +3944,28 @@ function ScholarshipDetailDrawer({
             {reqs.length === 0 ? (
               <p className="text-xs italic text-muted-foreground">No requirements added yet. Edit this scholarship to add a checklist.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {reqs.map((r, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    data-testid={`button-drawer-toggle-req-${sch.id}-${idx}`}
-                    onClick={() => onToggleReq(sch, idx)}
-                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${r.done ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400' : 'bg-muted border-border text-muted-foreground hover:border-indigo/40'}`}
-                  >
-                    {r.done ? '✓ ' : ''}{r.label} <span className="opacity-60">· {REQ_CATEGORY_META[r.category || 'requirement'].short}</span>
-                  </button>
-                ))}
+              <div className="rounded-lg border divide-y overflow-hidden">
+                {reqs.map((r, idx) => {
+                  const status = reqStatus(r);
+                  const meta = DOC_STATUS_META[status];
+                  return (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2">
+                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${meta.dot}`} />
+                      <span className="text-xs font-medium flex-1 min-w-0 truncate">{r.label}</span>
+                      <span className="text-[10px] shrink-0 text-muted-foreground">{REQ_CATEGORY_META[r.category || 'requirement'].short}</span>
+                      <Select value={status} onValueChange={v => onSetReqStatus(sch, idx, v as DocStatus)}>
+                        <SelectTrigger data-testid={`select-drawer-req-status-${sch.id}-${idx}`} className={`h-6 w-[92px] text-[10px] border-0 ${meta.bg} ${meta.color} shrink-0`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DOC_STATUS_ORDER.map(ds => (
+                            <SelectItem key={ds} value={ds} className="text-xs">{DOC_STATUS_META[ds].label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
