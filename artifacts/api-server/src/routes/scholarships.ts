@@ -53,7 +53,7 @@ router.post("/higher-study/scholarships", requireAuth, async (req, res): Promise
 
 router.put("/higher-study/scholarships/:id", requireAuth, async (req, res): Promise<void> => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
     const parsed = bodySchema.partial().safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
@@ -70,7 +70,7 @@ router.put("/higher-study/scholarships/:id", requireAuth, async (req, res): Prom
 
 router.delete("/higher-study/scholarships/:id", requireAuth, async (req, res): Promise<void> => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
     const [deleted] = await db.delete(scholarshipsTable)
       .where(and(eq(scholarshipsTable.id, id), eq(scholarshipsTable.userId, req.userId!)))
