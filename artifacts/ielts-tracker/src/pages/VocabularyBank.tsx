@@ -290,7 +290,7 @@ export function VocabularyBank() {
               <DialogContent>
                 <DialogHeader><DialogTitle>Add Vocabulary</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddWord} className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Word or Phrase</Label>
                       <Input value={newWord} onChange={e => setNewWord(e.target.value)} required autoFocus />

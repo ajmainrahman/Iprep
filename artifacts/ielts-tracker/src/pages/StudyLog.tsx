@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
 import { BookOpen, Flame, Clock, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +19,17 @@ function localDateStr(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+/* Module → color, shared by the stacked chart and the breakdown table below it */
+const MODULES = ['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary', 'Mixed'] as const;
+const MODULE_COLORS: Record<string, string> = {
+  Reading: '#2EC4B6',
+  Listening: '#7B5EA7',
+  Writing: '#06D6A0',
+  Speaking: '#FF6B6B',
+  Vocabulary: '#FFD166',
+  Mixed: '#1B2A4A',
+};
 
 export function StudyLog() {
   const { toast } = useToast();
@@ -107,20 +118,32 @@ export function StudyLog() {
     mapDays.push({ date: dateStr, total: dayTotal, color });
   }
 
-  // Weekly Chart Data
-  const weeklyData: { day: string; minutes: number; fullDate: string }[] = [];
+  // Weekly Chart Data — now broken down per module so the bar for each day
+  // shows which skill the time actually went to, not just a single total.
+  const weeklyData: Array<{ day: string; fullDate: string; minutes: number } & Record<string, number | string>> = [];
   let weekTotal = 0;
+  const moduleWeekTotals: Record<string, number> = {};
   for (let i = 6; i >= 0; i--) {
     const curr = new Date(today);
     curr.setDate(today.getDate() - i);
     const dateStr = localDateStr(curr);
     const shortDay = curr.toLocaleDateString(undefined, { weekday: 'short' });
-    const dayTotal = (studySessions as any[])
-      .filter((s: any) => s.date === dateStr)
-      .reduce((sum: number, s: any) => sum + s.minutes, 0);
+    const daySessions = (studySessions as any[]).filter((s: any) => s.date === dateStr);
+    const dayTotal = daySessions.reduce((sum: number, s: any) => sum + s.minutes, 0);
     weekTotal += dayTotal;
-    weeklyData.push({ day: shortDay, minutes: dayTotal, fullDate: dateStr });
+
+    const dayRow: Record<string, number | string> = { day: shortDay, fullDate: dateStr, minutes: dayTotal };
+    MODULES.forEach(mod => {
+      const modMinutes = daySessions.filter((s: any) => s.module === mod).reduce((sum: number, s: any) => sum + s.minutes, 0);
+      dayRow[mod] = modMinutes;
+      moduleWeekTotals[mod] = (moduleWeekTotals[mod] || 0) + modMinutes;
+    });
+    weeklyData.push(dayRow as any);
   }
+  const moduleBreakdown = MODULES
+    .map(mod => ({ module: mod, minutes: moduleWeekTotals[mod] || 0 }))
+    .filter(m => m.minutes > 0)
+    .sort((a, b) => b.minutes - a.minutes);
 
   const totalHours = Math.floor((studySessions as any[]).reduce((sum: number, s: any) => sum + s.minutes, 0) / 60);
   const targetWeekly = (settings?.dailyGoalMinutes || 60) * 7;
@@ -283,18 +306,48 @@ export function StudyLog() {
               <CardTitle className="text-lg">This Week's Study Time</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-               <div className="h-[250px] w-full mt-4">
+               <div className="h-[280px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                       <XAxis dataKey="day" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                       <YAxis tick={{fontSize: 12}} tickLine={false} axisLine={false} />
-                      <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#FFD166" strokeDasharray="3 3" />
-                      <Bar dataKey="minutes" fill="#1B2A4A" radius={[4, 4, 0, 0]} barSize={40} />
+                      <RechartsTooltip
+                        cursor={{fill: 'rgba(0,0,0,0.05)'}}
+                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                        formatter={(value: number, name: string) => [`${value} min`, name]}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#94a3b8" strokeDasharray="3 3" />
+                      {MODULES.map(mod => (
+                        <Bar key={mod} dataKey={mod} name={mod} stackId="study" fill={MODULE_COLORS[mod]} radius={[0, 0, 0, 0]} />
+                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                </div>
+
+               {/* Per-module breakdown — exact minutes so it's clear which skill the time went to */}
+               {moduleBreakdown.length > 0 && (
+                 <div className="mt-5 pt-4 border-t border-border/50">
+                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">This Week by Module</p>
+                   <div className="space-y-2">
+                     {moduleBreakdown.map(({ module, minutes }) => {
+                       const pct = weekTotal > 0 ? Math.round((minutes / weekTotal) * 100) : 0;
+                       return (
+                         <div key={module} className="flex items-center gap-3 text-sm">
+                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: MODULE_COLORS[module] }} />
+                           <span className="w-24 shrink-0 font-medium text-foreground">{module}</span>
+                           <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                             <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: MODULE_COLORS[module] }} />
+                           </div>
+                           <span className="w-16 shrink-0 text-right text-muted-foreground text-xs">{minutes} min</span>
+                           <span className="w-10 shrink-0 text-right text-muted-foreground text-xs">{pct}%</span>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
+               )}
             </CardContent>
           </Card>
           

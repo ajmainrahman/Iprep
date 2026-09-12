@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { Target, Search } from 'lucide-react';
+import { Target, Search, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const READING_TYPES = [
@@ -50,6 +50,13 @@ export function PracticeTracker() {
     mutationFn: api.addPracticeLog,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['practice-logs'] }),
   });
+  const deleteLog = useMutation({
+    mutationFn: (id: number) => api.deletePracticeLog(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['practice-logs'] }),
+  });
+  const handleDeleteLog = (id: number) => {
+    if (confirm('Delete this log?')) deleteLog.mutate(id);
+  };
 
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [activeSubtype, setActiveSubtype] = useState('');
@@ -175,6 +182,16 @@ export function PracticeTracker() {
     return { ...part, attempts, avgBand, bestBand };
   });
 
+  // Logs for the currently active module, most recent first — this is what
+  // actually surfaces the Notes/Reflection someone types in when logging practice.
+  const activeModuleLogs = practiceLogs
+    .filter((l: any) => l.module === activeTab)
+    .sort((a: any, b: any) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id ?? 0) - (a.id ?? 0)));
+
+  const formatLogScore = (l: any) => {
+    if (activeTab === 'Reading' || activeTab === 'Listening') return `${l.score}/${l.totalQuestions}`;
+    return `Band ${Number(l.score).toFixed(1)}`;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -432,6 +449,42 @@ export function PracticeTracker() {
               </div>
             </div>
           )}
+          {/* RECENT LOGS — shows the Notes/Reflection entered in the Log Practice form,
+              which previously had nowhere to display after being saved. */}
+          <Card className="shadow-sm overflow-hidden">
+            <CardHeader className="pb-2 bg-muted/50 border-b">
+              <CardTitle className="text-lg">Recent {activeTab} Logs</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {activeModuleLogs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No {activeTab.toLowerCase()} logs yet.</div>
+              ) : (
+                <div className="divide-y max-h-[320px] overflow-y-auto">
+                  {activeModuleLogs.map((l: any) => (
+                    <div key={l.id} className="p-4 hover:bg-muted/30">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-bold text-foreground">{l.subType}</span>
+                            <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{formatLogScore(l)}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">{l.date}</div>
+                          {l.notes && (
+                            <p className="mt-2 text-xs text-foreground/80 bg-muted/60 rounded px-2 py-1.5 whitespace-pre-wrap">
+                              <span className="font-semibold">Notes:</span> {l.notes}
+                            </p>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(l.id)} disabled={deleteLog.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
 
