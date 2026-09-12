@@ -54,7 +54,7 @@ router.post("/higher-study/applications", requireAuth, async (req, res): Promise
 });
 
 router.put("/higher-study/applications/:id", requireAuth, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const parsed = bodySchema.partial().safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
@@ -66,7 +66,7 @@ router.put("/higher-study/applications/:id", requireAuth, async (req, res): Prom
 });
 
 router.delete("/higher-study/applications/:id", requireAuth, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const [deleted] = await db.delete(higherStudyApplicationsTable)
     .where(and(eq(higherStudyApplicationsTable.id, id), eq(higherStudyApplicationsTable.userId, req.userId!)))
