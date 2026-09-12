@@ -95,4 +95,10 @@ export const api = {
 
   getNoticeBoards: () => getList('/api/notice-boards'),
   updateNoticeBoard: (boardKey: string, body: Record<string, unknown>) => put(`/api/notice-boards/${boardKey}`, body),
+
+  getScheduledSessions: () => getList('/api/scheduled-sessions'),
+  addScheduledSession: (body: Record<string, unknown>) => post('/api/scheduled-sessions', body),
+  updateScheduledSession: (id: number, body: Record<string, unknown>) => put(`/api/scheduled-sessions/${id}`, body),
+  deleteScheduledSession: (id: number) => del(`/api/scheduled-sessions/${id}`),
+  completeScheduledSession: (id: number) => post(`/api/scheduled-sessions/${id}/complete`, {}),
 };

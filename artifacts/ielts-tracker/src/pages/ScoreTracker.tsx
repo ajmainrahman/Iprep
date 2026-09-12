@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Trash2, TrendingUp, Award, Edit2, X, Check } from 'lucide-react';
+import { Trash2, TrendingUp, Award, Edit2, Check, ChevronDown, Star, Clock, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -21,13 +21,15 @@ function localDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const MODULES = ['Reading', 'Listening', 'Writing', 'Speaking'] as const;
+
 export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  
+
   const { data: scores = [], isLoading: scoresLoading } = useQuery({ queryKey: ['scores'], queryFn: api.getScores });
   const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
-  
+
   const addScore = useMutation({
     mutationFn: api.addScore,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scores'] })
@@ -41,7 +43,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
       toast({ title: 'Score updated!' });
     }
   });
-  
+
   const deleteScoreReq = useMutation({
     mutationFn: (id: number) => api.deleteScore(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scores'] })
@@ -52,7 +54,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
   const [scoreVal, setScoreVal] = useState('');
   const [band, setBand] = useState('');
   const [notes, setNotes] = useState('');
-  const [filterDate, setFilterDate] = useState<string>('');
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
   const [editingScore, setEditingScore] = useState<null | { id: number; date: string; module: string; band: string; score: string; notes: string }>(null);
 
   const handleAddScore = (e: React.FormEvent) => {
@@ -60,23 +62,16 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
     if (!scoreVal && !band) return;
 
     const b = Number(band) || 0;
-    
-    // Check if personal best
+
     const existingScores = scores.filter((s: any) => s.module === module);
     const isPB = existingScores.length > 0 && existingScores.every((s: any) => s.band < b);
     if (isPB) triggerConfetti();
 
     addScore.mutate({
-      date,
-      module,
-      score: scoreVal ? Number(scoreVal) : null,
-      band: b,
-      notes
+      date, module, score: scoreVal ? Number(scoreVal) : null, band: b, notes
     }, {
       onSuccess: () => {
-        setScoreVal('');
-        setBand('');
-        setNotes('');
+        setScoreVal(''); setBand(''); setNotes('');
         toast({
           title: "Score Added!",
           description: isPB ? "Congratulations! That's a new personal best! 🎉" : "Your practice score has been logged.",
@@ -101,40 +96,31 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
   };
 
   const deleteScore = (id: number) => {
-    if (confirm('Delete this score entry?')) {
-      deleteScoreReq.mutate(id);
-    }
+    if (confirm('Delete this score entry?')) deleteScoreReq.mutate(id);
   };
 
   const startEditScore = (s: any) => {
     setEditingScore({
-      id: s.id,
-      date: s.date,
-      module: s.module,
-      band: String(s.band),
-      score: s.score ? String(s.score) : '',
-      notes: s.notes || '',
+      id: s.id, date: s.date, module: s.module,
+      band: String(s.band), score: s.score ? String(s.score) : '', notes: s.notes || '',
     });
   };
 
-  // Compute best scores
   const bestScores: Record<string, number> = {};
-  ['Reading', 'Writing', 'Speaking', 'Listening', 'Full Mock'].forEach(mod => {
+  [...MODULES, 'Full Mock'].forEach(mod => {
     const modScores = scores.filter((s: any) => s.module === mod);
     bestScores[mod] = modScores.length > 0 ? Math.max(...modScores.map((s: any) => s.band)) : 0;
   });
 
-  // Prepare chart data (group by date)
   const chartDataMap = new Map<string, any>();
-  [...scores].sort((a: any,b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach((s: any) => {
+  [...scores].sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach((s: any) => {
     if (!chartDataMap.has(s.date)) chartDataMap.set(s.date, { date: s.date });
-    const entry = chartDataMap.get(s.date);
-    entry[s.module] = s.band;
+    chartDataMap.get(s.date)[s.module] = s.band;
   });
   const chartData = Array.from(chartDataMap.values());
 
   const getModuleBadgeColor = (mod: string) => {
-    switch(mod) {
+    switch (mod) {
       case 'Reading': return 'bg-coral/10 text-coral border-coral/20';
       case 'Writing': return 'bg-green-100 text-green-700 border-green-200';
       case 'Speaking': return 'bg-purple-100 text-purple-700 border-purple-200';
@@ -142,6 +128,40 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
       default: return 'bg-navy/10 text-navy border-navy/20 dark:bg-blue-900/30 dark:text-blue-400';
     }
   };
+
+  const targets = {
+    Reading: (settings as any)?.targetReading || 7,
+    Listening: (settings as any)?.targetListening || 7,
+    Writing: (settings as any)?.targetWriting || 7,
+    Speaking: (settings as any)?.targetSpeaking || 7,
+  };
+  const overallTarget = Object.values(targets).reduce((a, b) => a + b, 0) / 4;
+
+  /* ── Group score entries by date into "test sittings" ─────────────────────
+     Your data model stores one row per module per date, not a single "mock
+     test" record. A test sitting = every score logged on the same date.
+     Overall Band = average of whichever modules were logged that day. */
+  const testSittings = useMemo(() => {
+    const byDate = new Map<string, any[]>();
+    (scores as any[]).forEach(s => {
+      if (!byDate.has(s.date)) byDate.set(s.date, []);
+      byDate.get(s.date)!.push(s);
+    });
+
+    const sittings = Array.from(byDate.entries()).map(([d, entries]) => {
+      const moduleMap: Record<string, any> = {};
+      entries.forEach(e => { moduleMap[e.module] = e; });
+      const bandValues = MODULES.map(m => moduleMap[m]?.band).filter((b): b is number => typeof b === 'number');
+      const overallBand = bandValues.length > 0 ? bandValues.reduce((a, b) => a + b, 0) / bandValues.length : null;
+      const isFullMock = MODULES.every(m => moduleMap[m]);
+      return { date: d, moduleMap, overallBand, isFullMock, entries };
+    });
+
+    return sittings.sort((a, b) => b.date.localeCompare(a.date));
+  }, [scores]);
+
+  const bestSitting = testSittings.reduce((best, s) => (s.overallBand !== null && (!best || s.overallBand > (best.overallBand ?? -1)) ? s : best), null as typeof testSittings[number] | null);
+  const latestSitting = testSittings[0] ?? null;
 
   if (scoresLoading) {
     return <div className="space-y-4"><Skeleton className="h-12 w-48" /><Skeleton className="h-[400px] w-full" /></div>;
@@ -155,8 +175,8 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Form & Best Scores */}
+
+        {/* Left Column: Form & Best Scores — unchanged, already on-system */}
         <div className="space-y-6 lg:col-span-1">
           <Card className="border-t-4 border-t-teal shadow-sm">
             <CardHeader className="pb-3 bg-gradient-to-r from-teal/5 to-transparent">
@@ -168,13 +188,10 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                   <Label>Date</Label>
                   <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
                 </div>
-                
                 <div className="space-y-2">
                   <Label>Module</Label>
                   <Select value={module} onValueChange={setModule}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Reading">Reading</SelectItem>
                       <SelectItem value="Listening">Listening</SelectItem>
@@ -184,7 +201,6 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Raw Score</Label>
@@ -195,12 +211,10 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     <Input type="number" step="0.5" min="0" max="9" placeholder="e.g. 7.5" value={band} onChange={e => setBand(e.target.value)} required />
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <Label>Notes / Mistakes</Label>
                   <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none h-20" />
                 </div>
-
                 <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={addScore.isPending}>
                   {addScore.isPending ? "Adding..." : "Add Score"}
                 </Button>
@@ -211,13 +225,12 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
           <Card className="shadow-sm">
             <CardHeader className="pb-3 border-b border-border/50">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="w-5 h-5 text-yellow-500" />
-                Personal Bests
+                <Award className="w-5 h-5 text-yellow-500" /> Personal Bests
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="grid grid-cols-2 gap-3">
-                {['Reading', 'Listening', 'Writing', 'Speaking'].map(mod => (
+                {MODULES.map(mod => (
                   <div key={mod} className="bg-muted p-3 rounded-xl border flex flex-col items-center justify-center text-center">
                     <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">{mod}</span>
                     <span className="text-2xl font-bold text-foreground">{bestScores[mod] > 0 ? bestScores[mod].toFixed(1) : '-'}</span>
@@ -228,7 +241,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
           </Card>
         </div>
 
-        {/* Right Column: Chart & History */}
+        {/* Right Column: Chart + Test History */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-sm">
             <CardHeader className="pb-2 border-b border-border/50">
@@ -240,15 +253,15 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                      <XAxis dataKey="date" tick={{fontSize: 12}} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, {month:'short', day:'numeric'})} />
-                      <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{fontSize: 12}} />
-                      <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
+                      <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{ fontSize: 12 }} />
+                      <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="Reading" stroke="#FF6B6B" strokeWidth={3} dot={{r: 4, fill: '#FF6B6B'}} activeDot={{r: 6}} connectNulls />
-                      <Line type="monotone" dataKey="Listening" stroke="#FFD166" strokeWidth={3} dot={{r: 4, fill: '#FFD166'}} activeDot={{r: 6}} connectNulls />
-                      <Line type="monotone" dataKey="Writing" stroke="#06D6A0" strokeWidth={3} dot={{r: 4, fill: '#06D6A0'}} activeDot={{r: 6}} connectNulls />
-                      <Line type="monotone" dataKey="Speaking" stroke="#7B5EA7" strokeWidth={3} dot={{r: 4, fill: '#7B5EA7'}} activeDot={{r: 6}} connectNulls />
-                      <Line type="monotone" dataKey="Full Mock" stroke="#1B2A4A" strokeWidth={3} strokeDasharray="5 5" dot={{r: 5}} connectNulls />
+                      <Line type="monotone" dataKey="Reading" stroke="#FF6B6B" strokeWidth={3} dot={{ r: 4, fill: '#FF6B6B' }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Listening" stroke="#FFD166" strokeWidth={3} dot={{ r: 4, fill: '#FFD166' }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Writing" stroke="#06D6A0" strokeWidth={3} dot={{ r: 4, fill: '#06D6A0' }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Speaking" stroke="#7B5EA7" strokeWidth={3} dot={{ r: 4, fill: '#7B5EA7' }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Full Mock" stroke="#1B2A4A" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 5 }} connectNulls />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -262,9 +275,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
           <Dialog open={!!editingScore} onOpenChange={open => { if (!open) setEditingScore(null); }}>
             <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-base">Edit Score</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle className="text-base">Edit Score</DialogTitle></DialogHeader>
               {editingScore && (
                 <form onSubmit={handleUpdateScore} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -276,7 +287,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     <Select value={editingScore.module} onValueChange={v => setEditingScore(p => p && ({ ...p, module: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {['Reading','Listening','Writing','Speaking','Full Mock'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {['Reading', 'Listening', 'Writing', 'Speaking', 'Full Mock'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -303,74 +314,109 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
             </DialogContent>
           </Dialog>
 
+          {/* ── Test History (redesigned) ── */}
           <Card className="shadow-sm overflow-hidden">
             <CardHeader className="pb-2 bg-muted/50 border-b">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg">Recent History</CardTitle>
-                {scores.length > 0 && (
-                  <Select value={filterDate} onValueChange={setFilterDate}>
-                    <SelectTrigger className="w-[160px] h-8 text-xs">
-                      <SelectValue placeholder="All dates" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All dates</SelectItem>
-                      {[...new Set((scores as any[]).map((s: any) => s.date))].sort((a, b) => b.localeCompare(a)).map(d => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+              <CardTitle className="text-lg">Test History</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {scores.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No scores yet — add your first one!</p>
+              {testSittings.length === 0 ? (
+                <div className="text-center py-10 px-4 text-muted-foreground">
+                  <p className="mb-3">No mock tests recorded.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-muted/30">
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Module</TableHead>
-                        <TableHead>Band</TableHead>
-                        <TableHead>Score</TableHead>
-                        <TableHead className="max-w-[200px]">Notes</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {[...scores]
-                        .filter((s: any) => !filterDate || s.date === filterDate)
-                        .sort((a: any, b: any) => b.date.localeCompare(a.date))
-                        .map((s: any) => (
-                        <TableRow key={s.id} className="hover:bg-muted/50">
-                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground font-medium">{s.date}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-sm ${getModuleBadgeColor(s.module)}`}>
-                              {s.module}
+                <div className="divide-y">
+                  {testSittings.map(sitting => {
+                    const isExpanded = expandedDate === sitting.date;
+                    const isBest = bestSitting?.date === sitting.date && sitting.overallBand !== null;
+                    const isLatest = latestSitting?.date === sitting.date;
+                    const gap = sitting.overallBand !== null ? sitting.overallBand - overallTarget : null;
+
+                    return (
+                      <div key={sitting.date}>
+                        <button
+                          onClick={() => setExpandedDate(isExpanded ? null : sitting.date)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
+                        >
+                          <div className="flex flex-col items-center justify-center w-14 h-14 shrink-0 rounded-xl bg-muted border">
+                            <span className="text-lg font-heading font-bold text-foreground leading-none">
+                              {sitting.overallBand !== null ? sitting.overallBand.toFixed(1) : '—'}
                             </span>
-                          </TableCell>
-                          <TableCell className="font-bold text-foreground">{s.band.toFixed(1)}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{s.score || '-'}</TableCell>
-                          <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground" title={s.notes}>
-                            {s.notes || '-'}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-8 w-8 text-muted-foreground hover:text-teal hover:bg-teal/10">
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                            <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">Overall</span>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-foreground">
+                                {sitting.isFullMock ? 'Full Mock Test' : 'Practice Sitting'}
+                              </span>
+                              {isBest && (
+                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 gap-1">
+                                  <Star className="w-3 h-3 fill-current" /> Best
+                                </Badge>
+                              )}
+                              {isLatest && (
+                                <Badge variant="secondary" className="bg-teal/10 text-teal border-teal/20 gap-1">
+                                  <Clock className="w-3 h-3" /> Latest
+                                </Badge>
+                              )}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            <p className="text-xs text-muted-foreground mt-0.5">{sitting.date}</p>
+                          </div>
+
+                          <div className="hidden sm:flex items-center gap-1.5">
+                            {MODULES.map(mod => (
+                              <span
+                                key={mod}
+                                title={mod}
+                                className={`inline-flex flex-col items-center justify-center w-10 h-10 rounded-lg border text-xs font-bold ${sitting.moduleMap[mod] ? getModuleBadgeColor(mod) : 'bg-muted/50 text-muted-foreground/40 border-transparent'}`}
+                              >
+                                {sitting.moduleMap[mod] ? sitting.moduleMap[mod].band.toFixed(1) : '-'}
+                              </span>
+                            ))}
+                          </div>
+
+                          {gap !== null && (
+                            <div className="hidden md:flex flex-col items-end w-20 shrink-0">
+                              <span className={`flex items-center gap-1 text-xs font-semibold ${gap >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                <Target className="w-3 h-3" /> {gap >= 0 ? '+' : ''}{gap.toFixed(1)}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">vs target</span>
+                            </div>
+                          )}
+
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isExpanded && (
+                          <div className="px-4 pb-4 bg-muted/20 space-y-2">
+                            {sitting.entries.map((s: any) => (
+                              <div key={s.id} className="flex items-start justify-between gap-3 bg-card rounded-lg border p-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${getModuleBadgeColor(s.module)}`}>
+                                      {s.module}
+                                    </span>
+                                    <span className="font-bold text-foreground text-sm">Band {s.band.toFixed(1)}</span>
+                                    {s.score && <span className="text-xs text-muted-foreground">({s.score})</span>}
+                                  </div>
+                                  {s.notes && <p className="mt-1.5 text-xs text-muted-foreground">{s.notes}</p>}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-7 w-7 text-muted-foreground hover:text-teal hover:bg-teal/10">
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
