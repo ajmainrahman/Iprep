@@ -546,7 +546,7 @@ export function Dashboard() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Hero */}
-      <div className="bg-gradient-to-r from-[#1B2A4A] to-[#2B406A] rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0b0f13] to-[#0a6650] rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-coral opacity-20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
         <div className="relative z-10">
