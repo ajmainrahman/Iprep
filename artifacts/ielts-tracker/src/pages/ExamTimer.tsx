@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Timer, Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
+import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
+import { HourglassBadge } from '@/components/illustrations/StudyIllustrations';
 
 const MODES = [
   { label: 'Task 1', minutes: 20, desc: 'Describe a graph, chart, or diagram (150+ words)' },
@@ -100,13 +102,11 @@ export function ExamTimer() {
       className={`space-y-8 animate-in fade-in duration-500 transition-colors ${flash ? 'bg-red-100 dark:bg-red-900/30 rounded-2xl' : ''}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Timer className="w-8 h-8 text-indigo-600" />
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Exam Timer</h1>
-          <p className="text-sm text-muted-foreground">Practise under real IELTS Writing exam conditions</p>
-        </div>
-      </div>
+      <StudyPageHeader
+        icon={<HourglassBadge size={44} />}
+        title="Exam Timer"
+        subtitle="Practise under real IELTS Writing exam conditions"
+      />
 
       {/* Mode selector */}
       <div className="flex gap-3 justify-center">

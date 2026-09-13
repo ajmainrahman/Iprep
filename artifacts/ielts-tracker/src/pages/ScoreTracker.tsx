@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Trash2, TrendingUp, Award, Edit2, X, Check } from 'lucide-react';
+import { Trash2, Award, Edit2, X, Check } from 'lucide-react';
+import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
+import { TrophyBadge } from '@/components/illustrations/StudyIllustrations';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -149,10 +151,11 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="w-8 h-8 text-teal" />
-        <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Mock Test</h1>
-      </div>
+      <StudyPageHeader
+        icon={<TrophyBadge size={44} />}
+        title="Mock Test"
+        subtitle="Log and track your practice test band scores"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -324,9 +327,11 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
             </CardHeader>
             <CardContent className="p-0">
               {scores.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No scores yet — add your first one!</p>
-                </div>
+                <StudyEmptyState
+                  icon={<TrophyBadge size={56} />}
+                  title="No scores yet"
+                  subtitle="Log your first mock test score using the form above."
+                />
               ) : (
                 <div className="overflow-x-auto">
                   <Table>

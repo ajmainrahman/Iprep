@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
+import { StudyLogBadge } from '@/components/illustrations/StudyIllustrations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
-import { BookOpen, Flame, Clock, Trash2 } from 'lucide-react';
+import { Flame, Clock, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -150,10 +152,11 @@ export function StudyLog() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-6">
-        <BookOpen className="w-8 h-8 text-navy dark:text-blue-400" />
-        <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Study Log</h1>
-      </div>
+      <StudyPageHeader
+        icon={<StudyLogBadge size={44} />}
+        title="Study Log"
+        subtitle="Track daily study time by skill"
+      />
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -357,7 +360,11 @@ export function StudyLog() {
             </CardHeader>
             <CardContent className="p-0">
                {studySessions.length === 0 ? (
-                 <div className="text-center py-8 text-muted-foreground">No sessions yet.</div>
+                 <StudyEmptyState
+                   icon={<StudyLogBadge size={56} />}
+                   title="No sessions logged yet"
+                   subtitle="Log your first study session above to start tracking time by skill."
+                 />
                ) : (
                  <div className="divide-y max-h-[300px] overflow-y-auto">
                    {[...studySessions].sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((s: any) => (

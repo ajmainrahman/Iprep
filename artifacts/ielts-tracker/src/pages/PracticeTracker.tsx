@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { Target, Search, Trash2 } from 'lucide-react';
+import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
+import { PracticeBadge } from '@/components/illustrations/StudyIllustrations';
 import { useToast } from '@/hooks/use-toast';
 
 const READING_TYPES = [
@@ -195,7 +197,12 @@ export function PracticeTracker() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+      <StudyPageHeader
+        icon={<PracticeBadge size={44} />}
+        title="Practice Tracker"
+        subtitle="Log attempts and track accuracy by question type"
+      />
+
       {/* Top Tabs */}
       <div className="flex overflow-x-auto space-x-2 border-b border-gray-200 dark:border-gray-800 pb-px">
         {['Reading', 'Listening', 'Writing', 'Speaking'].map(tab => (
@@ -457,7 +464,11 @@ export function PracticeTracker() {
             </CardHeader>
             <CardContent className="p-0">
               {activeModuleLogs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No {activeTab.toLowerCase()} logs yet.</div>
+                <StudyEmptyState
+                  icon={<PracticeBadge size={56} />}
+                  title={`No ${activeTab.toLowerCase()} logs yet`}
+                  subtitle="Use the Log Practice button above to record your first attempt."
+                />
               ) : (
                 <div className="divide-y max-h-[320px] overflow-y-auto">
                   {activeModuleLogs.map((l: any) => (

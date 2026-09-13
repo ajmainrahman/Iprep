@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, ChevronDown, ChevronUp, Save, X } from 'lucide-react';
+import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
+import { JourneyBadge } from '@/components/illustrations/StudyIllustrations';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 interface Task {
@@ -493,13 +495,14 @@ export function IELTSJourneyPlanner() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-navy dark:text-white flex items-center gap-2">
-            🗺️ My IELTS Journey
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Plan your study in phases — tick tasks as you complete them.
-          </p>
+        <div className="flex items-center gap-3">
+          <JourneyBadge size={44} />
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">My IELTS Journey</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Plan your study in phases — tick tasks as you complete them.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {saveStatus === 'saving' && (

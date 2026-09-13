@@ -11,7 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Book, Plus, CheckCircle2, Trash2, Search, Layers, ChevronLeft, ChevronRight, Shuffle, X } from 'lucide-react';
+import { Plus, CheckCircle2, Trash2, Search, Layers, ChevronLeft, ChevronRight, Shuffle, X } from 'lucide-react';
+import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
+import { VocabularyBadge } from '@/components/illustrations/StudyIllustrations';
 import { useToast } from '@/hooks/use-toast';
 
 const TOPICS = [
@@ -265,7 +267,7 @@ export function VocabularyBank() {
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Book className="w-8 h-8 text-purple-600" />
+            <VocabularyBadge size={44} />
             <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Vocabulary Bank</h1>
           </div>
 
@@ -386,12 +388,18 @@ export function VocabularyBank() {
               {isLoading ? (
                 <div className="h-32 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
               ) : currentTopicWords.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
-                  <p>No words found in {topic}.</p>
+                <div className="bg-card rounded-xl border border-dashed">
+                  <StudyEmptyState
+                    icon={<VocabularyBadge size={56} />}
+                    title={`No words found in ${topic}`}
+                    subtitle={searchTerm ? 'Try a different search term.' : 'Add your first word for this topic below.'}
+                  />
                   {!searchTerm && (
-                    <Button variant="link" className="text-purple-600 mt-2" onClick={() => { setNewTopic(topic); setAddModalOpen(true); }}>
-                      Add the first word
-                    </Button>
+                    <div className="text-center pb-6 -mt-4">
+                      <Button variant="link" className="text-purple-600" onClick={() => { setNewTopic(topic); setAddModalOpen(true); }}>
+                        Add the first word
+                      </Button>
+                    </div>
                   )}
                 </div>
               ) : (

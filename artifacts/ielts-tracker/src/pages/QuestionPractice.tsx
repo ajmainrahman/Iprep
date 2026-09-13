@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { Target } from 'lucide-react';
+import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
+import { QuestionCardsBadge } from '@/components/illustrations/StudyIllustrations';
 import { useToast } from '@/hooks/use-toast';
 
 const QUESTION_TYPES = [
@@ -102,10 +103,11 @@ export function QuestionPractice() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-6">
-        <Target className="w-8 h-8 text-coral" />
-        <h1 className="text-3xl font-heading font-bold text-navy dark:text-white">Question Practice</h1>
-      </div>
+      <StudyPageHeader
+        icon={<QuestionCardsBadge size={44} />}
+        title="Question Practice"
+        subtitle="Drill specific question types until they click"
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left: Cards List */}
