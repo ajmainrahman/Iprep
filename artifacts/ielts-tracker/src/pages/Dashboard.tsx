@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
 } from 'recharts';
+import { LearningActivity } from '@/components/LearningActivity';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 function localDateStr(d: Date) {
@@ -383,7 +384,8 @@ function BandRadar({ scores, targets }: { scores: any[]; targets: Record<string,
   );
 }
 
-/* ─── Weekly Progress Card ────────────────────────────────────────────────── */
+/* ─── Weekly Progress Card (retained per no-deletion rule; no longer rendered
+   in the main layout — Learning Activity below replaces its role) ─────────── */
 function WeeklyProgress({
   sessions, practiceLogs, vocabWords, dailyGoalMinutes
 }: {
@@ -609,19 +611,13 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* ── This Week ── */}
+      {/* ── Learning Activity (redesigned — real Study Log data, week comparison, module filters) ── */}
       <section>
         <div className="flex items-center gap-2 mb-4 border-l-4 border-teal pl-3">
           <TrendingUp className="w-5 h-5 text-teal" />
-          <h2 className="text-2xl font-heading font-bold text-foreground">This Week</h2>
-          <span className="text-xs text-muted-foreground ml-1">vs last week</span>
+          <h2 className="text-2xl font-heading font-bold text-foreground">Learning Activity</h2>
         </div>
-        <WeeklyProgress
-          sessions={sessions as any[]}
-          practiceLogs={practiceLogs as any[]}
-          vocabWords={vocabWords as any[]}
-          dailyGoalMinutes={settings?.dailyGoalMinutes || 60}
-        />
+        <LearningActivity sessions={sessions as any[]} />
       </section>
 
       {/* ── 2-col: Radar + Streak tracker ── */}
