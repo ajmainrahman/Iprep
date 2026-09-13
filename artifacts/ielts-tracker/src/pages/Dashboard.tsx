@@ -9,6 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
 } from 'recharts';
 import { LearningActivity } from '@/components/LearningActivity';
+import { DashboardHeroIllustrationDark } from '@/components/illustrations/HigherStudyIllustrations';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 function localDateStr(d: Date) {
@@ -551,15 +552,20 @@ export function Dashboard() {
       <div className="bg-gradient-to-r from-[#0b0f13] to-[#0a6650] rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-coral opacity-20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative z-10">
-          <p className="text-teal font-medium tracking-wide mb-1 uppercase text-sm">
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-4">
-            Welcome back, {settings?.name || 'Student'}! Keep going.
-          </h1>
-          <div className="bg-white/10 border border-white/20 rounded-lg p-4 inline-block backdrop-blur-md">
-            <p className="text-white/90 italic font-serif">"{quote}"</p>
+        <div className="relative z-10 flex items-center justify-between gap-6">
+          <div>
+            <p className="text-teal font-medium tracking-wide mb-1 uppercase text-sm">
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-4">
+              Welcome back, {settings?.name || 'Student'}! Keep going.
+            </h1>
+            <div className="bg-white/10 border border-white/20 rounded-lg p-4 inline-block backdrop-blur-md">
+              <p className="text-white/90 italic font-serif">"{quote}"</p>
+            </div>
+          </div>
+          <div className="hidden md:block shrink-0">
+            <DashboardHeroIllustrationDark size={160} />
           </div>
         </div>
       </div>

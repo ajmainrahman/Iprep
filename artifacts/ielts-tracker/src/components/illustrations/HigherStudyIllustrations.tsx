@@ -96,3 +96,23 @@ export function StudyLogHeroIllustration({ size = 200, ...props }: IllustrationP
     </svg>
   );
 }
+
+// Dark-background variant for the existing hero (white lines, app's teal/coral).
+export function DashboardHeroIllustrationDark({ size = 160, ...props }: IllustrationProps) {
+  const LINE = "#FFFFFF";
+  const TEAL = "#14b8a6";
+  const CORAL = "#f97316";
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" {...props}>
+      <circle cx="150" cy="55" r="26" fill={CORAL} opacity="0.35" />
+      <rect x="34" y="70" width="60" height="60" rx="14" fill={TEAL} opacity="0.3" transform="rotate(-6 64 100)" />
+      <path d="M92 150 C92 120 100 112 118 112 C136 112 144 128 144 150 L144 168 L92 168 Z" fill="none" stroke={LINE} strokeWidth={3} opacity="0.9" />
+      <circle cx="118" cy="92" r="20" fill="none" stroke={LINE} strokeWidth={3} opacity="0.9" />
+      <path d="M104 88 q14 -14 28 0" stroke={LINE} strokeWidth={3} fill="none" strokeLinecap="round" opacity="0.9" />
+      <circle cx="110" cy="90" r="2.4" fill={LINE} />
+      <circle cx="126" cy="90" r="2.4" fill={LINE} />
+      <rect x="90" y="130" width="56" height="30" rx="4" fill="none" stroke={TEAL} strokeWidth={3} />
+      <path d="M98 145 l10 -8 l8 6 l14 -12" stroke={TEAL} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
