@@ -10,13 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-<<<<<<< HEAD
-import { Trash2, Award, Edit2, X, Check } from 'lucide-react';
+import { Trash2, Award, Edit2, Check, ChevronDown, Star, Clock, Target } from 'lucide-react';
 import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
 import { TrophyBadge } from '@/components/illustrations/StudyIllustrations';
-=======
-import { Trash2, TrendingUp, Award, Edit2, Check, ChevronDown, Star, Clock, Target } from 'lucide-react';
->>>>>>> 0e32354629b14e147a5e5ee6493de355fc259978
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -327,19 +323,12 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
               <CardTitle className="text-lg">Test History</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-<<<<<<< HEAD
-              {scores.length === 0 ? (
+              {testSittings.length === 0 ? (
                 <StudyEmptyState
                   icon={<TrophyBadge size={56} />}
-                  title="No scores yet"
+                  title="No mock tests recorded"
                   subtitle="Log your first mock test score using the form above."
                 />
-=======
-              {testSittings.length === 0 ? (
-                <div className="text-center py-10 px-4 text-muted-foreground">
-                  <p className="mb-3">No mock tests recorded.</p>
-                </div>
->>>>>>> 0e32354629b14e147a5e5ee6493de355fc259978
               ) : (
                 <div className="divide-y">
                   {testSittings.map(sitting => {
