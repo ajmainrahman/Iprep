@@ -116,3 +116,4 @@ export function DashboardHeroIllustrationDark({ size = 160, ...props }: Illustra
     </svg>
   );
 }
+
