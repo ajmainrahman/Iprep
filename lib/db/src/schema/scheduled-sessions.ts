@@ -6,6 +6,7 @@ export const scheduledSessionsTable = pgTable("scheduled_sessions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   title: text("title").notNull(),
+<<<<<<< HEAD
   module: text("module").notNull(), // Listening | Reading | Writing | Speaking | Vocabulary | Grammar | Mock Test | General
   date: text("date").notNull(), // YYYY-MM-DD, local
   startTime: text("start_time").notNull(), // "HH:MM" 24h
@@ -14,6 +15,16 @@ export const scheduledSessionsTable = pgTable("scheduled_sessions", {
   priority: text("priority").notNull().default("medium"), // low | medium | high
   notes: text("notes"),
   linkedStudySessionId: integer("linked_study_session_id"), // set when "Mark Completed" logs it to study_sessions
+=======
+  module: text("module").notNull(),
+  date: text("date").notNull(),
+  startTime: text("start_time").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  status: text("status").notNull().default("planned"),
+  priority: text("priority").notNull().default("medium"),
+  notes: text("notes"),
+  linkedStudySessionId: integer("linked_study_session_id"),
+>>>>>>> 0e32354629b14e147a5e5ee6493de355fc259978
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
