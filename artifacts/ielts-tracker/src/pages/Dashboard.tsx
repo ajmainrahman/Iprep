@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -465,31 +465,50 @@ function WeeklyProgress({
 
 /* ─── NEW: Exam Calendar Widget (additive — does not replace anything) ─────── */
 function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const monthLabel = today.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
 
-  const firstOfMonth = new Date(year, month, 1);
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
   const startOffset = (firstOfMonth.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const todayStr = localDateStr(today);
+  const todayStr = localDateStr(now);
   const cells: { label: string; dateStr: string | null }[] = [];
   for (let i = 0; i < startOffset; i++) cells.push({ label: '', dateStr: null });
   for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ label: String(d), dateStr: localDateStr(new Date(year, month, d)) });
+    cells.push({ label: String(d), dateStr: localDateStr(new Date(viewYear, viewMonth, d)) });
   }
 
   const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const examInThisMonth = examDate && new Date(examDate).getFullYear() === year && new Date(examDate).getMonth() === month;
+  const examInThisMonth = examDate && new Date(examDate).getFullYear() === viewYear && new Date(examDate).getMonth() === viewMonth;
+
+  const goPrevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const goNextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
 
   return (
     <Card className="shadow-sm border-none h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <CalendarIcon className="w-4 h-4 text-teal" />
-          {monthLabel}
+        <CardTitle className="text-base font-semibold flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-teal" />
+            {monthLabel}
+          </span>
+          <span className="flex items-center gap-1">
+            <button type="button" onClick={goPrevMonth} aria-label="Previous month" className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={goNextMonth} aria-label="Next month" className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
