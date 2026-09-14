@@ -463,6 +463,70 @@ function WeeklyProgress({
   );
 }
 
+/* ─── NEW: Exam Calendar Widget (additive — does not replace anything) ─────── */
+function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const monthLabel = today.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = (firstOfMonth.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const todayStr = localDateStr(today);
+  const cells: { label: string; dateStr: string | null }[] = [];
+  for (let i = 0; i < startOffset; i++) cells.push({ label: '', dateStr: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ label: String(d), dateStr: localDateStr(new Date(year, month, d)) });
+  }
+
+  const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const examInThisMonth = examDate && new Date(examDate).getFullYear() === year && new Date(examDate).getMonth() === month;
+
+  return (
+    <Card className="shadow-sm border-none h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CalendarIcon className="w-4 h-4 text-teal" />
+          {monthLabel}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-7 gap-1 text-center mb-2">
+          {DOW.map(d => (
+            <div key={d} className="text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((cell, i) => {
+            if (!cell.dateStr) return <div key={i} />;
+            const isToday = cell.dateStr === todayStr;
+            const isExam = examDate === cell.dateStr;
+            return (
+              <div
+                key={i}
+                className={`text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto ${
+                  isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' : isToday ? 'border border-dashed border-muted-foreground text-foreground' : 'text-foreground'
+                }`}
+              >
+                {cell.label}
+              </div>
+            );
+          })}
+        </div>
+        {examDate ? (
+          <p className="mt-3 text-xs text-muted-foreground text-center">
+            🎓 Exam day highlighted{!examInThisMonth ? ` — ${new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}` : ''}
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground text-center">Set your exam date in Settings to see it here.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ─── Main ────────────────────────────────────────────────────────────────── */
 export function Dashboard() {
   const { data: settings, isLoading: settingsLoading } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
@@ -515,15 +579,15 @@ export function Dashboard() {
   const overallTarget = Object.values(targets).reduce((a: any, b: any) => a + b, 0) / 4;
 
   const getDaysColor = (days: number) => {
-    if (days > 30) return 'text-green-500 bg-green-50';
-    if (days > 15) return 'text-yellow-500 bg-yellow-50';
-    return 'text-red-500 bg-red-50';
+    if (days > 30) return 'text-[#1B6B5B] bg-[#CFEEE0]';
+    if (days > 15) return 'text-[#8A5A0A] bg-[#FCE7B8]';
+    return 'text-[#9C2B55] bg-[#FBDCE6]';
   };
 
   const getProgressColor = (days: number) => {
-    if (days > 30) return '[&>div]:bg-green-500';
-    if (days > 15) return '[&>div]:bg-yellow-500';
-    return '[&>div]:bg-red-500';
+    if (days > 30) return '[&>div]:bg-[#1B6B5B]';
+    if (days > 15) return '[&>div]:bg-[#8A5A0A]';
+    return '[&>div]:bg-[#9C2B55]';
   };
 
   const getRoutineTask = (daysLeft: number) => {
@@ -604,7 +668,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className="p-6 h-full flex flex-col bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] dark:from-gray-900 dark:to-gray-800 rounded-xl border border-gray-100 dark:border-gray-800">
+          <CardContent className="p-6 h-full flex flex-col bg-[#E3DEFA] dark:from-gray-900 dark:to-gray-800 rounded-xl border border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-2 mb-4">
               <PlayCircle className="w-5 h-5 text-teal" />
               <h3 className="font-semibold text-lg text-foreground">Today's Focus</h3>
@@ -616,6 +680,17 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Upcoming (new: calendar widget, additive — does not replace anything) ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4 border-l-4 border-teal pl-3">
+          <CalendarIcon className="w-5 h-5 text-teal" />
+          <h2 className="text-2xl font-heading font-bold text-foreground">Upcoming</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ExamCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
+        </div>
+      </section>
 
       {/* ── Learning Activity (redesigned — real Study Log data, week comparison, module filters) ── */}
       <section>
