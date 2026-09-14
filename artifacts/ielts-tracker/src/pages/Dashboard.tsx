@@ -142,8 +142,8 @@ function SemiCircleGauge({ value, target, scoredModules }: { value: number; targ
       <svg viewBox="0 0 240 140" className="w-full overflow-visible" role="img">
         <defs>
           <linearGradient id="overall-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#14b8a6" />
-            <stop offset="100%" stopColor="#6366f1" />
+            <stop offset="0%" stopColor="#1B6B5B" />
+            <stop offset="100%" stopColor="#F4A972" />
           </linearGradient>
         </defs>
         <path
@@ -285,11 +285,11 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
 
   return (
     <Card className="h-full overflow-hidden border-0 shadow-sm">
-      <CardHeader className="border-b border-border/60 bg-gradient-to-r from-orange-50/80 via-card to-amber-50/60 pb-4 dark:from-orange-950/20 dark:via-card dark:to-amber-950/10">
+      <CardHeader className="border-b border-border/60 bg-[#FCE7B8]/40 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-100 text-orange-500 dark:bg-orange-900/30">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FCE7B8] text-[#8A5A0A]">
                 <Flame className="h-4 w-4 fill-current" />
               </span>
               Study streak
@@ -297,18 +297,18 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
             <p className="mt-1 text-xs text-muted-foreground">Build a rhythm, one focused session at a time.</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-heading font-bold leading-none text-orange-500">{currentStreak}</p>
+            <p className="text-3xl font-heading font-bold leading-none text-[#8A5A0A]">{currentStreak}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">days</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-4 sm:p-5">
-        <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-orange-50/70 px-3 py-2.5 dark:border-orange-900/40 dark:bg-orange-950/20">
+        <div className="flex items-center justify-between rounded-2xl border border-[#FCE7B8] bg-[#FCE7B8]/40 px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-500" />
+            <Trophy className="h-4 w-4 text-[#8A5A0A]" />
             <span className="text-xs font-medium text-foreground">Your record</span>
           </div>
-          <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{record} days</span>
+          <span className="text-sm font-bold text-[#8A5A0A]">{record} days</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
@@ -318,7 +318,7 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
                 title={`${day.key}: ${day.minutes > 0 ? `${day.minutes} minutes` : 'No study'}`}
                 className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
                   day.active
-                    ? 'bg-orange-100 text-orange-500 dark:bg-orange-900/30 dark:text-orange-300'
+                    ? 'bg-[#FCE7B8] text-[#8A5A0A]'
                     : 'bg-muted/70 text-muted-foreground/40'
                 }`}
               >
@@ -374,8 +374,8 @@ function BandRadar({ scores, targets }: { scores: any[]; targets: Record<string,
         <PolarGrid stroke="#e5e7eb" />
         <PolarAngleAxis dataKey="module" tick={{ fontSize: 12, fill: '#6b7280' }} />
         <PolarRadiusAxis angle={90} domain={[0, 9]} tick={false} axisLine={false} />
-        <Radar name="Current" dataKey="Current" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot />
-        <Radar name="Target" dataKey="Target" stroke="#2ec4b6" fill="#2ec4b6" fillOpacity={0.10} strokeWidth={2} strokeDasharray="4 2" />
+        <Radar name="Current" dataKey="Current" stroke="#9C2B55" fill="#FBDCE6" fillOpacity={0.45} strokeWidth={2} dot />
+        <Radar name="Target" dataKey="Target" stroke="#1B6B5B" fill="#CFEEE0" fillOpacity={0.25} strokeWidth={2} strokeDasharray="4 2" />
         <Legend iconType="plainline" wrapperStyle={{ fontSize: 12 }} />
         <Tooltip
           formatter={(v: any, name: string) => [`Band ${Number(v).toFixed(1)}`, name]}
@@ -680,7 +680,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className="p-6 h-full flex flex-col justify-center items-center text-center bg-card rounded-xl">
+          <CardContent className="p-6 h-full flex flex-col justify-center items-center text-center bg-[#F6FBF8] rounded-xl">
             <h3 className="font-semibold text-lg text-foreground mb-4 w-full text-left">Overall Band</h3>
             <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
           </CardContent>
@@ -754,7 +754,7 @@ export function Dashboard() {
                 module={mod}
                 current={current}
                 target={target}
-                color={config.color.includes('coral') ? '#f97316' : config.color.includes('green') ? '#16a34a' : config.color.includes('purple') ? '#9333ea' : '#ca8a04'}
+                color={config.color.includes('coral') ? '#9C2B55' : config.color.includes('green') ? '#1B6B5B' : config.color.includes('purple') ? '#4A3B8C' : '#8A5A0A'}
                 icon={Icon}
               />
             );
