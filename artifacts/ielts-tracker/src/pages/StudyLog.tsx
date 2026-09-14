@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
-import { Flame, Clock, Trash2 } from 'lucide-react';
+import { Flame, Clock, Trash2, Target, ArrowUpRight, Book, Headphones, PenLine, Mic, Languages, Shuffle, type LucideIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -22,16 +22,23 @@ function localDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/* Module → color, shared by the stacked chart and the breakdown table below it */
+/* Module → pastel design tokens, shared by the stat cards, chart, breakdown
+   rows, and recent-session badges so every part of the page reads as one
+   consistent palette (light tint background, saturated bar/accent color,
+   dark text for contrast, and a matching icon). */
 const MODULES = ['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary', 'Mixed'] as const;
-const MODULE_COLORS: Record<string, string> = {
-  Reading: '#2EC4B6',
-  Listening: '#7B5EA7',
-  Writing: '#06D6A0',
-  Speaking: '#FF6B6B',
-  Vocabulary: '#FFD166',
-  Mixed: '#1B2A4A',
+const MODULE_STYLES: Record<string, { bg: string; bar: string; text: string; icon: LucideIcon }> = {
+  Reading:    { bg: '#DEEFE3', bar: '#1D9E75', text: '#2C4A36', icon: Book },
+  Listening:  { bg: '#E6E3F6', bar: '#7F77DD', text: '#3C3489', icon: Headphones },
+  Writing:    { bg: '#FBEDD2', bar: '#BA7517', text: '#5C441F', icon: PenLine },
+  Speaking:   { bg: '#FBE4E4', bar: '#C94F4E', text: '#791F1F', icon: Mic },
+  Vocabulary: { bg: '#FBE4EC', bar: '#D4537E', text: '#72243E', icon: Languages },
+  Mixed:      { bg: '#EFEEE9', bar: '#888780', text: '#444441', icon: Shuffle },
 };
+/* Back-compat flat map for the recharts <Bar fill> prop, which only accepts a single color */
+const MODULE_COLORS: Record<string, string> = Object.fromEntries(
+  MODULES.map(m => [m, MODULE_STYLES[m].bar])
+);
 
 export function StudyLog() {
   const { toast } = useToast();
@@ -115,8 +122,8 @@ export function StudyLog() {
       .reduce((sum: number, s: any) => sum + s.minutes, 0);
     const color =
       dayTotal === 0   ? 'bg-muted' :
-      dayTotal <= 45   ? 'bg-teal/60 dark:bg-teal/80' :
-                         'bg-coral dark:bg-coral';
+      dayTotal <= 45   ? 'bg-[#9FD4B3] dark:bg-[#1D9E75]/70' :
+                         'bg-[#E88FA0] dark:bg-[#D4537E]/80';
     mapDays.push({ date: dateStr, total: dayTotal, color });
   }
 
@@ -160,55 +167,55 @@ export function StudyLog() {
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-orange-900/40 border-none shadow-sm rounded-2xl">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">Current Streak</p>
-              <h3 className="text-3xl font-bold text-orange-700 dark:text-orange-300">{currentStreak} <span className="text-lg font-normal">days</span></h3>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#DEEFE3' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+              <Flame className="w-4 h-4" style={{ color: '#1D9E75' }} />
             </div>
-            <div className="w-12 h-12 rounded-full bg-orange-200 dark:bg-orange-800 flex items-center justify-center">
-              <Flame className="w-6 h-6 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/40 border-none shadow-sm rounded-2xl">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Total Time Studied</p>
-              <h3 className="text-3xl font-bold text-blue-700 dark:text-blue-300">{totalHours} <span className="text-lg font-normal">hours</span></h3>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#5F8C71' }} />
+          </div>
+          <p className="text-xs mb-1" style={{ color: '#5F8C71' }}>Current streak</p>
+          <p className="text-2xl font-medium" style={{ color: '#2C4A36' }}>{currentStreak} days</p>
+        </div>
 
-        <Card className="bg-card border-none shadow-sm rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex justify-between mb-2">
-              <p className="text-sm font-medium text-muted-foreground">Weekly Target ({targetWeekly}m)</p>
-              <p className="text-sm font-bold text-foreground">{weekTotal}m</p>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#FBEDD2' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+              <Clock className="w-4 h-4" style={{ color: '#BA7517' }} />
             </div>
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-teal transition-all" 
-                style={{ width: `${Math.min(100, (weekTotal / targetWeekly) * 100)}%` }}
-              />
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#9C7C48' }} />
+          </div>
+          <p className="text-xs mb-1" style={{ color: '#9C7C48' }}>Total studied</p>
+          <p className="text-2xl font-medium" style={{ color: '#5C441F' }}>{totalHours} hours</p>
+        </div>
+
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#E6E3F6' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+              <Target className="w-4 h-4" style={{ color: '#7F77DD' }} />
             </div>
-            <p className="text-xs text-muted-foreground mt-2 text-right">
-              {weekTotal >= targetWeekly ? 'Target met! 🎉' : `${targetWeekly - weekTotal}m to go`}
-            </p>
-          </CardContent>
-        </Card>
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#7A73A8' }} />
+          </div>
+          <p className="text-xs mb-1" style={{ color: '#7A73A8' }}>Weekly target</p>
+          <p className="text-2xl font-medium mb-2" style={{ color: '#3C3489' }}>{Math.round(weekTotal / 60 * 10) / 10} / {Math.round(targetWeekly / 60)} hrs</p>
+          <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/50">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${Math.min(100, (weekTotal / targetWeekly) * 100)}%`, backgroundColor: '#7F77DD' }}
+            />
+          </div>
+          <p className="text-[11px] mt-1.5" style={{ color: '#7A73A8' }}>
+            {weekTotal >= targetWeekly ? 'Target met!' : `${targetWeekly - weekTotal}m to go`}
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-t-4 border-t-navy dark:border-t-blue-500 shadow-sm">
-            <CardHeader className="pb-3 bg-gradient-to-r from-navy/5 dark:from-blue-500/10 to-transparent border-b border-border/50">
-              <CardTitle className="text-lg">Log a Session</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Log a session</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <form onSubmit={handleSave} className="space-y-4">
@@ -259,17 +266,17 @@ export function StudyLog() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-green-600 dark:text-green-400">What went well?</Label>
-                  <Textarea placeholder="Reflect on your wins" value={well} onChange={e => setWell(e.target.value)} className="resize-none h-16 border-green-200 dark:border-green-900 focus-visible:ring-green-500" />
+                  <Label style={{ color: '#1D9E75' }}>What went well?</Label>
+                  <Textarea placeholder="Reflect on your wins" value={well} onChange={e => setWell(e.target.value)} className="resize-none h-16 rounded-xl border-[#BEE3CB] dark:border-green-900 focus-visible:ring-[#1D9E75]" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-coral">What to improve?</Label>
-                  <Textarea placeholder="Note your mistakes" value={improve} onChange={e => setImprove(e.target.value)} className="resize-none h-16 border-red-200 dark:border-red-900 focus-visible:ring-coral" />
+                  <Label style={{ color: '#C94F4E' }}>What to improve?</Label>
+                  <Textarea placeholder="Note your mistakes" value={improve} onChange={e => setImprove(e.target.value)} className="resize-none h-16 rounded-xl border-[#F4C4C4] dark:border-red-900 focus-visible:ring-[#C94F4E]" />
                 </div>
 
-                <Button type="submit" className="w-full bg-navy text-white hover:bg-navy/90 dark:bg-blue-600 dark:hover:bg-blue-700" disabled={addSession.isPending}>
-                  {addSession.isPending ? "Saving..." : "Save Session"}
+                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#1D9E75' }} disabled={addSession.isPending}>
+                  {addSession.isPending ? "Saving..." : "Save session"}
                 </Button>
               </form>
             </CardContent>
@@ -278,9 +285,9 @@ export function StudyLog() {
 
         {/* Charts & History */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2 border-b border-border/50">
-              <CardTitle className="text-lg">Consistency Map (Last 40 Days)</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Consistency map (last 40 days)</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="flex flex-wrap gap-1.5 pt-2">
@@ -296,34 +303,41 @@ export function StudyLog() {
                 <span>Less</span>
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-muted"></div>
-                  <div className="w-3 h-3 rounded-sm bg-teal/60"></div>
-                  <div className="w-3 h-3 rounded-sm bg-coral"></div>
+                  <div className="w-3 h-3 rounded-sm bg-[#9FD4B3]"></div>
+                  <div className="w-3 h-3 rounded-sm bg-[#E88FA0]"></div>
                 </div>
                 <span>More</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2 border-b border-border/50">
-              <CardTitle className="text-lg">This Week's Study Time</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">This week by module</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
                <div className="h-[280px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                    <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }} barCategoryGap="30%">
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                       <XAxis dataKey="day" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                       <YAxis tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                       <RechartsTooltip
-                        cursor={{fill: 'rgba(0,0,0,0.05)'}}
-                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                        cursor={{fill: 'rgba(0,0,0,0.04)'}}
+                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.08)'}}
                         formatter={(value: number, name: string) => [`${value} min`, name]}
                       />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#94a3b8" strokeDasharray="3 3" />
-                      {MODULES.map(mod => (
-                        <Bar key={mod} dataKey={mod} name={mod} stackId="study" fill={MODULE_COLORS[mod]} radius={[0, 0, 0, 0]} />
+                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#c9c7c0" strokeDasharray="3 3" />
+                      {MODULES.map((mod, i) => (
+                        <Bar
+                          key={mod}
+                          dataKey={mod}
+                          name={mod}
+                          stackId="study"
+                          fill={MODULE_COLORS[mod]}
+                          radius={i === MODULES.length - 1 ? [8, 8, 0, 0] : [0, 0, 0, 0]}
+                        />
                       ))}
                     </BarChart>
                   </ResponsiveContainer>
@@ -331,32 +345,35 @@ export function StudyLog() {
 
                {/* Per-module breakdown — exact minutes so it's clear which skill the time went to */}
                {moduleBreakdown.length > 0 && (
-                 <div className="mt-5 pt-4 border-t border-border/50">
-                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">This Week by Module</p>
-                   <div className="space-y-2">
-                     {moduleBreakdown.map(({ module, minutes }) => {
-                       const pct = weekTotal > 0 ? Math.round((minutes / weekTotal) * 100) : 0;
-                       return (
-                         <div key={module} className="flex items-center gap-3 text-sm">
-                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: MODULE_COLORS[module] }} />
-                           <span className="w-24 shrink-0 font-medium text-foreground">{module}</span>
-                           <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                             <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: MODULE_COLORS[module] }} />
+                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   {moduleBreakdown.map(({ module, minutes }) => {
+                     const pct = weekTotal > 0 ? Math.round((minutes / weekTotal) * 100) : 0;
+                     const s = MODULE_STYLES[module];
+                     const Icon = s.icon;
+                     const hours = Math.round((minutes / 60) * 10) / 10;
+                     return (
+                       <div key={module} className="rounded-[20px] p-4" style={{ backgroundColor: s.bg }}>
+                         <div className="flex items-center gap-2 mb-2.5">
+                           <div className="w-[26px] h-[26px] rounded-full bg-white/60 flex items-center justify-center shrink-0">
+                             <Icon className="w-3.5 h-3.5" style={{ color: s.bar }} />
                            </div>
-                           <span className="w-16 shrink-0 text-right text-muted-foreground text-xs">{minutes} min</span>
-                           <span className="w-10 shrink-0 text-right text-muted-foreground text-xs">{pct}%</span>
+                           <span className="text-xs" style={{ color: s.bar }}>{module}</span>
                          </div>
-                       );
-                     })}
-                   </div>
+                         <p className="text-[17px] font-medium mb-2.5" style={{ color: s.text }}>{hours}h this week</p>
+                         <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/50">
+                           <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: s.bar }} />
+                         </div>
+                       </div>
+                     );
+                   })}
                  </div>
                )}
             </CardContent>
           </Card>
           
-          <Card className="shadow-sm overflow-hidden">
-            <CardHeader className="pb-2 bg-muted/50 border-b">
-              <CardTitle className="text-lg">Recent Sessions</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Recent sessions</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                {studySessions.length === 0 ? (
@@ -366,14 +383,21 @@ export function StudyLog() {
                    subtitle="Log your first study session above to start tracking time by skill."
                  />
                ) : (
-                 <div className="divide-y max-h-[300px] overflow-y-auto">
-                   {[...studySessions].sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((s: any) => (
-                     <div key={s.id} className="p-4 hover:bg-muted/30">
+                 <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                   {[...studySessions].sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((s: any) => {
+                     const st = MODULE_STYLES[s.module] || MODULE_STYLES.Mixed;
+                     const SIcon = st.icon;
+                     return (
+                     <div key={s.id} className="rounded-[16px] p-3.5" style={{ backgroundColor: st.bg }}>
                        <div className="flex items-start justify-between gap-2">
-                         <div className="flex-1 min-w-0">
+                         <div className="flex items-start gap-3 flex-1 min-w-0">
+                           <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center shrink-0 mt-0.5">
+                             <SIcon className="w-4 h-4" style={{ color: st.bar }} />
+                           </div>
+                           <div className="flex-1 min-w-0">
                            <div className="flex items-center gap-2 mb-1">
-                             <span className="font-bold text-foreground">{s.module}</span>
-                             <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{s.minutes} min</span>
+                             <span className="font-medium" style={{ color: st.text }}>{s.module}</span>
+                             <span className="text-xs px-2 py-0.5 rounded-full bg-white/60" style={{ color: st.bar }}>{s.minutes} min</span>
                            </div>
                            <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                              <span>{s.date}</span>
@@ -394,13 +418,15 @@ export function StudyLog() {
                                )}
                              </div>
                            )}
+                           </div>
                          </div>
                          <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
                            <Trash2 className="h-4 w-4" />
                          </Button>
                        </div>
                      </div>
-                   ))}
+                     );
+                   })}
                  </div>
                )}
             </CardContent>
