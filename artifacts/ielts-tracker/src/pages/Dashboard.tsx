@@ -787,11 +787,11 @@ export function Dashboard() {
 
       </div>
 
-      {/* ── Upcoming (new: calendar widget, additive — does not replace anything) ── */}
+      {/* ── Lesson Schedule (calendar widget) ── */}
       <section>
         <div className="flex items-center gap-2 mb-4 border-l-4 border-teal pl-3">
           <CalendarIcon className="w-5 h-5 text-teal" />
-          <h2 className="text-2xl font-heading font-bold text-foreground">Upcoming</h2>
+          <h2 className="text-2xl font-heading font-bold text-foreground">Lesson Schedule</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
