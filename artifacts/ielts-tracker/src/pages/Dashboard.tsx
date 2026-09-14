@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -464,10 +464,33 @@ function WeeklyProgress({
 }
 
 /* ─── NEW: Exam Calendar Widget (additive — does not replace anything) ─────── */
-function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
+function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
+  const queryClient = useQueryClient();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [selectedDate, setSelectedDate] = useState(localDateStr(now));
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newModule, setNewModule] = useState('General');
+  const [newTime, setNewTime] = useState('18:00');
+  const [newDuration, setNewDuration] = useState(30);
+
+  const { data: scheduledSessions = [] } = useQuery({ queryKey: ['scheduled-sessions'], queryFn: api.getScheduledSessions });
+
+  const addMutation = useMutation({
+    mutationFn: (body: Record<string, unknown>) => api.addScheduledSession(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-sessions'] });
+      setShowAddForm(false);
+      setNewTitle('');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteScheduledSession(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['scheduled-sessions'] }),
+  });
 
   const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   const firstOfMonth = new Date(viewYear, viewMonth, 1);
@@ -482,7 +505,7 @@ function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
   }
 
   const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const examInThisMonth = examDate && new Date(examDate).getFullYear() === viewYear && new Date(examDate).getMonth() === viewMonth;
+  const MODULES_LIST = ['General', 'Listening', 'Reading', 'Writing', 'Speaking', 'Vocabulary', 'Grammar', 'Mock Test'];
 
   const goPrevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -491,6 +514,21 @@ function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
   const goNextMonth = () => {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
     else setViewMonth(m => m + 1);
+  };
+
+  const sessionsOnDate = (dateStr: string) => (scheduledSessions as any[]).filter((s: any) => s.date === dateStr);
+  const selectedSessions = sessionsOnDate(selectedDate).sort((a: any, b: any) => a.startTime.localeCompare(b.startTime));
+
+  const handleAdd = () => {
+    if (!newTitle.trim()) return;
+    addMutation.mutate({
+      title: newTitle.trim(),
+      module: newModule,
+      date: selectedDate,
+      startTime: newTime,
+      durationMinutes: Number(newDuration) || 30,
+      priority: 'medium',
+    });
   };
 
   return (
@@ -517,29 +555,99 @@ function ExamCalendarWidget({ examDate }: { examDate: string | null }) {
             <div key={d} className="text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 mb-4">
           {cells.map((cell, i) => {
             if (!cell.dateStr) return <div key={i} />;
             const isToday = cell.dateStr === todayStr;
             const isExam = examDate === cell.dateStr;
+            const isSelected = cell.dateStr === selectedDate;
+            const hasSessions = sessionsOnDate(cell.dateStr).length > 0;
             return (
-              <div
+              <button
+                type="button"
                 key={i}
-                className={`text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto ${
-                  isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' : isToday ? 'border border-dashed border-muted-foreground text-foreground' : 'text-foreground'
+                onClick={() => setSelectedDate(cell.dateStr as string)}
+                className={`relative text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto transition-colors ${
+                  isSelected ? 'bg-[#1B6B5B] text-white font-bold' :
+                  isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' :
+                  isToday ? 'border border-dashed border-muted-foreground text-foreground' :
+                  'text-foreground hover:bg-muted'
                 }`}
               >
                 {cell.label}
-              </div>
+                {hasSessions && !isSelected && (
+                  <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-[#1B6B5B]" />
+                )}
+              </button>
             );
           })}
         </div>
-        {examDate ? (
-          <p className="mt-3 text-xs text-muted-foreground text-center">
-            🎓 Exam day highlighted{!examInThisMonth ? ` — ${new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}` : ''}
+
+        <div className="border-t border-border pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-foreground">
+              {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAddForm(v => !v)}
+              className="flex items-center gap-1 text-xs font-medium text-[#1B6B5B] hover:underline"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add task
+            </button>
+          </div>
+
+          {showAddForm && (
+            <div className="mb-3 p-3 rounded-lg bg-[#F6FBF8] border border-[#CFEEE0] space-y-2">
+              <input
+                type="text"
+                placeholder="Task title, e.g. Writing Task 2 practice"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                className="w-full text-xs rounded-md border border-border px-2 py-1.5 bg-white"
+              />
+              <div className="flex gap-2">
+                <select value={newModule} onChange={e => setNewModule(e.target.value)} className="flex-1 text-xs rounded-md border border-border px-2 py-1.5 bg-white">
+                  {MODULES_LIST.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} className="text-xs rounded-md border border-border px-2 py-1.5 bg-white" />
+                <input type="number" min={5} step={5} value={newDuration} onChange={e => setNewDuration(Number(e.target.value))} className="w-16 text-xs rounded-md border border-border px-2 py-1.5 bg-white" />
+              </div>
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={addMutation.isPending || !newTitle.trim()}
+                className="w-full text-xs font-medium bg-[#1B6B5B] text-white rounded-md py-1.5 disabled:opacity-50"
+              >
+                {addMutation.isPending ? 'Saving…' : 'Save task'}
+              </button>
+            </div>
+          )}
+
+          {selectedSessions.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-3">No tasks scheduled for this day.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {selectedSessions.map((s: any) => (
+                <div key={s.id} className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1B6B5B] shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground truncate">{s.title}</p>
+                    <p className="text-muted-foreground">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
+                  </div>
+                  <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-muted-foreground hover:text-red-500 shrink-0">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {examDate && (
+          <p className="mt-3 text-[10px] text-muted-foreground text-center border-t border-border pt-2">
+            🎓 Exam day: {new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
-        ) : (
-          <p className="mt-3 text-xs text-muted-foreground text-center">Set your exam date in Settings to see it here.</p>
         )}
       </CardContent>
     </Card>
@@ -707,7 +815,7 @@ export function Dashboard() {
           <h2 className="text-2xl font-heading font-bold text-foreground">Upcoming</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ExamCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
+          <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
         </div>
       </section>
 

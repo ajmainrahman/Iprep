@@ -14,6 +14,7 @@ import checklistTemplatesRouter from "./checklist-templates";
 import planningNotesRouter from "./planning-notes";
 import journeyPlannerRouter from "./journey-planner";
 import noticeBoardsRouter from "./notice-boards";
+import scheduledSessionsRouter from "./scheduled-sessions.route";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(checklistTemplatesRouter);
 router.use(planningNotesRouter);
 router.use(journeyPlannerRouter);
 router.use(noticeBoardsRouter);
+router.use(scheduledSessionsRouter);
 
 export default router;
