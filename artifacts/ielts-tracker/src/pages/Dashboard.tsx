@@ -9,7 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
 } from 'recharts';
 import { LearningActivity } from '@/components/LearningActivity';
-import { DashboardHeroIllustrationDark } from '@/components/illustrations/HigherStudyIllustrations';
+import { DashboardHeroIllustration } from '@/components/illustrations/HigherStudyIllustrations';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 function localDateStr(d: Date) {
@@ -613,23 +613,23 @@ export function Dashboard() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Hero */}
-      <div className="bg-gradient-to-r from-[#0b0f13] to-[#0a6650] rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-teal opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-coral opacity-20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E7ECE9] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#CFEEE0] opacity-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FBDCE6] opacity-40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
         <div className="relative z-10 flex items-center justify-between gap-6">
           <div>
-            <p className="text-teal font-medium tracking-wide mb-1 uppercase text-sm">
+            <p className="text-[#1B6B5B] font-medium tracking-wide mb-1 uppercase text-sm">
               {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
-            <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-4">
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-4 text-foreground">
               Welcome back, {settings?.name || 'Student'}! Keep going.
             </h1>
-            <div className="bg-white/10 border border-white/20 rounded-lg p-4 inline-block backdrop-blur-md">
-              <p className="text-white/90 italic font-serif">"{quote}"</p>
+            <div className="bg-[#F4F5F6] border border-[#E7ECE9] rounded-lg p-4 inline-block">
+              <p className="text-muted-foreground italic font-serif">"{quote}"</p>
             </div>
           </div>
           <div className="hidden md:block shrink-0">
-            <DashboardHeroIllustrationDark size={160} />
+            <DashboardHeroIllustration size={160} />
           </div>
         </div>
       </div>
