@@ -90,7 +90,7 @@ export function LearningActivity({ sessions }: { sessions: any[] }) {
         <div className="flex flex-wrap gap-1.5 pt-2">
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors ${filter === f ? 'bg-teal text-white border-teal' : 'border-border text-muted-foreground hover:border-teal/50'}`}>
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors ${filter === f ? 'bg-[#1B6B5B] text-white border-[#1B6B5B]' : 'border-border text-muted-foreground hover:border-[#1B6B5B]/50'}`}>
               {f}
             </button>
           ))}
@@ -117,23 +117,25 @@ export function LearningActivity({ sessions }: { sessions: any[] }) {
             <p className="text-sm">No study activity yet.</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={chartData} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
-              <Tooltip formatter={(v: any) => fmtDuration(Number(v))} />
-              {range === 'This Week' && <Legend wrapperStyle={{ fontSize: 11 }} />}
-              {range === 'This Week' ? (
-                <>
-                  <Bar dataKey="LastWeek" fill="#c7d2fe" radius={[4, 4, 0, 0]} name="Last Week" />
-                  <Bar dataKey="ThisWeek" fill="#6366F1" radius={[4, 4, 0, 0]} name="This Week" />
-                </>
-              ) : (
-                <Bar dataKey="ThisPeriod" fill="#6366F1" radius={[4, 4, 0, 0]} />
-              )}
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', height: 220 }}>
+            <ResponsiveContainer key={`${range}-${filter}-${chartData.length}`} width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
+                <Tooltip formatter={(v: any) => fmtDuration(Number(v))} />
+                {range === 'This Week' && <Legend wrapperStyle={{ fontSize: 11 }} />}
+                {range === 'This Week' ? (
+                  <>
+                    <Bar dataKey="LastWeek" fill="#FBDCE6" radius={[4, 4, 0, 0]} name="Last Week" />
+                    <Bar dataKey="ThisWeek" fill="#1B6B5B" radius={[4, 4, 0, 0]} name="This Week" />
+                  </>
+                ) : (
+                  <Bar dataKey="ThisPeriod" fill="#1B6B5B" radius={[4, 4, 0, 0]} />
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
 
         {/* Recent activity */}

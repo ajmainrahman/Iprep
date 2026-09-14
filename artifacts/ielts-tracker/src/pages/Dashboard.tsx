@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, PlayCircle, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -539,11 +539,11 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
             <CalendarIcon className="w-4 h-4 text-teal" />
             {monthLabel}
           </span>
-          <span className="flex items-center gap-1">
-            <button type="button" onClick={goPrevMonth} aria-label="Previous month" className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted transition-colors">
+          <span className="flex items-center gap-1.5">
+            <button type="button" onClick={goPrevMonth} aria-label="Previous month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F4F5F6] hover:bg-muted transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button type="button" onClick={goNextMonth} aria-label="Next month" className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted transition-colors">
+            <button type="button" onClick={goNextMonth} aria-label="Next month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F4F5F6] hover:bg-muted transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
           </span>
@@ -567,17 +567,15 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
                 type="button"
                 key={i}
                 onClick={() => setSelectedDate(cell.dateStr as string)}
-                className={`relative text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto transition-colors ${
-                  isSelected ? 'bg-[#1B6B5B] text-white font-bold' :
+                className={`text-xs rounded-full h-8 w-8 flex items-center justify-center mx-auto font-medium transition-colors ${
+                  isSelected ? 'bg-[#15181A] text-white font-bold' :
                   isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' :
+                  hasSessions ? 'bg-[#CFEEE0] text-[#1B6B5B] font-semibold' :
                   isToday ? 'border border-dashed border-muted-foreground text-foreground' :
                   'text-foreground hover:bg-muted'
                 }`}
               >
                 {cell.label}
-                {hasSessions && !isSelected && (
-                  <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-[#1B6B5B]" />
-                )}
               </button>
             );
           })}
@@ -627,15 +625,17 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
           {selectedSessions.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-3">No tasks scheduled for this day.</p>
           ) : (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {selectedSessions.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1B6B5B] shrink-0" />
+                <div key={s.id} className="flex items-center gap-3 rounded-2xl bg-[#CFEEE0]/60 px-3 py-2.5 text-xs">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shrink-0">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#1B6B5B]" />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground truncate">{s.title}</p>
-                    <p className="text-muted-foreground">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
+                    <p className="font-semibold text-foreground truncate">{s.title}</p>
+                    <p className="text-[#1B6B5B]">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
                   </div>
-                  <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-muted-foreground hover:text-red-500 shrink-0">
+                  <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-[#1B6B5B]/60 hover:text-red-500 shrink-0">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -717,15 +717,6 @@ export function Dashboard() {
     return '[&>div]:bg-[#9C2B55]';
   };
 
-  const getRoutineTask = (daysLeft: number) => {
-    if (daysLeft > 28) return { phase: "Foundation", desc: "Focus on question type drills and building vocabulary.", color: "text-blue-600" };
-    if (daysLeft > 14) return { phase: "Mixed Practice", desc: "Start doing timed passages and applying strategies.", color: "text-purple-600" };
-    if (daysLeft > 7) return { phase: "Mock Tests", desc: "Do full timed tests to build stamina.", color: "text-coral" };
-    return { phase: "Final Polish", desc: "Light review, rest well, and trust your preparation.", color: "text-teal" };
-  };
-
-  const task = getRoutineTask(daysRemaining);
-
   const getModuleConfig = (mod: string) => {
     switch (mod) {
       case 'Reading': return { color: 'text-coral', bg: 'bg-coral/10', border: 'border-coral', bar: '[&>div]:bg-coral', icon: BookOpen };
@@ -761,8 +752,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Top 3 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Top cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
           <CardContent className={`p-6 h-full flex flex-col justify-center ${hasExamDate ? getDaysColor(Math.max(0, daysRemaining)).split(' ')[1] : 'bg-gray-50'} rounded-xl border border-transparent`}>
             <div className="flex items-center gap-2 mb-4">
@@ -794,18 +785,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className="p-6 h-full flex flex-col bg-[#E3DEFA] dark:from-gray-900 dark:to-gray-800 rounded-xl border border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-2 mb-4">
-              <PlayCircle className="w-5 h-5 text-teal" />
-              <h3 className="font-semibold text-lg text-foreground">Today's Focus</h3>
-            </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 w-max bg-white dark:bg-gray-800 shadow-sm ${task.color}`}>{task.phase}</span>
-              <p className="text-muted-foreground font-medium leading-relaxed">{task.desc}</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* ── Upcoming (new: calendar widget, additive — does not replace anything) ── */}
