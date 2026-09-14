@@ -158,16 +158,16 @@ function ModuleRow({
   };
 
   const MODULE_COLORS: Record<string, string> = {
-    Listening: 'bg-yellow-50 border-yellow-200',
-    Reading: 'bg-red-50 border-red-200',
-    Writing: 'bg-green-50 border-green-200',
-    Speaking: 'bg-purple-50 border-purple-200',
+    Listening: 'bg-[#FCE7B8]/40 border-[#FCE7B8]',
+    Reading: 'bg-[#FBDCE6]/40 border-[#FBDCE6]',
+    Writing: 'bg-[#CFEEE0]/40 border-[#CFEEE0]',
+    Speaking: 'bg-[#E3DEFA]/40 border-[#E3DEFA]',
   };
   const MODULE_LABEL: Record<string, string> = {
-    Listening: 'text-yellow-700',
-    Reading: 'text-red-600',
-    Writing: 'text-green-700',
-    Speaking: 'text-purple-700',
+    Listening: 'text-[#8A5A0A]',
+    Reading: 'text-[#9C2B55]',
+    Writing: 'text-[#1B6B5B]',
+    Speaking: 'text-[#4A3B8C]',
   };
   const colorClass = MODULE_COLORS[mod.name] || 'bg-gray-50 border-gray-200';
   const labelClass = MODULE_LABEL[mod.name] || 'text-gray-700';
@@ -212,7 +212,7 @@ function ModuleRow({
               type="checkbox"
               checked={task.done}
               onChange={e => updateTask(i, { done: e.target.checked })}
-              className="w-4 h-4 rounded accent-teal shrink-0 cursor-pointer"
+              className="w-4 h-4 rounded accent-[#1B6B5B] shrink-0 cursor-pointer"
               title="Mark as done"
             />
             <Input
@@ -233,7 +233,7 @@ function ModuleRow({
         ))}
         <button
           onClick={addTask}
-          className="text-xs text-muted-foreground hover:text-teal transition-colors flex items-center gap-1 mt-1"
+          className="text-xs text-muted-foreground hover:text-[#1B6B5B] transition-colors flex items-center gap-1 mt-1"
         >
           <Plus className="w-3 h-3" /> Add task
         </button>
@@ -266,11 +266,11 @@ function PhaseCard({
   const toggle = () => onUpdate({ ...phase, collapsed: !phase.collapsed });
 
   const PHASE_COLORS = [
-    'from-indigo-500 to-violet-500',
-    'from-teal-500 to-emerald-500',
-    'from-orange-400 to-rose-400',
-    'from-blue-500 to-cyan-500',
-    'from-pink-500 to-fuchsia-500',
+    'from-[#4A3B8C] to-[#7B6FD1]',
+    'from-[#1B6B5B] to-[#3FAE80]',
+    'from-[#C97A2E] to-[#F4A972]',
+    'from-[#1B6B5B] to-[#6FD9A0]',
+    'from-[#9C2B55] to-[#D46A93]',
   ];
   const gradient = PHASE_COLORS[index % PHASE_COLORS.length];
 
@@ -355,7 +355,7 @@ function PhaseCard({
           ))}
           <button
             onClick={addModule}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-teal hover:text-teal transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1B6B5B] hover:text-[#1B6B5B] transition-colors text-sm"
           >
             <Plus className="w-4 h-4" /> Add module
           </button>
@@ -378,9 +378,9 @@ function OverallProgress({ phases }: { phases: Phase[] }) {
   const overallPct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
 
   return (
-    <div className="bg-gradient-to-br from-navy/5 to-teal/5 border border-teal/20 rounded-2xl p-5">
+    <div className="bg-white border border-[#E7ECE9] shadow-sm rounded-2xl p-5">
       <div className="flex items-center gap-4 mb-4">
-        <ProgressRing pct={overallPct} size={68} strokeWidth={6} color="#0d9488" trackColor="#e2e8f0" />
+        <ProgressRing pct={overallPct} size={68} strokeWidth={6} color="#1B6B5B" trackColor="#CFEEE0" />
         <div>
           <h3 className="font-bold text-base text-foreground">Overall Progress</h3>
           <p className="text-sm text-muted-foreground">
@@ -391,7 +391,7 @@ function OverallProgress({ phases }: { phases: Phase[] }) {
       <div className="grid gap-2">
         {phases.map((phase, i) => {
           const { done, total, pct } = perPhase[i];
-          const PHASE_COLORS = ['bg-indigo-500', 'bg-teal-500', 'bg-orange-400', 'bg-blue-500', 'bg-pink-500'];
+          const PHASE_COLORS = ['bg-[#4A3B8C]', 'bg-[#1B6B5B]', 'bg-[#C97A2E]', 'bg-[#1B6B5B]', 'bg-[#9C2B55]'];
           const bar = PHASE_COLORS[i % PHASE_COLORS.length];
           return (
             <div key={phase.id} className="flex items-center gap-3 text-sm">
@@ -512,7 +512,7 @@ export function IELTSJourneyPlanner() {
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className="text-xs text-teal flex items-center gap-1.5">
+            <span className="text-xs text-[#1B6B5B] flex items-center gap-1.5">
               <Save className="w-3 h-3" /> Saved
             </span>
           )}
@@ -530,7 +530,7 @@ export function IELTSJourneyPlanner() {
             <p className="font-semibold text-foreground text-lg mb-1">No phases yet</p>
             <p className="text-muted-foreground text-sm">Break your IELTS preparation into phases — each with date ranges and daily module targets.</p>
           </div>
-          <Button onClick={addPhase} className="bg-teal text-white hover:bg-teal/90 mt-2">
+          <Button onClick={addPhase} className="bg-[#1B6B5B] text-white hover:bg-[#1B6B5B]/90 mt-2">
             <Plus className="w-4 h-4 mr-2" /> Add your first phase
           </Button>
         </div>
@@ -553,7 +553,7 @@ export function IELTSJourneyPlanner() {
       {plan.phases.length > 0 && (
         <button
           onClick={addPhase}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-teal hover:text-teal transition-colors font-medium"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1B6B5B] hover:text-[#1B6B5B] transition-colors font-medium"
         >
           <Plus className="w-4 h-4" /> Add Phase
         </button>
@@ -568,7 +568,7 @@ export function IELTSJourneyPlanner() {
               const days = calcDays(phase.startDate, phase.endDate);
               return (
                 <div key={phase.id} className="flex items-center gap-3 text-sm">
-                  <span className="w-5 h-5 rounded-full bg-teal/10 text-teal flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                  <span className="w-5 h-5 rounded-full bg-[#CFEEE0] text-[#1B6B5B] flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
                   <span className="font-medium text-foreground truncate flex-1">{phase.title}</span>
                   {phase.startDate && phase.endDate ? (
                     <span className="text-muted-foreground text-xs whitespace-nowrap">
