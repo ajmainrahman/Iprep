@@ -8,38 +8,39 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { Target, Search, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
 import { PracticeBadge } from '@/components/illustrations/StudyIllustrations';
+import { MODULE_STYLES, PASTELS } from '@/lib/moduleStyles';
 import { useToast } from '@/hooks/use-toast';
 
 const READING_TYPES = [
-  { id: 'True/False/Not Given', name: 'True / False / Not Given', icon: '🔍', color: 'bg-coral text-white', accent: 'text-coral', bar: '[&>div]:bg-coral' },
-  { id: 'Yes/No/Not Given', name: 'Yes / No / Not Given', icon: '💬', color: 'bg-purple-600 text-white', accent: 'text-purple-600', bar: '[&>div]:bg-purple-600' },
-  { id: 'Summary/Gap Fill', name: 'Summary / Gap Fill', icon: '✏️', color: 'bg-teal text-white', accent: 'text-teal', bar: '[&>div]:bg-teal' },
-  { id: 'Matching Headings', name: 'Matching Headings', icon: '📑', color: 'bg-green-500 text-white', accent: 'text-green-500', bar: '[&>div]:bg-green-500' },
-  { id: 'Matching Information', name: 'Matching Information', icon: '🔗', color: 'bg-yellow-400 text-gray-900', accent: 'text-yellow-600', bar: '[&>div]:bg-yellow-400' },
-  { id: 'Multiple Choice', name: 'Multiple Choice', icon: '✅', color: 'bg-navy text-white', accent: 'text-navy', bar: '[&>div]:bg-navy' },
-  { id: 'Sentence Completion', name: 'Sentence Completion', icon: '🔤', color: 'bg-orange-500 text-white', accent: 'text-orange-500', bar: '[&>div]:bg-orange-500' },
-];
+  { id: 'True/False/Not Given', name: 'True / False / Not Given', icon: '🔍' },
+  { id: 'Yes/No/Not Given', name: 'Yes / No / Not Given', icon: '💬' },
+  { id: 'Summary/Gap Fill', name: 'Summary / Gap Fill', icon: '✏️' },
+  { id: 'Matching Headings', name: 'Matching Headings', icon: '📑' },
+  { id: 'Matching Information', name: 'Matching Information', icon: '🔗' },
+  { id: 'Multiple Choice', name: 'Multiple Choice', icon: '✅' },
+  { id: 'Sentence Completion', name: 'Sentence Completion', icon: '🔤' },
+].map((t, i) => ({ ...t, ...PASTELS[i % PASTELS.length] }));
 
 const LISTENING_PARTS = [
-  { id: 'Part 1', name: 'Part 1: Form/note completion (everyday social)', icon: '📝', color: 'bg-teal text-white' },
-  { id: 'Part 2', name: 'Part 2: Monologue (non-academic)', icon: '🎙️', color: 'bg-purple-500 text-white' },
-  { id: 'Part 3', name: 'Part 3: Discussion (academic, multiple speakers)', icon: '👥', color: 'bg-coral text-white' },
-  { id: 'Part 4', name: 'Part 4: Academic lecture', icon: '🎓', color: 'bg-navy text-white' },
-];
+  { id: 'Part 1', name: 'Part 1: Form/note completion (everyday social)', icon: '📝' },
+  { id: 'Part 2', name: 'Part 2: Monologue (non-academic)', icon: '🎙️' },
+  { id: 'Part 3', name: 'Part 3: Discussion (academic, multiple speakers)', icon: '👥' },
+  { id: 'Part 4', name: 'Part 4: Academic lecture', icon: '🎓' },
+].map((t, i) => ({ ...t, ...PASTELS[i % PASTELS.length] }));
 
 const WRITING_TASKS = [
-  { id: 'Task 1', name: 'Task 1: Graph/chart/diagram description', icon: '📊', color: 'bg-green-500 text-white', detail: '150 words, 20 min' },
-  { id: 'Task 2', name: 'Task 2: Essay', icon: '📝', color: 'bg-blue-600 text-white', detail: '250 words, 40 min' },
-];
+  { id: 'Task 1', name: 'Task 1: Graph/chart/diagram description', icon: '📊', detail: '150 words, 20 min' },
+  { id: 'Task 2', name: 'Task 2: Essay', icon: '📝', detail: '250 words, 40 min' },
+].map((t, i) => ({ ...t, ...PASTELS[i % PASTELS.length] }));
 
 const SPEAKING_PARTS = [
-  { id: 'Part 1', name: 'Part 1: Introduction/Interview', icon: '👋', color: 'bg-yellow-500 text-white', detail: '4-5 min' },
-  { id: 'Part 2', name: 'Part 2: Individual long turn / Cue Card', icon: '⏱️', color: 'bg-orange-500 text-white', detail: '3-4 min' },
-  { id: 'Part 3', name: 'Part 3: Two-way discussion', icon: '🗣️', color: 'bg-red-500 text-white', detail: '4-5 min' },
-];
+  { id: 'Part 1', name: 'Part 1: Introduction/Interview', icon: '👋', detail: '4-5 min' },
+  { id: 'Part 2', name: 'Part 2: Individual long turn / Cue Card', icon: '⏱️', detail: '3-4 min' },
+  { id: 'Part 3', name: 'Part 3: Two-way discussion', icon: '🗣️', detail: '4-5 min' },
+].map((t, i) => ({ ...t, ...PASTELS[i % PASTELS.length] }));
 
 export function PracticeTracker() {
   const { toast } = useToast();
@@ -204,21 +205,21 @@ export function PracticeTracker() {
       />
 
       {/* Top Tabs */}
-      <div className="flex overflow-x-auto space-x-2 border-b border-gray-200 dark:border-gray-800 pb-px">
-        {['Reading', 'Listening', 'Writing', 'Speaking'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
-            className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors whitespace-nowrap ${
-              activeTab === tab 
-                ? 'bg-card border border-b-0 border-gray-200 dark:border-gray-800 text-primary' 
-                : 'text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800/50'
-            }`}
-            style={{ marginBottom: activeTab === tab ? '-1px' : '0' }}
-          >
-            {tab} Practice
-          </button>
-        ))}
+      <div className="flex overflow-x-auto gap-1.5 bg-[#F3F2ED] dark:bg-muted rounded-2xl p-1.5 w-fit">
+        {(['Reading', 'Listening', 'Writing', 'Speaking'] as const).map(tab => {
+          const active = activeTab === tab;
+          const s = MODULE_STYLES[tab];
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="px-4 py-2 font-medium text-sm rounded-xl transition-colors whitespace-nowrap"
+              style={active ? { backgroundColor: s.bg, color: s.text } : { color: '#8A897F' }}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {isLoading ? (
@@ -232,49 +233,52 @@ export function PracticeTracker() {
                 <p className="text-muted-foreground mb-4">Track your accuracy on specific reading question types.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {readingStats.map(stat => (
-                    <Card key={stat.id} className="shadow-sm hover-elevate overflow-hidden border-l-4" style={{borderLeftColor: stat.color.includes('bg-coral') ? '#FF6B6B' : stat.color.includes('bg-purple') ? '#7B5EA7' : stat.color.includes('bg-teal') ? '#2EC4B6' : stat.color.includes('bg-green') ? '#06D6A0' : stat.color.includes('bg-yellow') ? '#FFD166' : stat.color.includes('bg-navy') ? '#1B2A4A' : '#F97316'}}>
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${stat.color}`}>
-                            {stat.icon}
-                          </div>
-                          <h3 className="font-semibold text-foreground leading-tight">{stat.name}</h3>
+                    <div key={stat.id} className="rounded-[20px] p-4" style={{ backgroundColor: stat.bg }}>
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center text-base shrink-0">
+                          {stat.icon}
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-muted rounded-lg p-2">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Attempts</p>
-                            <p className="font-bold text-foreground">{stat.attempts}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Avg Acc</p>
-                            <p className="font-bold text-foreground">{stat.avgAccuracy.toFixed(0)}%</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Best</p>
-                            <p className="font-bold text-foreground">{stat.bestScoreStr}</p>
-                          </div>
+                        <h3 className="font-medium leading-tight" style={{ color: stat.text }}>{stat.name}</h3>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-white/50 rounded-2xl p-2.5">
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Attempts</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.attempts}</p>
                         </div>
-                        
-                        <Button variant="outline" className="w-full text-xs font-medium h-8" onClick={() => openLogModal(stat.id, stat.icon)}>
-                          Log Practice
-                        </Button>
-                      </CardContent>
-                    </Card>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Avg Acc</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.avgAccuracy.toFixed(0)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Best</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.bestScoreStr}</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="w-full text-xs font-medium h-8 rounded-xl border-none bg-white/60 hover:bg-white/90"
+                        style={{ color: stat.text }}
+                        onClick={() => openLogModal(stat.id, stat.icon)}
+                      >
+                        Log Practice
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
               <div className="xl:col-span-1">
-                <Card className="shadow-sm sticky top-24">
+                <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card sticky top-24">
                   <CardContent className="p-6">
-                    <h3 className="font-heading font-bold text-lg text-foreground mb-2 text-center">Accuracy Radar</h3>
+                    <h3 className="font-heading font-medium text-lg text-foreground mb-2 text-center">Accuracy Radar</h3>
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                           <PolarGrid stroke="#e5e7eb" />
                           <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 10 }} />
                           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                          <Radar name="Accuracy %" dataKey="accuracy" stroke="#2EC4B6" fill="#2EC4B6" fillOpacity={0.4} />
+                          <Radar name="Accuracy %" dataKey="accuracy" stroke="#1D9E75" fill="#1D9E75" fillOpacity={0.35} />
                           <RechartsTooltip />
                         </RadarChart>
                       </ResponsiveContainer>
@@ -292,50 +296,53 @@ export function PracticeTracker() {
                 <p className="text-muted-foreground mb-4">Track your performance across the 4 listening parts.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {listeningStats.map(stat => (
-                    <Card key={stat.id} className="shadow-sm hover-elevate overflow-hidden">
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${stat.color}`}>
-                            {stat.icon}
-                          </div>
-                          <h3 className="font-semibold text-foreground leading-tight">{stat.name}</h3>
+                    <div key={stat.id} className="rounded-[20px] p-4" style={{ backgroundColor: stat.bg }}>
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center text-base shrink-0">
+                          {stat.icon}
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-muted rounded-lg p-2">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Attempts</p>
-                            <p className="font-bold text-foreground">{stat.attempts}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Avg Score</p>
-                            <p className="font-bold text-foreground">{stat.avgScore.toFixed(1)}/10</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Best</p>
-                            <p className="font-bold text-foreground">{stat.bestScore}/10</p>
-                          </div>
+                        <h3 className="font-medium leading-tight" style={{ color: stat.text }}>{stat.name}</h3>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-white/50 rounded-2xl p-2.5">
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Attempts</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.attempts}</p>
                         </div>
-                        
-                        <Button variant="outline" className="w-full text-xs font-medium h-8" onClick={() => openLogModal(stat.id, stat.icon)}>
-                          Log Practice
-                        </Button>
-                      </CardContent>
-                    </Card>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Avg Score</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.avgScore.toFixed(1)}/10</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Best</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.bestScore}/10</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="w-full text-xs font-medium h-8 rounded-xl border-none bg-white/60 hover:bg-white/90"
+                        style={{ color: stat.text }}
+                        onClick={() => openLogModal(stat.id, stat.icon)}
+                      >
+                        Log Practice
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
               <div className="xl:col-span-1">
-                <Card className="shadow-sm sticky top-24">
+                <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card sticky top-24">
                   <CardContent className="p-6">
-                    <h3 className="font-heading font-bold text-lg text-foreground mb-2 text-center">Avg Score per Part</h3>
+                    <h3 className="font-heading font-medium text-lg text-foreground mb-2 text-center">Avg Score per Part</h3>
                     <div className="h-[300px] w-full mt-4">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={listeningChartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                           <XAxis dataKey="name" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                           <YAxis domain={[0, 10]} tick={{fontSize: 12}} tickLine={false} axisLine={false} />
-                          <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                          <Bar dataKey="avgScore" fill="#7B5EA7" radius={[4, 4, 0, 0]} barSize={40} />
+                          <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.04)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.08)'}} />
+                          <Bar dataKey="avgScore" fill="#7F77DD" radius={[8, 8, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -352,43 +359,46 @@ export function PracticeTracker() {
                 <p className="text-muted-foreground mb-4">Track your band scores for Writing Tasks 1 & 2.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {writingStats.map(stat => (
-                    <Card key={stat.id} className="shadow-sm hover-elevate">
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${stat.color}`}>
-                            {stat.icon}
-                          </div>
-                          <h3 className="font-semibold text-foreground leading-tight">{stat.name}</h3>
+                    <div key={stat.id} className="rounded-[20px] p-4" style={{ backgroundColor: stat.bg }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center text-base shrink-0">
+                          {stat.icon}
                         </div>
-                        <p className="text-xs text-muted-foreground mb-4 ml-10">{stat.detail}</p>
-                        
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-muted rounded-lg p-2">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Attempts</p>
-                            <p className="font-bold text-foreground">{stat.attempts}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Avg Band</p>
-                            <p className="font-bold text-foreground">{stat.avgBand > 0 ? stat.avgBand.toFixed(1) : '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Best Band</p>
-                            <p className="font-bold text-foreground">{stat.bestBand > 0 ? stat.bestBand.toFixed(1) : '-'}</p>
-                          </div>
+                        <h3 className="font-medium leading-tight" style={{ color: stat.text }}>{stat.name}</h3>
+                      </div>
+                      <p className="text-xs mb-4 ml-11" style={{ color: stat.accent }}>{stat.detail}</p>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-white/50 rounded-2xl p-2.5">
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Attempts</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.attempts}</p>
                         </div>
-                        
-                        <Button variant="outline" className="w-full text-xs font-medium h-8" onClick={() => openLogModal(stat.id, stat.icon)}>
-                          Log Practice
-                        </Button>
-                      </CardContent>
-                    </Card>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Avg Band</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.avgBand > 0 ? stat.avgBand.toFixed(1) : '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Best Band</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.bestBand > 0 ? stat.bestBand.toFixed(1) : '-'}</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="w-full text-xs font-medium h-8 rounded-xl border-none bg-white/60 hover:bg-white/90"
+                        style={{ color: stat.text }}
+                        onClick={() => openLogModal(stat.id, stat.icon)}
+                      >
+                        Log Practice
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
               <div className="xl:col-span-1">
-                <Card className="shadow-sm sticky top-24">
+                <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card sticky top-24">
                   <CardContent className="p-6">
-                    <h3 className="font-heading font-bold text-lg text-foreground mb-2 text-center">Progress Over Time</h3>
+                    <h3 className="font-heading font-medium text-lg text-foreground mb-2 text-center">Progress Over Time</h3>
                     <div className="h-[300px] w-full mt-4">
                       {writingChartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
@@ -398,12 +408,12 @@ export function PracticeTracker() {
                             <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{fontSize: 10}} />
                             <RechartsTooltip />
                             <Legend iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
-                            <Line type="monotone" name="Task 1" dataKey="Task 1" stroke="#06D6A0" strokeWidth={2} dot={{r: 3}} connectNulls />
-                            <Line type="monotone" name="Task 2" dataKey="Task 2" stroke="#2563EB" strokeWidth={2} dot={{r: 3}} connectNulls />
+                            <Line type="monotone" name="Task 1" dataKey="Task 1" stroke="#1D9E75" strokeWidth={2} dot={{r: 3}} connectNulls />
+                            <Line type="monotone" name="Task 2" dataKey="Task 2" stroke="#7F77DD" strokeWidth={2} dot={{r: 3}} connectNulls />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/50 rounded-lg border border-dashed text-sm text-center p-4">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/40 rounded-2xl border border-dashed text-sm text-center p-4">
                            Log practice to see your progress
                         </div>
                       )}
@@ -421,36 +431,39 @@ export function PracticeTracker() {
                 <p className="text-muted-foreground mb-4">Track your band scores for Speaking Parts 1, 2 & 3.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {speakingStats.map(stat => (
-                    <Card key={stat.id} className="shadow-sm hover-elevate">
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${stat.color}`}>
-                            {stat.icon}
-                          </div>
-                          <h3 className="font-semibold text-foreground leading-tight">{stat.name}</h3>
+                    <div key={stat.id} className="rounded-[20px] p-4" style={{ backgroundColor: stat.bg }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center text-base shrink-0">
+                          {stat.icon}
                         </div>
-                        <p className="text-xs text-muted-foreground mb-4 ml-10">{stat.detail}</p>
-                        
-                        <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-muted rounded-lg p-2">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Attempts</p>
-                            <p className="font-bold text-foreground">{stat.attempts}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Avg Band</p>
-                            <p className="font-bold text-foreground">{stat.avgBand > 0 ? stat.avgBand.toFixed(1) : '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Best Band</p>
-                            <p className="font-bold text-foreground">{stat.bestBand > 0 ? stat.bestBand.toFixed(1) : '-'}</p>
-                          </div>
+                        <h3 className="font-medium leading-tight" style={{ color: stat.text }}>{stat.name}</h3>
+                      </div>
+                      <p className="text-xs mb-4 ml-11" style={{ color: stat.accent }}>{stat.detail}</p>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-white/50 rounded-2xl p-2.5">
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Attempts</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.attempts}</p>
                         </div>
-                        
-                        <Button variant="outline" className="w-full text-xs font-medium h-8" onClick={() => openLogModal(stat.id, stat.icon)}>
-                          Log Practice
-                        </Button>
-                      </CardContent>
-                    </Card>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Avg Band</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.avgBand > 0 ? stat.avgBand.toFixed(1) : '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: stat.accent }}>Best Band</p>
+                          <p className="font-medium" style={{ color: stat.text }}>{stat.bestBand > 0 ? stat.bestBand.toFixed(1) : '-'}</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="w-full text-xs font-medium h-8 rounded-xl border-none bg-white/60 hover:bg-white/90"
+                        style={{ color: stat.text }}
+                        onClick={() => openLogModal(stat.id, stat.icon)}
+                      >
+                        Log Practice
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -458,9 +471,9 @@ export function PracticeTracker() {
           )}
           {/* RECENT LOGS — shows the Notes/Reflection entered in the Log Practice form,
               which previously had nowhere to display after being saved. */}
-          <Card className="shadow-sm overflow-hidden">
-            <CardHeader className="pb-2 bg-muted/50 border-b">
-              <CardTitle className="text-lg">Recent {activeTab} Logs</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Recent {activeTab} logs</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {activeModuleLogs.length === 0 ? (
@@ -470,28 +483,37 @@ export function PracticeTracker() {
                   subtitle="Use the Log Practice button above to record your first attempt."
                 />
               ) : (
-                <div className="divide-y max-h-[320px] overflow-y-auto">
-                  {activeModuleLogs.map((l: any) => (
-                    <div key={l.id} className="p-4 hover:bg-muted/30">
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                  {activeModuleLogs.map((l: any) => {
+                    const st = MODULE_STYLES[activeTab];
+                    const MIcon = st.icon;
+                    return (
+                    <div key={l.id} className="rounded-[16px] p-3.5" style={{ backgroundColor: st.bg }}>
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-bold text-foreground">{l.subType}</span>
-                            <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full">{formatLogScore(l)}</span>
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center shrink-0 mt-0.5">
+                            <MIcon className="w-4 h-4" style={{ color: st.bar }} />
                           </div>
-                          <div className="text-sm text-muted-foreground">{l.date}</div>
-                          {l.notes && (
-                            <p className="mt-2 text-xs text-foreground/80 bg-muted/60 rounded px-2 py-1.5 whitespace-pre-wrap">
-                              <span className="font-semibold">Notes:</span> {l.notes}
-                            </p>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="font-medium" style={{ color: st.text }}>{l.subType}</span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-white/60" style={{ color: st.bar }}>{formatLogScore(l)}</span>
+                            </div>
+                            <div className="text-sm" style={{ color: st.bar }}>{l.date}</div>
+                            {l.notes && (
+                              <p className="mt-2 text-xs rounded-lg px-2 py-1.5 whitespace-pre-wrap bg-white/50" style={{ color: st.text }}>
+                                <span className="font-semibold">Notes:</span> {l.notes}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(l.id)} disabled={deleteLog.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -501,7 +523,7 @@ export function PracticeTracker() {
 
       {/* Log Modal */}
       <Dialog open={logModalOpen} onOpenChange={setLogModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] rounded-[24px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-xl">{activeIcon}</span>
@@ -513,17 +535,17 @@ export function PracticeTracker() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Module</Label>
-                <Input value={activeTab} disabled className="bg-muted text-muted-foreground" />
+                <Input value={activeTab} disabled className="rounded-xl border-none" style={{ backgroundColor: MODULE_STYLES[activeTab].bg, color: MODULE_STYLES[activeTab].text }} />
               </div>
               <div className="space-y-2">
                 <Label>Sub-type</Label>
-                <Input value={activeSubtype} disabled className="bg-muted text-muted-foreground" />
+                <Input value={activeSubtype} disabled className="rounded-xl border-none" style={{ backgroundColor: MODULE_STYLES[activeTab].bg, color: MODULE_STYLES[activeTab].text }} />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Date</Label>
-              <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} required className="rounded-xl" />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -534,24 +556,24 @@ export function PracticeTracker() {
                    ['Listening'].includes(activeTab) ? " (out of 10)" : 
                    " (Band 1-9)"}
                 </Label>
-                <Input type="number" step={['Writing', 'Speaking'].includes(activeTab) ? "0.5" : "1"} min="0" max={['Writing', 'Speaking'].includes(activeTab) ? "9" : undefined} value={score} onChange={e => setScore(e.target.value)} required />
+                <Input type="number" step={['Writing', 'Speaking'].includes(activeTab) ? "0.5" : "1"} min="0" max={['Writing', 'Speaking'].includes(activeTab) ? "9" : undefined} value={score} onChange={e => setScore(e.target.value)} required className="rounded-xl" />
               </div>
               {['Reading', 'Listening'].includes(activeTab) && (
                 <div className="space-y-2">
                   <Label>Total Questions</Label>
-                  <Input type="number" min="1" max={activeTab === 'Listening' ? '10' : undefined} value={total} onChange={e => setTotal(e.target.value)} required />
+                  <Input type="number" min="1" max={activeTab === 'Listening' ? '10' : undefined} value={total} onChange={e => setTotal(e.target.value)} required className="rounded-xl" />
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
               <Label>Notes / Reflection</Label>
-              <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none" />
+              <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none rounded-xl" />
             </div>
 
             <div className="pt-4 flex justify-end gap-2 border-t">
-              <Button type="button" variant="outline" onClick={() => setLogModalOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-primary text-primary-foreground shadow-sm">Save Log</Button>
+              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setLogModalOpen(false)}>Cancel</Button>
+              <Button type="submit" className="rounded-xl text-white hover:opacity-90" style={{ backgroundColor: MODULE_STYLES[activeTab].bar }}>Save Log</Button>
             </div>
           </form>
         </DialogContent>
