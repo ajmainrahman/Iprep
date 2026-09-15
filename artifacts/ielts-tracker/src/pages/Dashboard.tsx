@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -654,6 +654,81 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
   );
 }
 
+/* ─── NEW: Live Exam Countdown Timer (days/hrs/mins/secs) ───────────────────── */
+function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; examTime: string | null }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!examDate) {
+    return (
+      <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
+        <CardContent className="p-6 h-full flex flex-col justify-center bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <CalendarIcon className="w-5 h-5 text-gray-400" />
+            <h3 className="font-semibold text-lg text-gray-800">Exam Countdown</h3>
+          </div>
+          <p className="text-sm text-gray-400">Set your exam date in Settings to see the countdown.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const [y, mo, d] = examDate.split('-').map(Number);
+  const [th, tm] = (examTime || '00:00').split(':').map(Number);
+  const target = new Date(y, mo - 1, d, th || 0, tm || 0, 0);
+  const diffMs = Math.max(0, target.getTime() - now.getTime());
+
+  const days = Math.floor(diffMs / 86_400_000);
+  const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
+  const seconds = Math.floor((diffMs % 60_000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const isPast = target.getTime() <= now.getTime();
+
+  return (
+    <Card className="col-span-1 shadow-lg border-none overflow-hidden">
+      <CardContent className="p-6 h-full flex flex-col justify-center bg-gradient-to-br from-navy to-navy/80 rounded-xl text-white">
+        {isPast ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-4">
+            <span className="text-4xl">🎓</span>
+            <p className="text-sm font-medium text-white/80">Exam day has arrived — good luck!</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {[
+                { value: days, label: 'Days' },
+                { value: hours, label: 'Hrs' },
+                { value: minutes, label: 'Mins' },
+                { value: seconds, label: 'Secs' },
+              ].map(({ value, label }) => (
+                <div key={label} className="flex flex-col items-center bg-white/10 rounded-xl py-3">
+                  <span className="text-2xl font-heading font-bold tabular-nums">{pad(value)}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-white/60 mt-1">{label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-medium">
+                <CalendarIcon className="w-3.5 h-3.5" />
+                {target.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+              <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-medium">
+                <Clock className="w-3.5 h-3.5" />
+                {target.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+              </span>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ─── Main ────────────────────────────────────────────────────────────────── */
 export function Dashboard() {
   const { data: settings, isLoading: settingsLoading } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
@@ -754,29 +829,7 @@ export function Dashboard() {
 
       {/* Top cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className={`p-6 h-full flex flex-col justify-center ${hasExamDate ? getDaysColor(Math.max(0, daysRemaining)).split(' ')[1] : 'bg-gray-50'} rounded-xl border border-transparent`}>
-            <div className="flex items-center gap-2 mb-4">
-              <CalendarIcon className={`w-5 h-5 ${hasExamDate ? getDaysColor(Math.max(0, daysRemaining)).split(' ')[0] : 'text-gray-400'}`} />
-              <h3 className="font-semibold text-lg text-gray-800">Exam Countdown</h3>
-            </div>
-            {!hasExamDate ? (
-              <div className="flex-1 flex flex-col justify-center">
-                <p className="text-sm text-gray-400">Set your exam date in Settings to see the countdown.</p>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col justify-center">
-                <div className="text-5xl font-heading font-bold mb-1 tracking-tight text-gray-900">
-                  {daysRemaining > 0 ? daysRemaining : daysRemaining === 0 ? '🎓' : `${Math.abs(daysRemaining)}d`}
-                </div>
-                <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
-                  {daysRemaining > 0 ? 'Days left' : daysRemaining === 0 ? 'Exam day!' : 'Days ago'}
-                </p>
-                <Progress value={Math.min(100, Math.max(0, (90 - Math.max(0, daysRemaining)) / 90 * 100))} className={`h-2.5 bg-black/10 ${getProgressColor(Math.max(0, daysRemaining))}`} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ExamCountdownTimer examDate={hasExamDate ? (settings?.examDate as string) : null} examTime={(settings as any)?.examTime ?? null} />
 
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
           <CardContent className="p-6 h-full flex flex-col justify-center items-center text-center bg-[#F6FBF8] rounded-xl">

@@ -6,6 +6,7 @@ export const settingsTable = pgTable("settings", {
   id: text("id").primaryKey().default("default"),
   name: text("name").notNull().default("Student"),
   examDate: text("exam_date"),
+  examTime: text("exam_time"), // "HH:MM" 24h, optional
   targetReading: real("target_reading").notNull().default(6.5),
   targetListening: real("target_listening").notNull().default(6.5),
   targetWriting: real("target_writing").notNull().default(6.5),

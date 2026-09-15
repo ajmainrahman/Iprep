@@ -27,6 +27,7 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
   const [form, setForm] = useState({
     name: '',
     examDate: '',
+    examTime: '',
     dailyGoalMinutes: 60,
     targetReading: 7,
     targetListening: 7,
@@ -39,6 +40,7 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
       setForm({
         name: (settings as any).name ?? '',
         examDate: (settings as any).examDate ?? '',
+        examTime: (settings as any).examTime ?? '',
         dailyGoalMinutes: (settings as any).dailyGoalMinutes ?? 60,
         targetReading: (settings as any).targetReading ?? 7,
         targetListening: (settings as any).targetListening ?? 7,
@@ -66,6 +68,7 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
       ...(settings as any),
       ...form,
       examDate: form.examDate || null,
+      examTime: form.examTime || null,
     });
   };
 
@@ -168,7 +171,20 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
                 onChange={e => setForm(f => ({ ...f, examDate: e.target.value }))}
                 className="h-10"
               />
-              <p className="text-[11px] text-muted-foreground">Used for the countdown timer on your dashboard.</p>
+              <div className="space-y-1.5 pt-1">
+                <Label htmlFor="examTime" className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  Exam Time (optional)
+                </Label>
+                <Input
+                  id="examTime"
+                  type="time"
+                  value={form.examTime}
+                  onChange={e => setForm(f => ({ ...f, examTime: e.target.value }))}
+                  className="h-10"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Used for the live countdown timer on your dashboard.</p>
             </div>
 
             <div className="space-y-1.5">

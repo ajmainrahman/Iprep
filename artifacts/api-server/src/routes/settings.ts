@@ -20,6 +20,7 @@ router.get("/settings", requireAuth, async (req, res): Promise<void> => {
 const updateSettingsSchema = z.object({
   name: z.string().optional(),
   examDate: z.string().nullable().optional(),
+  examTime: z.string().nullable().optional(),
   targetReading: z.number().optional(),
   targetListening: z.number().optional(),
   targetWriting: z.number().optional(),
