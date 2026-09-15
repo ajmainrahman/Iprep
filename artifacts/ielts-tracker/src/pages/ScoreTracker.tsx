@@ -13,6 +13,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { Trash2, Award, Edit2, Check, ChevronDown, Star, Clock, Target } from 'lucide-react';
 import { StudyPageHeader, StudyEmptyState } from '@/components/illustrations/StudyPageHeader';
 import { TrophyBadge } from '@/components/illustrations/StudyIllustrations';
+import { MODULE_STYLES } from '@/lib/moduleStyles';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -121,15 +122,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
   });
   const chartData = Array.from(chartDataMap.values());
 
-  const getModuleBadgeColor = (mod: string) => {
-    switch (mod) {
-      case 'Reading': return 'bg-coral/10 text-coral border-coral/20';
-      case 'Writing': return 'bg-green-100 text-green-700 border-green-200';
-      case 'Speaking': return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'Listening': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      default: return 'bg-navy/10 text-navy border-navy/20 dark:bg-blue-900/30 dark:text-blue-400';
-    }
-  };
+  const moduleStyle = (mod: string) => MODULE_STYLES[mod] || MODULE_STYLES.Mixed;
 
   const targets = {
     Reading: (settings as any)?.targetReading || 7,
@@ -181,20 +174,20 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
         {/* Left Column: Form & Best Scores — unchanged, already on-system */}
         <div className="space-y-6 lg:col-span-1">
-          <Card className="border-t-4 border-t-teal shadow-sm">
-            <CardHeader className="pb-3 bg-gradient-to-r from-teal/5 to-transparent">
-              <CardTitle className="text-lg">Log a Score</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Log a score</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <form onSubmit={handleAddScore} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+                  <Input type="date" value={date} onChange={e => setDate(e.target.value)} required className="rounded-xl" />
                 </div>
                 <div className="space-y-2">
                   <Label>Module</Label>
                   <Select value={module} onValueChange={setModule}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Reading">Reading</SelectItem>
                       <SelectItem value="Listening">Listening</SelectItem>
@@ -207,38 +200,41 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Raw Score</Label>
-                    <Input placeholder="e.g. 34/40" value={scoreVal} onChange={e => setScoreVal(e.target.value)} />
+                    <Input placeholder="e.g. 34/40" value={scoreVal} onChange={e => setScoreVal(e.target.value)} className="rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label>Band Score</Label>
-                    <Input type="number" step="0.5" min="0" max="9" placeholder="e.g. 7.5" value={band} onChange={e => setBand(e.target.value)} required />
+                    <Input type="number" step="0.5" min="0" max="9" placeholder="e.g. 7.5" value={band} onChange={e => setBand(e.target.value)} required className="rounded-xl" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Notes / Mistakes</Label>
-                  <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none h-20" />
+                  <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none h-20 rounded-xl" />
                 </div>
-                <Button type="submit" className="w-full bg-teal text-white hover:bg-teal/90" disabled={addScore.isPending}>
-                  {addScore.isPending ? "Adding..." : "Add Score"}
+                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#1D9E75' }} disabled={addScore.isPending}>
+                  {addScore.isPending ? "Adding..." : "Add score"}
                 </Button>
               </form>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3 border-b border-border/50">
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="w-5 h-5 text-yellow-500" /> Personal Bests
+                <Award className="w-5 h-5" style={{ color: '#BA7517' }} /> Personal bests
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="grid grid-cols-2 gap-3">
-                {MODULES.map(mod => (
-                  <div key={mod} className="bg-muted p-3 rounded-xl border flex flex-col items-center justify-center text-center">
-                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">{mod}</span>
-                    <span className="text-2xl font-bold text-foreground">{bestScores[mod] > 0 ? bestScores[mod].toFixed(1) : '-'}</span>
-                  </div>
-                ))}
+                {MODULES.map(mod => {
+                  const s = moduleStyle(mod);
+                  return (
+                    <div key={mod} className="rounded-[16px] p-3 flex flex-col items-center justify-center text-center" style={{ backgroundColor: s.bg }}>
+                      <span className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: s.bar }}>{mod}</span>
+                      <span className="text-2xl font-medium" style={{ color: s.text }}>{bestScores[mod] > 0 ? bestScores[mod].toFixed(1) : '-'}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -246,9 +242,9 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
         {/* Right Column: Chart + Test History */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2 border-b border-border/50">
-              <CardTitle className="text-lg">Progress Over Time</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Progress over time</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="h-[300px] w-full mt-4">
@@ -258,17 +254,17 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
                       <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{ fontSize: 12 }} />
-                      <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                      <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.08)' }} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="Reading" stroke="#FF6B6B" strokeWidth={3} dot={{ r: 4, fill: '#FF6B6B' }} activeDot={{ r: 6 }} connectNulls />
-                      <Line type="monotone" dataKey="Listening" stroke="#FFD166" strokeWidth={3} dot={{ r: 4, fill: '#FFD166' }} activeDot={{ r: 6 }} connectNulls />
-                      <Line type="monotone" dataKey="Writing" stroke="#06D6A0" strokeWidth={3} dot={{ r: 4, fill: '#06D6A0' }} activeDot={{ r: 6 }} connectNulls />
-                      <Line type="monotone" dataKey="Speaking" stroke="#7B5EA7" strokeWidth={3} dot={{ r: 4, fill: '#7B5EA7' }} activeDot={{ r: 6 }} connectNulls />
-                      <Line type="monotone" dataKey="Full Mock" stroke="#1B2A4A" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 5 }} connectNulls />
+                      <Line type="monotone" dataKey="Reading" stroke={MODULE_STYLES.Reading.bar} strokeWidth={3} dot={{ r: 4, fill: MODULE_STYLES.Reading.bar }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Listening" stroke={MODULE_STYLES.Listening.bar} strokeWidth={3} dot={{ r: 4, fill: MODULE_STYLES.Listening.bar }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Writing" stroke={MODULE_STYLES.Writing.bar} strokeWidth={3} dot={{ r: 4, fill: MODULE_STYLES.Writing.bar }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Speaking" stroke={MODULE_STYLES.Speaking.bar} strokeWidth={3} dot={{ r: 4, fill: MODULE_STYLES.Speaking.bar }} activeDot={{ r: 6 }} connectNulls />
+                      <Line type="monotone" dataKey="Full Mock" stroke={MODULE_STYLES.Mixed.bar} strokeWidth={3} strokeDasharray="5 5" dot={{ r: 5 }} connectNulls />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/50 rounded-lg border border-dashed">
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/40 rounded-2xl border border-dashed">
                     Add some scores to see your progress chart
                   </div>
                 )}
@@ -277,18 +273,18 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
           </Card>
 
           <Dialog open={!!editingScore} onOpenChange={open => { if (!open) setEditingScore(null); }}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl rounded-[24px]">
               <DialogHeader><DialogTitle className="text-base">Edit Score</DialogTitle></DialogHeader>
               {editingScore && (
                 <form onSubmit={handleUpdateScore} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label>Date</Label>
-                    <Input type="date" value={editingScore.date} onChange={e => setEditingScore(p => p && ({ ...p, date: e.target.value }))} />
+                    <Input type="date" value={editingScore.date} onChange={e => setEditingScore(p => p && ({ ...p, date: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1">
                     <Label>Module</Label>
                     <Select value={editingScore.module} onValueChange={v => setEditingScore(p => p && ({ ...p, module: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {['Reading', 'Listening', 'Writing', 'Speaking', 'Full Mock'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
@@ -296,21 +292,21 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                   </div>
                   <div className="space-y-1">
                     <Label>Band Score</Label>
-                    <Input type="number" step="0.5" min="0" max="9" value={editingScore.band} onChange={e => setEditingScore(p => p && ({ ...p, band: e.target.value }))} />
+                    <Input type="number" step="0.5" min="0" max="9" value={editingScore.band} onChange={e => setEditingScore(p => p && ({ ...p, band: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1">
                     <Label>Raw Score</Label>
-                    <Input placeholder="e.g. 34/40" value={editingScore.score} onChange={e => setEditingScore(p => p && ({ ...p, score: e.target.value }))} />
+                    <Input placeholder="e.g. 34/40" value={editingScore.score} onChange={e => setEditingScore(p => p && ({ ...p, score: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
                     <Label>Notes</Label>
-                    <Input value={editingScore.notes} onChange={e => setEditingScore(p => p && ({ ...p, notes: e.target.value }))} />
+                    <Input value={editingScore.notes} onChange={e => setEditingScore(p => p && ({ ...p, notes: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
-                    <Button type="submit" size="sm" disabled={updateScoreReq.isPending} className="bg-teal text-white hover:bg-teal/90">
+                    <Button type="submit" size="sm" disabled={updateScoreReq.isPending} className="rounded-xl text-white hover:opacity-90" style={{ backgroundColor: '#1D9E75' }}>
                       <Check className="w-4 h-4 mr-1" /> Save Changes
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingScore(null)}>Cancel</Button>
+                    <Button type="button" size="sm" variant="ghost" className="rounded-xl" onClick={() => setEditingScore(null)}>Cancel</Button>
                   </div>
                 </form>
               )}
@@ -318,9 +314,9 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
           </Dialog>
 
           {/* ── Test History (redesigned) ── */}
-          <Card className="shadow-sm overflow-hidden">
-            <CardHeader className="pb-2 bg-muted/50 border-b">
-              <CardTitle className="text-lg">Test History</CardTitle>
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Test history</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {testSittings.length === 0 ? (
@@ -330,7 +326,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                   subtitle="Log your first mock test score using the form above."
                 />
               ) : (
-                <div className="divide-y">
+                <div className="space-y-2">
                   {testSittings.map(sitting => {
                     const isExpanded = expandedDate === sitting.date;
                     const isBest = bestSitting?.date === sitting.date && sitting.overallBand !== null;
@@ -338,13 +334,13 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     const gap = sitting.overallBand !== null ? sitting.overallBand - overallTarget : null;
 
                     return (
-                      <div key={sitting.date}>
+                      <div key={sitting.date} className="rounded-[18px] overflow-hidden" style={{ backgroundColor: '#F3F2ED' }}>
                         <button
                           onClick={() => setExpandedDate(isExpanded ? null : sitting.date)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] transition-colors text-left"
                         >
-                          <div className="flex flex-col items-center justify-center w-14 h-14 shrink-0 rounded-xl bg-muted border">
-                            <span className="text-lg font-heading font-bold text-foreground leading-none">
+                          <div className="flex flex-col items-center justify-center w-14 h-14 shrink-0 rounded-2xl bg-white/70">
+                            <span className="text-lg font-heading font-medium text-foreground leading-none">
                               {sitting.overallBand !== null ? sitting.overallBand.toFixed(1) : '—'}
                             </span>
                             <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">Overall</span>
@@ -352,16 +348,16 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-foreground">
+                              <span className="font-medium text-foreground">
                                 {sitting.isFullMock ? 'Full Mock Test' : 'Practice Sitting'}
                               </span>
                               {isBest && (
-                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 gap-1">
+                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#FBEDD2', color: '#5C441F' }}>
                                   <Star className="w-3 h-3 fill-current" /> Best
                                 </Badge>
                               )}
                               {isLatest && (
-                                <Badge variant="secondary" className="bg-teal/10 text-teal border-teal/20 gap-1">
+                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#DEEFE3', color: '#2C4A36' }}>
                                   <Clock className="w-3 h-3" /> Latest
                                 </Badge>
                               )}
@@ -370,20 +366,25 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                           </div>
 
                           <div className="hidden sm:flex items-center gap-1.5">
-                            {MODULES.map(mod => (
-                              <span
-                                key={mod}
-                                title={mod}
-                                className={`inline-flex flex-col items-center justify-center w-10 h-10 rounded-lg border text-xs font-bold ${sitting.moduleMap[mod] ? getModuleBadgeColor(mod) : 'bg-muted/50 text-muted-foreground/40 border-transparent'}`}
-                              >
-                                {sitting.moduleMap[mod] ? sitting.moduleMap[mod].band.toFixed(1) : '-'}
-                              </span>
-                            ))}
+                            {MODULES.map(mod => {
+                              const s = moduleStyle(mod);
+                              const has = !!sitting.moduleMap[mod];
+                              return (
+                                <span
+                                  key={mod}
+                                  title={mod}
+                                  className="inline-flex flex-col items-center justify-center w-10 h-10 rounded-xl text-xs font-medium"
+                                  style={has ? { backgroundColor: s.bg, color: s.text } : { backgroundColor: '#FFFFFF80', color: '#B4B2A9' }}
+                                >
+                                  {has ? sitting.moduleMap[mod].band.toFixed(1) : '-'}
+                                </span>
+                              );
+                            })}
                           </div>
 
                           {gap !== null && (
                             <div className="hidden md:flex flex-col items-end w-20 shrink-0">
-                              <span className={`flex items-center gap-1 text-xs font-semibold ${gap >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: gap >= 0 ? '#1D9E75' : '#BA7517' }}>
                                 <Target className="w-3 h-3" /> {gap >= 0 ? '+' : ''}{gap.toFixed(1)}
                               </span>
                               <span className="text-[10px] text-muted-foreground">vs target</span>
@@ -394,21 +395,23 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                         </button>
 
                         {isExpanded && (
-                          <div className="px-4 pb-4 bg-muted/20 space-y-2">
-                            {sitting.entries.map((s: any) => (
-                              <div key={s.id} className="flex items-start justify-between gap-3 bg-card rounded-lg border p-3">
+                          <div className="px-3 pb-3 space-y-2">
+                            {sitting.entries.map((s: any) => {
+                              const es = moduleStyle(s.module);
+                              return (
+                              <div key={s.id} className="flex items-start justify-between gap-3 bg-white/70 rounded-2xl p-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${getModuleBadgeColor(s.module)}`}>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: es.bg, color: es.text }}>
                                       {s.module}
                                     </span>
-                                    <span className="font-bold text-foreground text-sm">Band {s.band.toFixed(1)}</span>
+                                    <span className="font-medium text-foreground text-sm">Band {s.band.toFixed(1)}</span>
                                     {s.score && <span className="text-xs text-muted-foreground">({s.score})</span>}
                                   </div>
                                   {s.notes && <p className="mt-1.5 text-xs text-muted-foreground">{s.notes}</p>}
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
-                                  <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-7 w-7 text-muted-foreground hover:text-teal hover:bg-teal/10">
+                                  <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-7 w-7 text-muted-foreground hover:text-[#1D9E75] hover:bg-[#DEEFE3]">
                                     <Edit2 className="w-3.5 h-3.5" />
                                   </Button>
                                   <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
@@ -416,7 +419,8 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                                   </Button>
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

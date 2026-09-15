@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
-import { Flame, Clock, Trash2, Target, ArrowUpRight, Book, Headphones, PenLine, Mic, Languages, Shuffle, type LucideIcon } from 'lucide-react';
+import { Flame, Clock, Trash2, Target, ArrowUpRight } from 'lucide-react';
+import { MODULES, MODULE_STYLES, MODULE_COLORS } from '@/lib/moduleStyles';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -22,23 +23,9 @@ function localDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/* Module → pastel design tokens, shared by the stat cards, chart, breakdown
-   rows, and recent-session badges so every part of the page reads as one
-   consistent palette (light tint background, saturated bar/accent color,
-   dark text for contrast, and a matching icon). */
-const MODULES = ['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary', 'Mixed'] as const;
-const MODULE_STYLES: Record<string, { bg: string; bar: string; text: string; icon: LucideIcon }> = {
-  Reading:    { bg: '#DEEFE3', bar: '#1D9E75', text: '#2C4A36', icon: Book },
-  Listening:  { bg: '#E6E3F6', bar: '#7F77DD', text: '#3C3489', icon: Headphones },
-  Writing:    { bg: '#FBEDD2', bar: '#BA7517', text: '#5C441F', icon: PenLine },
-  Speaking:   { bg: '#FBE4E4', bar: '#C94F4E', text: '#791F1F', icon: Mic },
-  Vocabulary: { bg: '#FBE4EC', bar: '#D4537E', text: '#72243E', icon: Languages },
-  Mixed:      { bg: '#EFEEE9', bar: '#888780', text: '#444441', icon: Shuffle },
-};
-/* Back-compat flat map for the recharts <Bar fill> prop, which only accepts a single color */
-const MODULE_COLORS: Record<string, string> = Object.fromEntries(
-  MODULES.map(m => [m, MODULE_STYLES[m].bar])
-);
+/* Module → pastel design tokens (bg tint, accent color, text color, icon) now
+   live in @/lib/moduleStyles so Study Log and Practice Tracker share one
+   consistent palette instead of each keeping its own copy. */
 
 export function StudyLog() {
   const { toast } = useToast();
