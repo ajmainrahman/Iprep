@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useApp, PracticeLog } from '@/lib/store';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,17 +9,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
 import { QuestionCardsBadge } from '@/components/illustrations/StudyIllustrations';
+import { PASTELS } from '@/lib/moduleStyles';
 import { useToast } from '@/hooks/use-toast';
 
 const QUESTION_TYPES = [
-  { id: 'tfng', name: 'True / False / Not Given', icon: '🔍', color: 'bg-coral text-white', accent: 'text-coral', bar: '[&>div]:bg-coral' },
-  { id: 'ynng', name: 'Yes / No / Not Given', icon: '💬', color: 'bg-purple-600 text-white', accent: 'text-purple-600', bar: '[&>div]:bg-purple-600' },
-  { id: 'gap', name: 'Summary / Gap Fill', icon: '✏️', color: 'bg-teal text-white', accent: 'text-teal', bar: '[&>div]:bg-teal' },
-  { id: 'head', name: 'Matching Headings', icon: '📑', color: 'bg-green-500 text-white', accent: 'text-green-500', bar: '[&>div]:bg-green-500' },
-  { id: 'match', name: 'Matching Information', icon: '🔗', color: 'bg-yellow-400 text-gray-900', accent: 'text-yellow-600', bar: '[&>div]:bg-yellow-400' },
-  { id: 'mcq', name: 'Multiple Choice', icon: '✅', color: 'bg-navy text-white', accent: 'text-navy', bar: '[&>div]:bg-navy' },
-  { id: 'sentence', name: 'Sentence Completion', icon: '🔤', color: 'bg-orange-500 text-white', accent: 'text-orange-500', bar: '[&>div]:bg-orange-500' },
-];
+  { id: 'tfng', name: 'True / False / Not Given', icon: '🔍' },
+  { id: 'ynng', name: 'Yes / No / Not Given', icon: '💬' },
+  { id: 'gap', name: 'Summary / Gap Fill', icon: '✏️' },
+  { id: 'head', name: 'Matching Headings', icon: '📑' },
+  { id: 'match', name: 'Matching Information', icon: '🔗' },
+  { id: 'mcq', name: 'Multiple Choice', icon: '✅' },
+  { id: 'sentence', name: 'Sentence Completion', icon: '🔤' },
+].map((t, i) => ({ ...t, ...PASTELS[i % PASTELS.length] }));
 
 export function QuestionPractice() {
   const { practiceLogs, setPracticeLogs } = useApp();
@@ -112,65 +112,63 @@ export function QuestionPractice() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left: Cards List */}
         <div className="xl:col-span-2 space-y-4">
-          <p className="text-gray-600 mb-4">Track your accuracy on specific IELTS question types to find your weak spots.</p>
+          <p className="text-muted-foreground mb-4">Track your accuracy on specific IELTS question types to find your weak spots.</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {typeStats.map(stat => (
-              <Card key={stat.id} className="shadow-sm hover-elevate transition-all overflow-hidden border-t-0 border-l-4" style={{borderLeftColor: 'currentColor'}}>
-                <div className={`w-1 h-full absolute left-0 ${stat.color}`}></div>
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${stat.color}`}>
-                        {stat.icon}
-                      </div>
-                      <h3 className="font-semibold text-gray-800 leading-tight">{stat.name}</h3>
-                    </div>
+              <div key={stat.id} className="rounded-[20px] p-4" style={{ backgroundColor: stat.bg }}>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-white/60 flex items-center justify-center text-base shrink-0">
+                    {stat.icon}
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                    <div>
-                      <p className="text-gray-500 text-xs">Attempts</p>
-                      <p className="font-bold text-navy dark:text-white">{stat.attempts}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs">Avg Score</p>
-                      <p className="font-bold text-navy dark:text-white">{stat.avgScoreStr}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs">Best</p>
-                      <p className="font-bold text-navy dark:text-white">{stat.bestScoreStr}</p>
-                    </div>
+                  <h3 className="font-medium leading-tight" style={{ color: stat.text }}>{stat.name}</h3>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mb-4 text-sm text-center bg-white/50 rounded-2xl p-2.5">
+                  <div>
+                    <p className="text-xs" style={{ color: stat.accent }}>Attempts</p>
+                    <p className="font-medium" style={{ color: stat.text }}>{stat.attempts}</p>
                   </div>
-                  
-                  <div className="space-y-1 mb-4">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span className="text-gray-500">Accuracy</span>
-                      <span className={stat.accent}>{stat.accuracy.toFixed(0)}%</span>
-                    </div>
-                    <Progress value={stat.accuracy} className={`h-1.5 bg-gray-100 ${stat.bar}`} />
+                  <div>
+                    <p className="text-xs" style={{ color: stat.accent }}>Avg Score</p>
+                    <p className="font-medium" style={{ color: stat.text }}>{stat.avgScoreStr}</p>
                   </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full text-xs font-medium h-8"
-                    onClick={() => openLogModal(stat)}
-                  >
-                    Log Practice
-                  </Button>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-xs" style={{ color: stat.accent }}>Best</p>
+                    <p className="font-medium" style={{ color: stat.text }}>{stat.bestScoreStr}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 mb-4">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span style={{ color: stat.accent }}>Accuracy</span>
+                    <span style={{ color: stat.text }}>{stat.accuracy.toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/50">
+                    <div className="h-full rounded-full" style={{ width: `${stat.accuracy}%`, backgroundColor: stat.accent }} />
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full text-xs font-medium h-8 rounded-xl border-none bg-white/60 hover:bg-white/90"
+                  style={{ color: stat.text }}
+                  onClick={() => openLogModal(stat)}
+                >
+                  Log Practice
+                </Button>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Right: Radar Chart */}
         <div className="xl:col-span-1">
-          <Card className="shadow-sm sticky top-24">
+          <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card sticky top-24">
             <CardContent className="p-6">
-              <h3 className="font-heading font-bold text-lg text-navy mb-2 text-center">Accuracy Radar</h3>
-              <p className="text-xs text-center text-gray-500 mb-6">Visualise your strengths and weaknesses</p>
-              
+              <h3 className="font-heading font-medium text-lg text-foreground mb-2 text-center">Accuracy Radar</h3>
+              <p className="text-xs text-center text-muted-foreground mb-6">Visualise your strengths and weaknesses</p>
+
               <div className="h-[300px] w-full">
                 {practiceLogs.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -178,12 +176,12 @@ export function QuestionPractice() {
                       <PolarGrid stroke="#e5e7eb" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 10 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                      <Radar name="Accuracy %" dataKey="accuracy" stroke="#2EC4B6" fill="#2EC4B6" fillOpacity={0.4} />
+                      <Radar name="Accuracy %" dataKey="accuracy" stroke="#1D9E75" fill="#1D9E75" fillOpacity={0.35} />
                       <RechartsTooltip />
                     </RadarChart>
                   </ResponsiveContainer>
                 ) : (
-                   <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50/50 rounded-lg border border-dashed text-sm text-center p-4">
+                   <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/40 rounded-2xl border border-dashed text-sm text-center p-4">
                      Log practice scores to generate your accuracy radar chart
                    </div>
                 )}
@@ -195,7 +193,7 @@ export function QuestionPractice() {
 
       {/* Log Modal */}
       <Dialog open={logModalOpen} onOpenChange={setLogModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] rounded-[24px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-xl">{activeType.icon}</span>
@@ -205,28 +203,28 @@ export function QuestionPractice() {
           <form onSubmit={handleSaveLog} className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label>Date</Label>
-              <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} required className="rounded-xl" />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Score (Correct)</Label>
-                <Input type="number" min="0" value={score} onChange={e => setScore(e.target.value)} required />
+                <Input type="number" min="0" value={score} onChange={e => setScore(e.target.value)} required className="rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label>Total Questions</Label>
-                <Input type="number" min="1" value={total} onChange={e => setTotal(e.target.value)} required />
+                <Input type="number" min="1" value={total} onChange={e => setTotal(e.target.value)} required className="rounded-xl" />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Notes / Tricks learned</Label>
-              <Textarea placeholder="E.g. Pay attention to keywords in the second paragraph." value={notes} onChange={e => setNotes(e.target.value)} className="resize-none" />
+              <Textarea placeholder="E.g. Pay attention to keywords in the second paragraph." value={notes} onChange={e => setNotes(e.target.value)} className="resize-none rounded-xl" />
             </div>
 
             <div className="pt-4 flex justify-end gap-2 border-t">
-              <Button type="button" variant="outline" onClick={() => setLogModalOpen(false)}>Cancel</Button>
-              <Button type="submit" className={`${activeType.color} border-none shadow-sm`}>Save Log</Button>
+              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setLogModalOpen(false)}>Cancel</Button>
+              <Button type="submit" className="rounded-xl text-white hover:opacity-90" style={{ backgroundColor: activeType.accent }}>Save Log</Button>
             </div>
           </form>
         </DialogContent>

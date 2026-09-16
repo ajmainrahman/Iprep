@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, ChevronDown, ChevronUp, Save, X } from 'lucide-react';
-import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
 import { JourneyBadge } from '@/components/illustrations/StudyIllustrations';
+import { MODULE_STYLES, PASTELS } from '@/lib/moduleStyles';
+
+/* This page's generic "success/accent" mint (Saved text, hover states, the
+   Add Phase button) reuses Reading's exact mint token, matching how Study
+   Log uses the same mint for its streak/success indicators app-wide. */
+const MINT = MODULE_STYLES.Reading;
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 interface Task {
@@ -157,37 +162,31 @@ function ModuleRow({
     onChange({ ...mod, tasks: tasks.length ? tasks : [{ text: '', done: false }] });
   };
 
-  const MODULE_COLORS: Record<string, string> = {
-    Listening: 'bg-[#FCE7B8]/40 border-[#FCE7B8]',
-    Reading: 'bg-[#FBDCE6]/40 border-[#FBDCE6]',
-    Writing: 'bg-[#CFEEE0]/40 border-[#CFEEE0]',
-    Speaking: 'bg-[#E3DEFA]/40 border-[#E3DEFA]',
-  };
-  const MODULE_LABEL: Record<string, string> = {
-    Listening: 'text-[#8A5A0A]',
-    Reading: 'text-[#9C2B55]',
-    Writing: 'text-[#1B6B5B]',
-    Speaking: 'text-[#4A3B8C]',
-  };
-  const colorClass = MODULE_COLORS[mod.name] || 'bg-gray-50 border-gray-200';
-  const labelClass = MODULE_LABEL[mod.name] || 'text-gray-700';
+  const s = MODULE_STYLES[mod.name];
+  const colorClass = s ? '' : 'bg-gray-50 border-gray-200';
+  const colorStyle = s ? { backgroundColor: `${s.bg}99`, borderColor: s.bg } : undefined;
+  const labelStyle = s ? { color: s.text } : undefined;
 
   const doneTasks = mod.tasks.filter(t => t.text.trim() && t.done).length;
   const totalTasks = mod.tasks.filter(t => t.text.trim()).length;
 
   return (
-    <div className={`rounded-xl border p-4 ${colorClass}`}>
+    <div className={`rounded-xl border p-4 ${colorClass}`} style={colorStyle}>
       <div className="flex items-center gap-2 mb-3">
         <div className="flex-1 flex items-center gap-2">
           <Input
             value={mod.name}
             onChange={e => onChange({ ...mod, name: e.target.value })}
-            className={`font-semibold text-sm h-8 border-0 bg-transparent p-0 focus-visible:ring-0 ${labelClass}`}
+            className="font-semibold text-sm h-8 border-0 bg-transparent p-0 focus-visible:ring-0"
+            style={labelStyle}
             placeholder="Module name"
           />
         </div>
         {totalTasks > 0 && (
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${doneTasks === totalTasks ? 'bg-green-100 text-green-700' : 'bg-white/70 text-muted-foreground'}`}>
+          <span
+            className={`text-xs font-medium px-2 py-0.5 rounded-full ${doneTasks === totalTasks ? '' : 'bg-white/70 text-muted-foreground'}`}
+            style={doneTasks === totalTasks ? { backgroundColor: MINT.bg, color: MINT.text } : undefined}
+          >
             {doneTasks}/{totalTasks}
           </span>
         )}
@@ -212,7 +211,8 @@ function ModuleRow({
               type="checkbox"
               checked={task.done}
               onChange={e => updateTask(i, { done: e.target.checked })}
-              className="w-4 h-4 rounded accent-[#1B6B5B] shrink-0 cursor-pointer"
+              className="w-4 h-4 rounded shrink-0 cursor-pointer"
+              style={{ accentColor: MINT.bar }}
               title="Mark as done"
             />
             <Input
@@ -233,7 +233,7 @@ function ModuleRow({
         ))}
         <button
           onClick={addTask}
-          className="text-xs text-muted-foreground hover:text-[#1B6B5B] transition-colors flex items-center gap-1 mt-1"
+          className="text-xs text-muted-foreground hover:text-[#1D9E75] transition-colors flex items-center gap-1 mt-1"
         >
           <Plus className="w-3 h-3" /> Add task
         </button>
@@ -265,19 +265,12 @@ function PhaseCard({
   };
   const toggle = () => onUpdate({ ...phase, collapsed: !phase.collapsed });
 
-  const PHASE_COLORS = [
-    'from-[#4A3B8C] to-[#7B6FD1]',
-    'from-[#1B6B5B] to-[#3FAE80]',
-    'from-[#C97A2E] to-[#F4A972]',
-    'from-[#1B6B5B] to-[#6FD9A0]',
-    'from-[#9C2B55] to-[#D46A93]',
-  ];
-  const gradient = PHASE_COLORS[index % PHASE_COLORS.length];
+  const phaseColor = PASTELS[index % PASTELS.length].accent;
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       {/* Header */}
-      <div className={`bg-gradient-to-r ${gradient} p-4 text-white`}>
+      <div className="p-4 text-white" style={{ backgroundColor: phaseColor }}>
         <div className="flex items-center gap-3">
           {/* Progress ring */}
           <ProgressRing pct={pct} size={54} strokeWidth={5} />
@@ -355,7 +348,7 @@ function PhaseCard({
           ))}
           <button
             onClick={addModule}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1B6B5B] hover:text-[#1B6B5B] transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1D9E75] hover:text-[#1D9E75] transition-colors text-sm"
           >
             <Plus className="w-4 h-4" /> Add module
           </button>
@@ -378,9 +371,9 @@ function OverallProgress({ phases }: { phases: Phase[] }) {
   const overallPct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
 
   return (
-    <div className="bg-white border border-[#E7ECE9] shadow-sm rounded-2xl p-5">
+    <div className="bg-white border rounded-2xl p-5" style={{ borderColor: '#E7ECE9' }}>
       <div className="flex items-center gap-4 mb-4">
-        <ProgressRing pct={overallPct} size={68} strokeWidth={6} color="#1B6B5B" trackColor="#CFEEE0" />
+        <ProgressRing pct={overallPct} size={68} strokeWidth={6} color={MINT.bar} trackColor={MINT.bg} />
         <div>
           <h3 className="font-bold text-base text-foreground">Overall Progress</h3>
           <p className="text-sm text-muted-foreground">
@@ -391,16 +384,15 @@ function OverallProgress({ phases }: { phases: Phase[] }) {
       <div className="grid gap-2">
         {phases.map((phase, i) => {
           const { done, total, pct } = perPhase[i];
-          const PHASE_COLORS = ['bg-[#4A3B8C]', 'bg-[#1B6B5B]', 'bg-[#C97A2E]', 'bg-[#1B6B5B]', 'bg-[#9C2B55]'];
-          const bar = PHASE_COLORS[i % PHASE_COLORS.length];
+          const bar = PASTELS[i % PASTELS.length].accent;
           return (
             <div key={phase.id} className="flex items-center gap-3 text-sm">
               <span className="w-5 text-xs font-bold text-muted-foreground shrink-0 text-right">{i + 1}</span>
               <span className="w-28 font-medium truncate text-foreground">{phase.title || `Phase ${i + 1}`}</span>
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${bar} rounded-full transition-all duration-500`}
-                  style={{ width: `${pct}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${pct}%`, backgroundColor: bar }}
                 />
               </div>
               <span className="w-10 text-xs text-right text-muted-foreground shrink-0">
@@ -512,7 +504,7 @@ export function IELTSJourneyPlanner() {
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className="text-xs text-[#1B6B5B] flex items-center gap-1.5">
+            <span className="text-xs flex items-center gap-1.5" style={{ color: MINT.bar }}>
               <Save className="w-3 h-3" /> Saved
             </span>
           )}
@@ -530,7 +522,7 @@ export function IELTSJourneyPlanner() {
             <p className="font-semibold text-foreground text-lg mb-1">No phases yet</p>
             <p className="text-muted-foreground text-sm">Break your IELTS preparation into phases — each with date ranges and daily module targets.</p>
           </div>
-          <Button onClick={addPhase} className="bg-[#1B6B5B] text-white hover:bg-[#1B6B5B]/90 mt-2">
+          <Button onClick={addPhase} className="text-white hover:opacity-90 mt-2 rounded-xl" style={{ backgroundColor: MINT.bar }}>
             <Plus className="w-4 h-4 mr-2" /> Add your first phase
           </Button>
         </div>
@@ -553,7 +545,7 @@ export function IELTSJourneyPlanner() {
       {plan.phases.length > 0 && (
         <button
           onClick={addPhase}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1B6B5B] hover:text-[#1B6B5B] transition-colors font-medium"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1D9E75] hover:text-[#1D9E75] transition-colors font-medium"
         >
           <Plus className="w-4 h-4" /> Add Phase
         </button>
@@ -568,7 +560,7 @@ export function IELTSJourneyPlanner() {
               const days = calcDays(phase.startDate, phase.endDate);
               return (
                 <div key={phase.id} className="flex items-center gap-3 text-sm">
-                  <span className="w-5 h-5 rounded-full bg-[#CFEEE0] text-[#1B6B5B] flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ backgroundColor: MINT.bg, color: MINT.bar }}>{i + 1}</span>
                   <span className="font-medium text-foreground truncate flex-1">{phase.title}</span>
                   {phase.startDate && phase.endDate ? (
                     <span className="text-muted-foreground text-xs whitespace-nowrap">

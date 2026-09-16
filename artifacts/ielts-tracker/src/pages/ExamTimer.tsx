@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { StudyPageHeader } from '@/components/illustrations/StudyPageHeader';
 import { HourglassBadge } from '@/components/illustrations/StudyIllustrations';
+import { MODULE_STYLES, PASTELS } from '@/lib/moduleStyles';
+
+const WRITING = MODULE_STYLES.Writing; // Exam Timer is for Writing Tasks 1 & 2 — use its amber palette as the base identity
 
 const MODES = [
   { label: 'Task 1', minutes: 20, desc: 'Describe a graph, chart, or diagram (150+ words)' },
@@ -78,21 +81,15 @@ export function ExamTimer() {
   const ss = String(secondsLeft % 60).padStart(2, '0');
 
   const urgency = secondsLeft <= 120 && !finished;
-  const timeColor = finished
-    ? 'text-green-500'
-    : urgency
-    ? 'text-red-500'
-    : secondsLeft <= 300
-    ? 'text-orange-500'
-    : 'text-indigo-600 dark:text-indigo-400';
+  const timeColorStyle = { color: finished ? '#1D9E75' : urgency ? '#C94F4E' : secondsLeft <= 300 ? '#BA7517' : WRITING.bar };
 
   const ringColor = finished
-    ? '#22c55e'
+    ? '#1D9E75'
     : urgency
-    ? '#ef4444'
+    ? '#C94F4E'
     : secondsLeft <= 300
-    ? '#f97316'
-    : '#6366f1';
+    ? '#BA7517'
+    : WRITING.bar;
 
   const circumference = 2 * Math.PI * 110;
   const dashOffset = circumference * (1 - progress);
@@ -110,22 +107,25 @@ export function ExamTimer() {
 
       {/* Mode selector */}
       <div className="flex gap-3 justify-center">
-        {MODES.map((m, i) => (
+        {MODES.map((m, i) => {
+          const active = modeIdx === i;
+          return (
           <button
             key={m.label}
             onClick={() => selectMode(i)}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all border-2 ${
-              modeIdx === i
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40'
-                : 'bg-white dark:bg-gray-900 text-muted-foreground border-border hover:border-indigo-400'
-            }`}
+            className="px-6 py-3 rounded-xl font-semibold text-sm transition-all border-2"
+            style={active
+              ? { backgroundColor: WRITING.bar, color: '#fff', borderColor: WRITING.bar }
+              : { backgroundColor: WRITING.bg, color: WRITING.text, borderColor: 'transparent' }
+            }
           >
             {m.label}
-            <span className={`ml-2 text-xs font-normal ${modeIdx === i ? 'text-indigo-200' : 'text-muted-foreground'}`}>
+            <span className="ml-2 text-xs font-normal" style={{ opacity: active ? 0.85 : 0.7 }}>
               {m.minutes} min
             </span>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* Description */}
@@ -153,11 +153,11 @@ export function ExamTimer() {
             {finished ? (
               <div className="text-center">
                 <div className="text-5xl mb-1">⏰</div>
-                <p className="text-lg font-bold text-green-600">Time's up!</p>
+                <p className="text-lg font-medium" style={{ color: '#1D9E75' }}>Time's up!</p>
               </div>
             ) : (
               <>
-                <span className={`text-6xl font-black font-mono tabular-nums leading-none ${timeColor} ${urgency ? 'animate-pulse' : ''}`}>
+                <span className={`text-6xl font-black font-mono tabular-nums leading-none ${urgency ? 'animate-pulse' : ''}`} style={timeColorStyle}>
                   {mm}:{ss}
                 </span>
                 <span className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-widest">
@@ -188,11 +188,8 @@ export function ExamTimer() {
             onClick={() => setRunning(r => !r)}
             disabled={finished}
             size="lg"
-            className={`px-10 py-6 text-base font-bold rounded-xl shadow-lg ${
-              running
-                ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
+            className="px-10 py-6 text-base font-bold rounded-xl text-white hover:opacity-90"
+            style={{ backgroundColor: running ? '#BA7517' : WRITING.bar }}
           >
             {running ? <><Pause className="w-5 h-5 mr-2" />Pause</> : <><Play className="w-5 h-5 mr-2" />{finished ? 'Done' : secondsLeft === total ? 'Start' : 'Resume'}</>}
           </Button>
@@ -214,12 +211,15 @@ export function ExamTimer() {
           { emoji: '📝', tip: 'Write clearly — examiners appreciate legible text' },
           { emoji: '⏱️', tip: 'Check your word count at the halfway mark' },
           { emoji: '✅', tip: 'Leave 2 minutes to review grammar & spelling' },
-        ].map(({ emoji, tip }) => (
-          <div key={tip} className="flex items-start gap-2 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
-            <span className="text-lg">{emoji}</span>
-            <p className="text-xs text-muted-foreground leading-relaxed">{tip}</p>
-          </div>
-        ))}
+        ].map(({ emoji, tip }, i) => {
+          const p = PASTELS[i % PASTELS.length];
+          return (
+            <div key={tip} className="flex items-start gap-2 p-3 rounded-xl" style={{ backgroundColor: p.bg }}>
+              <span className="text-lg">{emoji}</span>
+              <p className="text-xs leading-relaxed" style={{ color: p.text }}>{tip}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
