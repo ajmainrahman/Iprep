@@ -75,7 +75,7 @@ const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: str
   rejected:       { label: 'Rejected',       color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
   waitlisted:     { label: 'Waitlisted',     color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
   deferred:       { label: 'Deferred',       color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
-  withdrawn:      { label: 'Withdrawn',      color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  withdrawn:      { label: 'Not Applied',    color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
   missed_deadline:{ label: 'Missed Deadline',color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30' },
 };
 
@@ -1476,32 +1476,6 @@ function ApplicationsTab() {
           </div>
         </div>
 
-        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>By Priority</p>
-              <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--apps-progress-track)' }}>
-                {(['high', 'medium', 'low'] as Priority[]).map(priority => (
-                  <div
-                    key={priority}
-                    style={{
-                      width: `${(applicationSummary.priorityCounts[priority] / priorityTotal) * 100}%`,
-                      backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)',
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
-                {(['high', 'medium', 'low'] as Priority[]).map(priority => (
-                  <span key={priority} className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)' }} />
-                    {PRIORITY_META[priority].label} {applicationSummary.priorityCounts[priority]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Status pulse — a compact, live pipeline summary */}
@@ -1514,7 +1488,9 @@ function ApplicationsTab() {
           <span className="hidden text-[10px] font-bold uppercase tracking-[0.12em] sm:block" style={{ color: 'var(--apps-text-muted)' }}>Live status</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-          {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([status, meta]) => {
+          {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
+            .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
+            .map(([status, meta]) => {
             const count = applicationSummary.statusCounts[status] || 0;
             const active = statusFilter === status;
             return (
@@ -1935,7 +1911,9 @@ function ApplicationsTab() {
       ) : viewMode === 'kanban' ? (
         <div data-testid="applications-kanban" className="overflow-x-auto pb-2">
           <div className="grid min-w-[1120px] grid-cols-7 gap-3">
-            {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([status, meta]) => {
+            {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
+            .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
+            .map(([status, meta]) => {
               const columnApps = filteredApplications.filter(app => String(app.status || 'researching') === status);
               return (
                 <section key={status} data-testid={`kanban-column-${status}`} className="min-h-[260px] rounded-xl border p-2.5" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-page)' }}>
@@ -1965,7 +1943,7 @@ function ApplicationsTab() {
                           <Select value={status} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
                             <SelectTrigger data-testid={`select-application-status-${app.id}`} className="mt-2 h-7 w-full text-[10px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                              {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status)).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
@@ -2223,7 +2201,7 @@ function ApplicationsTab() {
                     <Select value={String(app.status || 'researching')} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
                       <SelectTrigger data-testid={`select-list-application-status-${app.id}`} className="h-7 w-[148px] text-[11px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                        {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status)).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2416,7 +2394,9 @@ function ApplicationDetailDrawer({
             <Select value={String(app.status || 'researching')} onValueChange={value => onChangeStatus(app, value as AppStatus)}>
               <SelectTrigger data-testid="select-drawer-application-status" className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => (
+                {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
+                  .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
+                  .map(([key, value]) => (
                   <SelectItem key={key} value={key}>{value.label}</SelectItem>
                 ))}
               </SelectContent>
