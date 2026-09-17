@@ -220,7 +220,7 @@ export function FlyNotepad() {
                     </div>
                   </div>
                   {n.content && (
-                    <p className="text-sm text-foreground/75 mt-2 whitespace-pre-wrap line-clamp-4">{n.content}</p>
+                    <p className="text-sm text-foreground/75 mt-2 whitespace-pre-wrap">{n.content}</p>
                   )}
                   {n.url && (
                     <a
