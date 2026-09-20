@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
 } from 'recharts';
-import { LearningActivity } from '@/components/LearningActivity';
 import { DashboardHeroIllustration } from '@/components/illustrations/HigherStudyIllustrations';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -386,7 +385,8 @@ function BandRadar({ scores, targets }: { scores: any[]; targets: Record<string,
 }
 
 /* ─── Weekly Progress Card (retained per no-deletion rule; no longer rendered
-   in the main layout — Learning Activity below replaces its role) ─────────── */
+   in the main layout — Learning Activity, which had replaced it, was also
+   removed from the layout; this function is kept unrendered, not deleted) ── */
 function WeeklyProgress({
   sessions, practiceLogs, vocabWords, dailyGoalMinutes
 }: {
@@ -849,15 +849,6 @@ export function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
         </div>
-      </section>
-
-      {/* ── Learning Activity (redesigned — real Study Log data, week comparison, module filters) ── */}
-      <section>
-        <div className="flex items-center gap-2 mb-4 border-l-4 border-teal pl-3">
-          <TrendingUp className="w-5 h-5 text-teal" />
-          <h2 className="text-2xl font-heading font-bold text-foreground">Learning Activity</h2>
-        </div>
-        <LearningActivity sessions={sessions as any[]} />
       </section>
 
       {/* ── 2-col: Radar + Streak tracker ── */}
