@@ -24,6 +24,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FLY_PASTELS } from '@/lib/flyStyles';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 type AppStatus =
@@ -79,19 +80,28 @@ const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: str
   missed_deadline:{ label: 'Missed Deadline',color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30' },
 };
 
+/* Scholarship status colors now use pastel hex (matching @/lib/flyStyles'
+   FLY_PASTELS, kept in sync manually) instead of Tailwind's built-in shade
+   palette. Written as literal Tailwind arbitrary-value classes — NOT computed
+   from a variable — because Tailwind's build-time scanner only detects class
+   names that appear literally in source; a runtime-built template literal
+   like `text-[${x}]` would silently generate no CSS at all. Shape is
+   UNCHANGED ({label, color, bg} as className strings) so shared rendering
+   code (e.g. UnifiedRecordCard, which renders this polymorphically alongside
+   APP_STATUS_META) keeps working with no changes. */
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string; bg: string }> = {
-  researching:   { label: 'Researching',   color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  eligible:      { label: 'Eligible',      color: 'text-cyan-700',    bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  shortlisted:   { label: 'Shortlisted',   color: 'text-violet-600',  bg: 'bg-violet-100 dark:bg-violet-900/30' },
-  preparing:     { label: 'Preparing',     color: 'text-amber-600',   bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  applying:      { label: 'Applying',      color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
-  applied:       { label: 'Applied',       color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  under_review:  { label: 'Under Review',  color: 'text-sky-600',     bg: 'bg-sky-100 dark:bg-sky-900/30' },
-  interview:     { label: 'Interview',     color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  awarded:       { label: 'Awarded',       color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  rejected:      { label: 'Rejected',      color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
-  expired:       { label: 'Expired',       color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  not_eligible:  { label: 'Not Eligible',  color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30' },
+  researching:   { label: 'Researching',   color: 'text-[#3D4148] dark:text-[#3D4148]',   bg: 'bg-[#ECEDEF] dark:bg-[#ECEDEF]/20' },
+  eligible:      { label: 'Eligible',      color: 'text-[#2C4A36] dark:text-[#2C4A36]',   bg: 'bg-[#DEEFE3] dark:bg-[#DEEFE3]/20' },
+  shortlisted:   { label: 'Shortlisted',   color: 'text-[#3C3489] dark:text-[#3C3489]',   bg: 'bg-[#E6E3F6] dark:bg-[#E6E3F6]/20' },
+  preparing:     { label: 'Preparing',     color: 'text-[#5C441F] dark:text-[#5C441F]',   bg: 'bg-[#FBEDD2] dark:bg-[#FBEDD2]/20' },
+  applying:      { label: 'Applying',      color: 'text-[#72243E] dark:text-[#72243E]',   bg: 'bg-[#FBE4EC] dark:bg-[#FBE4EC]/20' },
+  applied:       { label: 'Applied',       color: 'text-[#1E3A6B] dark:text-[#1E3A6B]',   bg: 'bg-[#E1EBFB] dark:bg-[#E1EBFB]/20' },
+  under_review:  { label: 'Under Review',  color: 'text-[#1C4F5C] dark:text-[#1C4F5C]',   bg: 'bg-[#DDF1F6] dark:bg-[#DDF1F6]/20' },
+  interview:     { label: 'Interview',     color: 'text-[#402C56] dark:text-[#402C56]',   bg: 'bg-[#EAD4FB] dark:bg-[#EAD4FB]/20' },
+  awarded:       { label: 'Awarded',       color: 'text-[#1D5C36] dark:text-[#1D5C36]',   bg: 'bg-[#DCF3E4] dark:bg-[#DCF3E4]/20' },
+  rejected:      { label: 'Rejected',      color: 'text-[#7A2020] dark:text-[#7A2020]',   bg: 'bg-[#FBE0E0] dark:bg-[#FBE0E0]/20' },
+  expired:       { label: 'Expired',       color: 'text-[#444441] dark:text-[#444441]',   bg: 'bg-[#EFEEE9] dark:bg-[#EFEEE9]/20' },
+  not_eligible:  { label: 'Not Eligible',  color: 'text-[#791F1F] dark:text-[#791F1F]',   bg: 'bg-[#FBE4E4] dark:bg-[#FBE4E4]/20' },
 };
 
 // Legacy → Phase 2 status mapping. Old rows keep their raw DB value until the user
@@ -3024,62 +3034,62 @@ function ScholarshipsTab() {
     <div className="space-y-5 rounded-2xl p-1" style={{ backgroundColor: 'var(--apps-bg-page)' }}>
       {/* Summary stat row — Total Scholarships (section 1), requirements completion, upcoming deadlines, priority mix */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: FLY_PASTELS.purple.bg }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p data-testid="stat-scholarships-total" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipRows.length}</p>
-              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Total Scholarships</p>
+              <p data-testid="stat-scholarships-total" className="text-3xl font-heading font-medium" style={{ color: FLY_PASTELS.purple.text }}>{scholarshipRows.length}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: FLY_PASTELS.purple.accent }}>Total Scholarships</p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: 'var(--apps-accent-light)', color: 'var(--apps-accent)' }}>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/60" style={{ color: FLY_PASTELS.purple.accent }}>
               <Trophy className="h-4 w-4" />
             </span>
           </div>
         </div>
 
-        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: FLY_PASTELS.mint.bg }}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>
-                <span data-testid="stat-scholarships-documents">{scholarshipSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: 'var(--apps-text-muted)' }}>/{scholarshipSummary.docsTotal}</span></span>
+              <p className="text-3xl font-heading font-medium" style={{ color: FLY_PASTELS.mint.text }}>
+                <span data-testid="stat-scholarships-documents">{scholarshipSummary.docsCompleted}<span className="text-base font-semibold" style={{ color: FLY_PASTELS.mint.accent }}>/{scholarshipSummary.docsTotal}</span></span>
               </p>
-              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Requirements/Docs Completed</p>
-              <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>{docsCompletion}% complete</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: FLY_PASTELS.mint.accent }}>Requirements/Docs Completed</p>
+              <p className="mt-1 text-[10px]" style={{ color: FLY_PASTELS.mint.accent }}>{docsCompletion}% complete</p>
             </div>
             <div className="relative h-11 w-11 shrink-0">
               <svg viewBox="0 0 44 44" className="-rotate-90" role="img" aria-label={`${docsCompletion}% of scholarship requirements completed`}>
-                <circle cx="22" cy="22" r="17" fill="none" stroke="var(--apps-progress-track)" strokeWidth="4" />
-                <circle cx="22" cy="22" r="17" fill="none" stroke="var(--apps-accent)" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 17} strokeDashoffset={(2 * Math.PI * 17) * (1 - docsCompletion / 100)} />
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#FFFFFF80" strokeWidth="4" />
+                <circle cx="22" cy="22" r="17" fill="none" stroke={FLY_PASTELS.mint.accent} strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 17} strokeDashoffset={(2 * Math.PI * 17) * (1 - docsCompletion / 100)} />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: 'var(--apps-accent)' }}>{docsCompletion}%</span>
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style={{ color: FLY_PASTELS.mint.text }}>{docsCompletion}%</span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: FLY_PASTELS.rose.bg }}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p data-testid="stat-scholarships-deadlines" className="text-3xl font-heading font-bold" style={{ color: 'var(--apps-text-primary)' }}>{scholarshipSummary.upcomingDeadlines}</p>
-              <p className="mt-1 text-xs font-medium" style={{ color: 'var(--apps-text-secondary)' }}>Upcoming Deadlines</p>
-              <p className="mt-1 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>Due within 30 days</p>
+              <p data-testid="stat-scholarships-deadlines" className="text-3xl font-heading font-medium" style={{ color: FLY_PASTELS.rose.text }}>{scholarshipSummary.upcomingDeadlines}</p>
+              <p className="mt-1 text-xs font-medium" style={{ color: FLY_PASTELS.rose.accent }}>Upcoming Deadlines</p>
+              <p className="mt-1 text-[10px]" style={{ color: FLY_PASTELS.rose.accent }}>Due within 30 days</p>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: scholarshipSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-bg)' : 'var(--apps-bg-page)', color: scholarshipSummary.upcomingDeadlines > 0 ? 'var(--apps-deadline-urgent-text)' : 'var(--apps-text-muted)' }}>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/60" style={{ color: FLY_PASTELS.rose.accent }}>
               <CalendarClock className="h-4 w-4" />
             </span>
           </div>
         </div>
 
-        <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: FLY_PASTELS.amber.bg }}>
           <div className="min-w-0">
-            <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>By Priority</p>
-            <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--apps-progress-track)' }}>
+            <p className="text-sm font-semibold" style={{ color: FLY_PASTELS.amber.text }}>By Priority</p>
+            <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-white/50">
               {(['high', 'medium', 'low'] as Priority[]).map(priority => (
-                <div key={priority} style={{ width: `${(scholarshipSummary.priorityCounts[priority] / priorityTotal) * 100}%`, backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)' }} />
+                <div key={priority} style={{ width: `${(scholarshipSummary.priorityCounts[priority] / priorityTotal) * 100}%`, backgroundColor: priority === 'high' ? FLY_PASTELS.red.accent : priority === 'medium' ? FLY_PASTELS.amber.accent : FLY_PASTELS.slate.accent }} />
               ))}
             </div>
-            <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--apps-text-muted)' }}>
+            <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: FLY_PASTELS.amber.accent }}>
               {(['high', 'medium', 'low'] as Priority[]).map(priority => (
                 <span key={priority} className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: priority === 'high' ? 'var(--apps-priority-high)' : priority === 'medium' ? 'var(--apps-priority-medium)' : 'var(--apps-priority-low)' }} />
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: priority === 'high' ? FLY_PASTELS.red.accent : priority === 'medium' ? FLY_PASTELS.amber.accent : FLY_PASTELS.slate.accent }} />
                   {PRIORITY_META[priority].label} {scholarshipSummary.priorityCounts[priority]}
                 </span>
               ))}
@@ -3089,7 +3099,7 @@ function ScholarshipsTab() {
       </div>
 
       {/* Scholarship pulse — dynamic, per-status counts (Eligible / Shortlisted / Preparing / Applying / Applied / Awarded / etc., section 1 & 2). Click a tile to filter. */}
-      <div className="rounded-xl border p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" style={{ backgroundColor: 'var(--apps-bg-card)', borderColor: 'var(--apps-border)' }}>
+      <div className="rounded-[20px] p-4" style={{ backgroundColor: 'var(--apps-bg-card)' }}>
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--apps-text-primary)' }}>Scholarship pulse</p>
@@ -3110,8 +3120,8 @@ function ScholarshipsTab() {
                 data-testid={`filter-scholarship-status-${status}`}
                 onClick={() => setStatusFilter(active ? null : status)}
                 aria-pressed={active}
-                className="rounded-lg border px-2.5 py-2 text-left transition-colors hover:border-indigo-300"
-                style={{ borderColor: active ? 'var(--apps-accent)' : 'var(--apps-border)', backgroundColor: active ? 'var(--apps-accent-light)' : 'var(--apps-bg-page)' }}
+                className={`rounded-2xl px-2.5 py-2 text-left transition-all ${meta.bg} ${active ? 'ring-2' : ''}`}
+                style={active ? { boxShadow: `0 0 0 2px ${FLY_PASTELS.purple.accent}` } : undefined}
               >
                 <span className={`block truncate text-[10px] font-semibold ${meta.color}`}>{meta.label}</span>
                 <span className="mt-1 block text-lg font-bold leading-none" style={{ color: 'var(--apps-text-primary)' }}>{count}</span>
@@ -3558,7 +3568,7 @@ function ScholarshipsTab() {
     const profileMatch = s.profileMatch !== null && s.profileMatch !== undefined && s.profileMatch !== '' ? Math.round(Number(s.profileMatch)) : null;
 
     return (
-      <Card key={s.id} data-testid={`card-scholarship-${s.id}`} className="group overflow-hidden hover:shadow-md transition-all">
+      <Card key={s.id} data-testid={`card-scholarship-${s.id}`} className="group overflow-hidden rounded-[20px] border-none shadow-none bg-white dark:bg-card hover:shadow-md transition-all">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <button
@@ -3568,7 +3578,7 @@ function ScholarshipsTab() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 data-testid={`text-scholarship-name-${s.id}`} className="font-semibold text-sm truncate">🎓 {String(s.name)}</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${pMeta.bg} ${pMeta.color}`}>{pMeta.label}</span>
-                <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>{meta.label}</span>
                 {profileMatch !== null && (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'var(--apps-accent-light)', color: 'var(--apps-accent)' }}>
                     <Percent className="w-3 h-3" /> {profileMatch}% match
@@ -3633,10 +3643,10 @@ function ScholarshipsTab() {
                 <div key={cat} className="space-y-1">
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-muted-foreground">{REQ_CATEGORY_META[cat].label}</span>
-                    <span className={`font-semibold ${pct === 100 ? 'text-emerald-600' : 'text-muted-foreground'}`}>{bucket.done}/{bucket.total} ({pct}%)</span>
+                    <span className={`font-semibold ${pct === 100 ? '' : 'text-muted-foreground'}`} style={{ color: pct === 100 ? FLY_PASTELS.mint.accent : undefined }}>{bucket.done}/{bucket.total} ({pct}%)</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: FLY_PASTELS.mint.accent }} />
                   </div>
                 </div>
               );
