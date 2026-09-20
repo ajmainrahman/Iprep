@@ -1194,15 +1194,7 @@ function ApplicationsTab() {
   const [editId,      setEditId]      = useState<number | null>(null);
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
   const [newItemDraft,  setNewItemDraft]  = useState('');
-  const [viewMode,    setViewMode]    = useState<'list' | 'timeline' | 'kanban'>(() => {
-    try {
-      const saved = sessionStorage.getItem('apps-view-mode');
-      return saved === 'list' || saved === 'timeline' || saved === 'kanban' ? saved : 'list';
-    } catch { return 'list'; }
-  });
-  useEffect(() => {
-    try { sessionStorage.setItem('apps-view-mode', viewMode); } catch { /* storage unavailable — non-fatal */ }
-  }, [viewMode]);
+  const [viewMode,    setViewMode]    = useState<'list' | 'timeline' | 'kanban'>('list');
   const [detailApp, setDetailApp] = useState<(Record<string, unknown> & { id: number }) | null>(null);
   const routeParams = useParams<{ tab?: string; id?: string }>();
   const [, setLocation] = useLocation();
@@ -1537,24 +1529,6 @@ function ApplicationsTab() {
               style={viewMode === 'list' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
             >
               <List className="w-3.5 h-3.5" /> List
-            </button>
-            <button
-              type="button"
-              data-testid="button-applications-view-kanban"
-              onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'kanban' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
-              style={viewMode === 'kanban' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
-            >
-              <Layers className="w-3.5 h-3.5" /> Pipeline
-            </button>
-            <button
-              type="button"
-              data-testid="button-applications-view-timeline"
-              onClick={() => setViewMode('timeline')}
-              className={`px-3 py-1.5 transition-colors flex items-center gap-1 text-xs font-medium ${viewMode === 'timeline' ? 'text-white' : 'hover:bg-[var(--apps-bg-page)]'}`}
-              style={viewMode === 'timeline' ? { backgroundColor: 'var(--apps-accent)' } : { color: 'var(--apps-text-secondary)' }}
-            >
-              <GitBranch className="w-3.5 h-3.5" /> Timeline
             </button>
           </div>
           {hasActiveFilters && (
