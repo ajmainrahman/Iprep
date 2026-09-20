@@ -65,12 +65,12 @@
   --color-indigo: #6366F1;
   --color-coral:  #FF6B6B;
   --color-yellow: #FFD166;
-  --color-purple: #7B5EA7;
+  --color-purple: #6c3fe8;
   --color-green:  #06D6A0;
   --color-orange: #F97316;
 
-  --font-sans:    'Outfit', sans-serif;
-  --font-heading: 'Poppins', sans-serif;
+  --font-sans:    'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -90,8 +90,9 @@
   --apps-text-primary: #14142B;
   --apps-text-secondary: #6B7280;
   --apps-text-muted: #9CA3AF;
-  --apps-accent: #684888;
-  --apps-accent-light: #EAD4FB;
+  --apps-accent: #6c3fe8;
+  --apps-accent-light: #a972ed;
+  --apps-accent-pale: #dae5f7;
   --apps-progress-track: #EEF0F5;
   --apps-priority-high-bg: #FEE2E2;
   --apps-priority-high: #DC2626;
@@ -108,7 +109,7 @@
 
   --border: 240 14% 89%;
   --input: 240 14% 89%;
-  --ring: 166 82% 22%;
+  --ring: 256 79% 58%;
 
   --card: 0 0% 100%;
   --card-foreground: 224 47% 11%;
@@ -118,7 +119,7 @@
   --popover-foreground: 224 47% 11%;
   --popover-border: 240 14% 89%;
 
-  --primary: 166 82% 22%;
+  --primary: 256 79% 58%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 210 30% 14%;
@@ -127,7 +128,7 @@
   --muted: 240 17% 94%;
   --muted-foreground: 240 9% 48%;
 
-  --accent: 166 82% 22%;
+  --accent: 256 79% 58%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
