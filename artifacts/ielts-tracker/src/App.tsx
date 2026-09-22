@@ -23,7 +23,7 @@ import {
   LayoutDashboard, GraduationCap, BarChart3, Trophy, FileText, NotebookPen,
   Home, TrendingUp, BookOpen, Target, BookMarked, Compass, CalendarClock,
   ChevronRight, Quote, ClipboardCheck, Clock, Gauge, Headphones, PenLine, FilePlus2,
-  Rocket, ArrowUpRight, ListChecks, CircleCheckBig,
+  Rocket, ArrowUpRight, ListChecks, CircleCheckBig, ChevronDown, Zap,
 } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
@@ -229,6 +229,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             Within a Few Weeks
           </span>
         </div>
+        <div className="hidden md:flex items-center gap-7">
+          <span className="text-[13.5px] font-semibold pb-1 border-b-2" style={{ color: '#FB923C', borderColor: '#FB923C' }}>Home</span>
+          <button onClick={onStudy} className="text-[13.5px] font-medium text-foreground/70 hover:text-foreground transition-colors pb-1 border-b-2 border-transparent">My Study</button>
+          <span title="Coming soon" className="text-[13.5px] font-medium text-muted-foreground/50 cursor-not-allowed pb-1 border-b-2 border-transparent">Resources</span>
+          <span title="Coming soon" className="text-[13.5px] font-medium text-muted-foreground/50 cursor-not-allowed pb-1 border-b-2 border-transparent">Community</span>
+        </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:block text-[13px] font-medium text-muted-foreground">{user?.name}</span>
           <span
@@ -237,9 +243,11 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           >
             {initials}
           </span>
+          <ChevronDown className="hidden sm:block h-3.5 w-3.5 text-muted-foreground" />
           <button
             onClick={logout}
-            className="text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors hover:bg-muted bg-white border border-border text-muted-foreground hover:text-foreground"
+            className="text-[13px] font-semibold px-4 py-1.5 rounded-full text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#14142B' }}
           >
             Sign out
           </button>
@@ -247,65 +255,69 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </nav>
 
       {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{ minHeight: 'clamp(360px, 46vw, 480px)' }}>
-        <img
-          src="/images/hero-nordic.jpg"
-          alt="A study desk overlooking a Nordic fjord town at sunset, with mountains, national flags, and a journal reading Plan: Learn, Explore, Grow, Inspire"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+      <div className="px-5 sm:px-8 pt-6">
         <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(100deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.82) 26%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.05) 68%, rgba(255,255,255,0) 82%)' }}
-        />
-
-        {/* Floating quote card */}
-        <div
-          className="hidden lg:block absolute top-8 right-8 max-w-[220px] rounded-2xl px-5 py-4"
-          style={{ background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(6px)', boxShadow: '0 8px 30px rgba(0,0,0,0.10)' }}
+          className="max-w-6xl mx-auto rounded-[32px] overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #FDEBDA 0%, #FBEAF3 45%, #F0E9FB 100%)' }}
         >
-          <p className="text-[26px] leading-none mb-1" style={{ color: '#684888' }}>&ldquo;</p>
-          <p className="text-[13px] leading-snug text-foreground/80 mb-2">
-            The best way to predict your future is to create it.
-          </p>
-          <p className="text-[11.5px] font-semibold text-muted-foreground">&mdash; Abraham Lincoln</p>
-        </div>
+          <div className="grid lg:grid-cols-[1fr_1.05fr] items-center gap-6 sm:gap-10 p-6 sm:p-10">
 
-        <div className="relative z-10 flex h-full flex-col justify-center px-6 sm:px-10 py-8 max-w-2xl">
-          <div className="inline-flex w-fit items-center gap-2 px-3.5 py-1 rounded-full mb-4 text-[10.5px] font-bold tracking-widest uppercase bg-white"
-            style={{ color: '#684888', border: '1px solid #EAD4FB' }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#684888' }} />
-            Your IELTS &amp; Higher Study Platform
-          </div>
-          <h1 className="font-black leading-[1.05] mb-3"
-            style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.1rem, 5vw, 3.1rem)', letterSpacing: '-0.02em' }}>
-            <span className="block text-foreground">Within a Few</span>
-            <span className="block" style={{ color: '#684888' }}>Weeks</span>
-          </h1>
-          <p className="max-w-md text-[14px] leading-relaxed text-foreground/70 mb-6">
-            One place to prepare for IELTS, manage university applications, and stay on track toward your next academic goal.
-          </p>
+            {/* Left: text content */}
+            <div>
+              <div className="inline-flex w-fit items-center gap-2 px-3.5 py-1 rounded-full mb-4 text-[10.5px] font-bold tracking-widest uppercase bg-white"
+                style={{ color: '#EA6A1F', border: '1px solid #FBD3AC' }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#FB923C' }} />
+                Your IELTS &amp; Higher Study Platform
+              </div>
+              <h1 className="font-black leading-[1.05] mb-3"
+                style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(2.1rem, 5vw, 3.1rem)', letterSpacing: '-0.02em' }}>
+                <span className="block text-foreground">Within a Few</span>
+                <span className="block bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #FB923C, #EC4899)' }}>Weeks</span>
+              </h1>
+              <p className="max-w-md text-[14px] leading-relaxed text-foreground/70 mb-6">
+                One place to prepare for IELTS, manage university applications, and stay on track toward your next academic goal.
+              </p>
 
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
-              <span className="text-xl">🔥</span>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-orange-600">Study Streak</p>
-                <p className="text-lg font-black leading-none text-orange-600">{streak > 0 ? `${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start today'}</p>
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ backgroundColor: '#FFE3C7' }}>🔥</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-orange-600">Study Streak</p>
+                    <p className="text-lg font-black leading-none text-orange-600">{streak > 0 ? `${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start today'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLocation('/study/scores')}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white text-left transition-transform hover:-translate-y-0.5"
+                  style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: '#EAD4FB' }}>
+                    <Target className="h-4.5 w-4.5" style={{ color: '#684888' }} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#684888' }}>IELTS Exam</p>
+                    <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>
+                      {examDays === null ? 'Not set' : examDays < 0 ? 'Passed' : fmtDays(examDays)}
+                    </p>
+                  </div>
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => setLocation('/study/scores')}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white text-left transition-transform hover:-translate-y-0.5"
-              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
-            >
-              <Target className="h-5 w-5" style={{ color: '#684888' }} />
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#684888' }}>IELTS Exam</p>
-                <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>
-                  {examDays === null ? 'Not set' : examDays < 0 ? 'Passed' : fmtDays(examDays)}
-                </p>
-              </div>
-            </button>
+
+            {/* Right: framed hero image */}
+            <div className="relative rounded-[28px] overflow-hidden" style={{ minHeight: 280, boxShadow: '0 20px 50px rgba(0,0,0,0.14)' }}>
+              <img
+                src="/images/hero-nordic.jpg"
+                alt="A study desk overlooking a Nordic fjord town at sunset, with mountains, national flags, and a journal reading Plan: Learn, Explore, Grow, Inspire"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <p
+                className="absolute bottom-5 right-6 text-right text-white leading-tight"
+                style={{ fontFamily: "'Caveat', cursive", fontSize: '26px', textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}
+              >
+                Better Skills<br />Bigger Opportunities
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -313,22 +325,42 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       {/* Quick Actions bar — overlaps the bottom of the hero */}
       <div className="px-5 sm:px-8 -mt-6 relative z-10">
         <div className="max-w-6xl mx-auto bg-white rounded-2xl px-5 sm:px-7 py-4 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
-          <span className="text-[13px] font-bold text-foreground shrink-0">Quick Actions</span>
+          <span className="flex items-center gap-2 text-[13px] font-bold text-foreground shrink-0">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FFE3C7' }}>
+              <Zap className="h-3.5 w-3.5" style={{ color: '#EA6A1F' }} />
+            </span>
+            Quick Actions
+          </span>
           <div className="h-5 w-px bg-border hidden sm:block" />
-          <button onClick={() => setLocation('/fly/applications')} className="flex items-center gap-2 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
-            <FileText className="h-4 w-4" style={{ color: '#684888' }} /> Add Application
+          <button onClick={() => setLocation('/fly/applications')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#EAD4FB' }}>
+              <FileText className="h-3.5 w-3.5" style={{ color: '#684888' }} />
+            </span>
+            Add Application
           </button>
-          <button onClick={() => setLocation('/study/study')} className="flex items-center gap-2 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
-            <BookOpen className="h-4 w-4" style={{ color: '#108888' }} /> Log Study Session
+          <button onClick={() => setLocation('/study/study')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#C8FBF2' }}>
+              <BookOpen className="h-3.5 w-3.5" style={{ color: '#108888' }} />
+            </span>
+            Log Study Session
           </button>
-          <button onClick={() => setLocation('/study/practice')} className="flex items-center gap-2 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
-            <Target className="h-4 w-4" style={{ color: '#108888' }} /> Practice Test
+          <button onClick={() => setLocation('/study/practice')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FBD9E0' }}>
+              <Target className="h-3.5 w-3.5" style={{ color: '#D6416A' }} />
+            </span>
+            Practice Test
           </button>
-          <button onClick={() => setLocation('/study/vocab')} className="flex items-center gap-2 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
-            <BookMarked className="h-4 w-4" style={{ color: '#108888' }} /> Vocabulary
+          <button onClick={() => setLocation('/study/vocab')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#DCEFFB' }}>
+              <BookMarked className="h-3.5 w-3.5" style={{ color: '#1D6FA5' }} />
+            </span>
+            Vocabulary
           </button>
-          <button onClick={() => setLocation('/study/planning')} className="flex items-center gap-2 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
-            <CalendarClock className="h-4 w-4" style={{ color: '#684888' }} /> View Planner
+          <button onClick={() => setLocation('/study/planning')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FFE3C7' }}>
+              <CalendarClock className="h-3.5 w-3.5" style={{ color: '#EA6A1F' }} />
+            </span>
+            View Planner
           </button>
         </div>
       </div>
@@ -339,31 +371,35 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           {/* Fly card */}
           <button
             onClick={onFly}
-            className="group relative text-left bg-white rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 border-y border-r border-border shadow-sm"
-            style={{ borderLeftWidth: 4, borderLeftColor: '#684888' }}
+            className="group relative text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
+            style={{ background: 'linear-gradient(160deg, #FDEEE8 0%, #FBE9F0 100%)' }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'linear-gradient(135deg, #D8B0F8, #F8B8F8)' }}>✈️</div>
+              <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">✈️</div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Fly — Higher Study</h2>
             </div>
             <p className="text-[13px] leading-relaxed text-muted-foreground mb-5">
               Manage your university applications, scholarships, deadlines, documents and everything in between.
             </p>
             <div className="grid grid-cols-2 gap-3 mb-5">
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>{appRows.length}</p>
+              <div className="rounded-xl bg-white p-3">
+                <FileText className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{appRows.length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Applications</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>{(scholarships as any[]).length}</p>
+              <div className="rounded-xl bg-white p-3">
+                <GraduationCap className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{(scholarships as any[]).length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Scholarships</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>{upcomingDeadlineCount}</p>
+              <div className="rounded-xl bg-white p-3">
+                <CalendarClock className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{upcomingDeadlineCount}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Upcoming Deadlines</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#684888' }}>{docsTotal > 0 ? `${docsDone}/${docsTotal}` : '—'}</p>
+              <div className="rounded-xl bg-white p-3">
+                <ClipboardCheck className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{docsTotal > 0 ? `${docsDone}/${docsTotal}` : '—'}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Documents Ready</p>
               </div>
             </div>
@@ -376,31 +412,35 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           {/* Study card */}
           <button
             onClick={onStudy}
-            className="group relative text-left bg-white rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 border-y border-r border-border shadow-sm"
-            style={{ borderLeftWidth: 4, borderLeftColor: '#108888' }}
+            className="group relative text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
+            style={{ background: 'linear-gradient(160deg, #EAFBF5 0%, #E8F5F0 100%)' }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: 'linear-gradient(135deg, #78F0E0, #C8FBF2)' }}>📚</div>
+              <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">📚</div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Study Journey</h2>
             </div>
             <p className="text-[13px] leading-relaxed text-muted-foreground mb-5">
               Prepare for IELTS with structured practice, progress tracking and smart insights.
             </p>
             <div className="grid grid-cols-2 gap-3 mb-5">
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#108888' }}>{currentBand !== null ? currentBand.toFixed(1) : '—'}</p>
+              <div className="rounded-xl bg-white p-3">
+                <BarChart3 className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{currentBand !== null ? currentBand.toFixed(1) : '—'}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Current Band</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#108888' }}>{practiceThisWeek.length}</p>
+              <div className="rounded-xl bg-white p-3">
+                <CalendarClock className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{practiceThisWeek.length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Practice Sessions This Week</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#108888' }}>{minutesThisWeek}</p>
+              <div className="rounded-xl bg-white p-3">
+                <Clock className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{minutesThisWeek}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Minutes This Week</p>
               </div>
-              <div>
-                <p className="text-lg font-black leading-none" style={{ color: '#108888' }}>{avgAccuracy !== null ? `${avgAccuracy}%` : '—'}</p>
+              <div className="rounded-xl bg-white p-3">
+                <Target className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
+                <p className="text-lg font-black leading-none text-foreground">{avgAccuracy !== null ? `${avgAccuracy}%` : '—'}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Avg Accuracy</p>
               </div>
             </div>
@@ -411,7 +451,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           </button>
 
           {/* What's Next */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-border flex flex-col">
+          <div className="rounded-2xl p-5 shadow-sm flex flex-col" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
             <h3 className="text-[13px] font-bold text-foreground mb-3">What&rsquo;s Next</h3>
             {shownItems.length === 0 ? (
               <div className="flex-1 flex items-center gap-2 text-[13px] text-muted-foreground py-4">
@@ -425,9 +465,9 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                     <button
                       key={i}
                       onClick={item.onClick}
-                      className="w-full flex items-center gap-3 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-muted/50"
+                      className="w-full flex items-center gap-3 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-white/60"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor }}>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full shrink-0 bg-white" style={{ color: item.iconColor }}>
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1">
@@ -443,7 +483,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             <button
               onClick={() => setLocation('/study/planning')}
               className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-bold text-white text-center transition-transform hover:-translate-y-0.5"
-              style={{ background: 'linear-gradient(135deg, #684888, #9B4FB8)' }}
+              style={{ background: 'linear-gradient(135deg, #6B46C1, #FB923C)' }}
             >
               View My Planner
             </button>

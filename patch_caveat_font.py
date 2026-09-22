@@ -1,0 +1,13 @@
+path = "artifacts/ielts-tracker/index.html"
+with open(path, "r", encoding="utf-8") as f:
+    content = f.read()
+
+old = '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">'
+new = old + '\n    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">'
+
+count = content.count(old)
+content = content.replace(old, new)
+print(f"Caveat font link: {count} occurrence(s)")
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
