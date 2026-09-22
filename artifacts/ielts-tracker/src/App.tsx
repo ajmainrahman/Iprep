@@ -383,27 +383,27 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             </p>
             <div className="grid grid-cols-2 gap-3 mb-5">
               <div className="rounded-xl bg-white p-3">
-                <FileText className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <FileText className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
                 <p className="text-lg font-black leading-none text-foreground">{appRows.length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Applications</p>
               </div>
               <div className="rounded-xl bg-white p-3">
-                <GraduationCap className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <GraduationCap className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
                 <p className="text-lg font-black leading-none text-foreground">{(scholarships as any[]).length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Scholarships</p>
               </div>
               <div className="rounded-xl bg-white p-3">
-                <CalendarClock className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <CalendarClock className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
                 <p className="text-lg font-black leading-none text-foreground">{upcomingDeadlineCount}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Upcoming Deadlines</p>
               </div>
               <div className="rounded-xl bg-white p-3">
-                <ClipboardCheck className="h-4 w-4 mb-1.5" style={{ color: '#684888' }} />
+                <ClipboardCheck className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
                 <p className="text-lg font-black leading-none text-foreground">{docsTotal > 0 ? `${docsDone}/${docsTotal}` : '—'}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Documents Ready</p>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#684888' }}>
+            <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#D6416A' }}>
               Continue tracking
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
@@ -467,7 +467,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                       onClick={item.onClick}
                       className="w-full flex items-center gap-3 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-white/60"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full shrink-0 bg-white" style={{ color: item.iconColor }}>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor }}>
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1">
