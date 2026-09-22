@@ -9,6 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
 } from 'recharts';
 import { DashboardHeroIllustration } from '@/components/illustrations/HigherStudyIllustrations';
+import { useLocation } from 'wouter';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 function localDateStr(d: Date) {
@@ -28,6 +29,27 @@ function startOfWeek(d: Date) {
   const r = new Date(d);
   r.setDate(r.getDate() - r.getDay());
   return r;
+}
+
+function calcCurrentStreak(sessions: any[]): number {
+  const dayMap: Record<string, number> = {};
+  sessions.forEach((session: any) => {
+    const date = String(session.date || '');
+    if (date) dayMap[date] = (dayMap[date] || 0) + Number(session.minutes || 0);
+  });
+  const activeDays = new Set(Object.keys(dayMap).filter(date => dayMap[date] > 0));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = localDateStr(today);
+  const yesterday = addDays(today, -1);
+  const streakStart = activeDays.has(todayKey) ? today : yesterday;
+  let currentStreak = 0;
+  let cursor = streakStart;
+  while (activeDays.has(localDateStr(cursor))) {
+    currentStreak++;
+    cursor = addDays(cursor, -1);
+  }
+  return currentStreak;
 }
 
 const MOTIVATIONAL_QUOTES = [
@@ -731,6 +753,7 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
 
 /* ─── Main ────────────────────────────────────────────────────────────────── */
 export function Dashboard() {
+  const [, setLocation] = useLocation();
   const { data: settings, isLoading: settingsLoading } = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const { data: scores = [], isLoading: scoresLoading } = useQuery({ queryKey: ['scores'], queryFn: api.getScores });
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
@@ -825,6 +848,49 @@ export function Dashboard() {
             <DashboardHeroIllustration size={160} />
           </div>
         </div>
+      </div>
+
+      {/* Quick stat row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onClick={() => setLocation('/study/study')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #FDEEE8 0%, #FBE9F0 100%)' }}>
+          <div className="flex items-start justify-between">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><Flame className="h-4 w-4" style={{ color: '#EA6A1F' }} /></span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
+          </div>
+          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Study Streak</p>
+          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{calcCurrentStreak(sessions as any[])} {calcCurrentStreak(sessions as any[]) === 1 ? 'day' : 'days'}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Keep it up!</p>
+        </button>
+
+        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
+          <div className="flex items-start justify-between">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><Target className="h-4 w-4" style={{ color: '#6B46C1' }} /></span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
+          </div>
+          <p className="text-[11px] font-semibold text-muted-foreground mt-3">IELTS Exam</p>
+          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{!hasExamDate ? 'Not set' : daysRemaining < 0 ? 'Passed' : `${daysRemaining} days`}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Left to apply</p>
+        </button>
+
+        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #EAFBF5 0%, #E8F5F0 100%)' }}>
+          <div className="flex items-start justify-between">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><BookOpen className="h-4 w-4" style={{ color: '#108888' }} /></span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
+          </div>
+          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Modules</p>
+          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{totalScores.length} / 4</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Completed</p>
+        </button>
+
+        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #DCEFFB 0%, #E4F0FB 100%)' }}>
+          <div className="flex items-start justify-between">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><TrendingUp className="h-4 w-4" style={{ color: '#1D6FA5' }} /></span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
+          </div>
+          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Target Band</p>
+          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{overallTarget.toFixed(1)}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Overall</p>
+        </button>
       </div>
 
       {/* Top cards */}
