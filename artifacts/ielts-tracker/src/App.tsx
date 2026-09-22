@@ -23,7 +23,7 @@ import {
   LayoutDashboard, GraduationCap, BarChart3, Trophy, FileText, NotebookPen,
   Home, TrendingUp, BookOpen, Target, BookMarked, Compass, CalendarClock,
   ChevronRight, Quote, ClipboardCheck, Clock, Gauge, Headphones, PenLine, FilePlus2,
-  Rocket, ArrowUpRight, ListChecks, CircleCheckBig, ChevronDown, Zap, Linkedin, Youtube, Twitter,
+  Rocket, ArrowUpRight, ListChecks, CircleCheckBig, ChevronDown, Zap, Linkedin, Youtube, Twitter, Leaf, Mountain,
 } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
@@ -366,29 +366,30 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </div>
 
       <main className="flex-1 px-5 sm:px-8 py-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1fr_0.85fr] gap-5">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_0.85fr] gap-5">
 
           {/* Fly card */}
           <button
             onClick={onFly}
-            className="group relative text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
+            className="group relative overflow-hidden text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
             style={{ background: 'linear-gradient(160deg, #FDEEE8 0%, #FBE9F0 100%)' }}
           >
-            <div className="flex items-center gap-3 mb-4">
+            <Plane className="absolute -right-5 -bottom-5 h-28 w-28 rotate-[18deg] opacity-[0.08] pointer-events-none" style={{ color: '#D6416A' }} />
+            <div className="relative flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">✈️</div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Fly — Higher Study</h2>
             </div>
-            <p className="text-[13px] leading-relaxed text-muted-foreground mb-5">
+            <p className="relative text-[13px] leading-relaxed text-muted-foreground mb-5">
               Manage your university applications, scholarships, deadlines, documents and everything in between.
             </p>
-            <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="relative grid grid-cols-2 gap-3 mb-5">
               <div className="rounded-xl bg-white p-3">
-                <FileText className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
+                <FileText className="h-4 w-4 mb-1.5" style={{ color: '#6B46C1' }} />
                 <p className="text-lg font-black leading-none text-foreground">{appRows.length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Applications</p>
               </div>
               <div className="rounded-xl bg-white p-3">
-                <GraduationCap className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
+                <GraduationCap className="h-4 w-4 mb-1.5" style={{ color: '#EA6A1F' }} />
                 <p className="text-lg font-black leading-none text-foreground">{(scholarships as any[]).length}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Scholarships</p>
               </div>
@@ -398,12 +399,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                 <p className="text-[11px] text-muted-foreground mt-1">Upcoming Deadlines</p>
               </div>
               <div className="rounded-xl bg-white p-3">
-                <ClipboardCheck className="h-4 w-4 mb-1.5" style={{ color: '#D6416A' }} />
+                <ClipboardCheck className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
                 <p className="text-lg font-black leading-none text-foreground">{docsTotal > 0 ? `${docsDone}/${docsTotal}` : '—'}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Documents Ready</p>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#D6416A' }}>
+            <span className="relative flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#D6416A' }}>
               Continue tracking
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
@@ -412,17 +413,18 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           {/* Study card */}
           <button
             onClick={onStudy}
-            className="group relative text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
+            className="group relative overflow-hidden text-left rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm"
             style={{ background: 'linear-gradient(160deg, #EAFBF5 0%, #E8F5F0 100%)' }}
           >
-            <div className="flex items-center gap-3 mb-4">
+            <Leaf className="absolute -right-4 -bottom-6 h-28 w-28 rotate-[-12deg] opacity-[0.08] pointer-events-none" style={{ color: '#108888' }} />
+            <div className="relative flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">📚</div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Study Journey</h2>
             </div>
-            <p className="text-[13px] leading-relaxed text-muted-foreground mb-5">
+            <p className="relative text-[13px] leading-relaxed text-muted-foreground mb-5">
               Prepare for IELTS with structured practice, progress tracking and smart insights.
             </p>
-            <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="relative grid grid-cols-2 gap-3 mb-5">
               <div className="rounded-xl bg-white p-3">
                 <BarChart3 className="h-4 w-4 mb-1.5" style={{ color: '#108888' }} />
                 <p className="text-lg font-black leading-none text-foreground">{currentBand !== null ? currentBand.toFixed(1) : '—'}</p>
@@ -444,21 +446,22 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                 <p className="text-[11px] text-muted-foreground mt-1">Avg Accuracy</p>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#108888' }}>
+            <span className="relative flex items-center gap-1.5 text-[13px] font-bold" style={{ color: '#108888' }}>
               Continue learning
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
           </button>
 
           {/* What's Next */}
-          <div className="rounded-2xl p-5 shadow-sm flex flex-col" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
-            <h3 className="text-[13px] font-bold text-foreground mb-3">What&rsquo;s Next</h3>
+          <div className="relative overflow-hidden rounded-2xl p-5 shadow-sm flex flex-col md:col-span-2 lg:col-span-1" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
+            <Mountain className="absolute -right-5 -bottom-4 h-24 w-24 opacity-[0.08] pointer-events-none" style={{ color: '#6B46C1' }} />
+            <h3 className="relative text-[13px] font-bold text-foreground mb-3">What&rsquo;s Next</h3>
             {shownItems.length === 0 ? (
-              <div className="flex-1 flex items-center gap-2 text-[13px] text-muted-foreground py-4">
+              <div className="relative flex-1 flex items-center gap-2 text-[13px] text-muted-foreground py-4">
                 <CircleCheckBig className="h-4 w-4 text-emerald-500 shrink-0" /> All caught up.
               </div>
             ) : (
-              <div className="flex-1 space-y-1">
+              <div className="relative flex-1 space-y-1">
                 {shownItems.map((item, i) => {
                   const Icon = item.icon;
                   return (
@@ -482,7 +485,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             )}
             <button
               onClick={() => setLocation('/study/planning')}
-              className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-bold text-white text-center transition-transform hover:-translate-y-0.5"
+              className="relative mt-3 w-full rounded-xl py-2.5 text-[13px] font-bold text-white text-center transition-transform hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #6B46C1, #FB923C)' }}
             >
               View My Planner
