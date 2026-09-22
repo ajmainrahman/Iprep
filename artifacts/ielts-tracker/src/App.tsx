@@ -257,7 +257,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       {/* Hero */}
       <div className="px-5 sm:px-8 pt-6">
         <div
-          className="max-w-6xl mx-auto rounded-[32px] overflow-hidden"
+          className="max-w-[1400px] mx-auto rounded-[32px] overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #FDEBDA 0%, #FBEAF3 45%, #F0E9FB 100%)' }}
         >
           <div className="grid lg:grid-cols-[1fr_1.05fr] items-center gap-6 sm:gap-10 p-6 sm:p-10">
@@ -324,7 +324,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
 
       {/* Quick Actions bar — overlaps the bottom of the hero */}
       <div className="px-5 sm:px-8 -mt-6 relative z-10">
-        <div className="max-w-6xl mx-auto bg-white rounded-2xl px-5 sm:px-7 py-4 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
+        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl px-5 sm:px-7 py-4 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
           <span className="flex items-center gap-2 text-[13px] font-bold text-foreground shrink-0">
             <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FFE3C7' }}>
               <Zap className="h-3.5 w-3.5" style={{ color: '#EA6A1F' }} />
@@ -366,7 +366,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
       </div>
 
       <main className="flex-1 px-5 sm:px-8 py-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_0.85fr] gap-5">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_0.85fr] gap-5">
 
           {/* Fly card */}
           <button
@@ -454,7 +454,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
 
           {/* What's Next */}
           <div className="relative overflow-hidden rounded-2xl p-5 shadow-sm flex flex-col md:col-span-2 lg:col-span-1" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
-            <Mountain className="absolute -right-5 -bottom-4 h-24 w-24 opacity-[0.08] pointer-events-none" style={{ color: '#6B46C1' }} />
+            <Mountain className="absolute -right-4 -bottom-3 h-32 w-32 opacity-[0.18] pointer-events-none" style={{ color: '#6B46C1' }} />
             <h3 className="relative text-[13px] font-bold text-foreground mb-3">What&rsquo;s Next</h3>
             {shownItems.length === 0 ? (
               <div className="relative flex-1 flex items-center gap-2 text-[13px] text-muted-foreground py-4">
@@ -494,7 +494,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         </div>
 
         {/* Value strip */}
-        <div className="max-w-6xl mx-auto mt-5 bg-white rounded-2xl px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-5 shadow-sm border border-border">
+        <div className="max-w-[1400px] mx-auto mt-5 bg-white rounded-2xl px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-5 shadow-sm border border-border">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ backgroundColor: '#C8FBF2' }}>
               <GraduationCap className="h-4 w-4" style={{ color: '#108888' }} />
@@ -533,7 +533,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           </defs>
           <path d="M0,110 C50,190 150,30 200,110 L200,200 L0,200 Z" fill="url(#footerWaveGradient)" />
         </svg>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60">
             Within a Few Weeks <span className="mx-2 text-white/30">·</span> Erasmus <span className="mx-2 text-white/30">·</span> Europe <span className="mx-2 text-white/30">·</span> Beyond
           </p>
