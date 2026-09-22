@@ -338,24 +338,28 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             </span>
             Add Application
           </button>
+          <div className="h-5 w-px bg-border hidden sm:block" />
           <button onClick={() => setLocation('/study/study')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
             <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#C8FBF2' }}>
               <BookOpen className="h-3.5 w-3.5" style={{ color: '#108888' }} />
             </span>
             Log Study Session
           </button>
+          <div className="h-5 w-px bg-border hidden sm:block" />
           <button onClick={() => setLocation('/study/practice')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
             <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FBD9E0' }}>
               <Target className="h-3.5 w-3.5" style={{ color: '#D6416A' }} />
             </span>
             Practice Test
           </button>
+          <div className="h-5 w-px bg-border hidden sm:block" />
           <button onClick={() => setLocation('/study/vocab')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
             <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#DCEFFB' }}>
               <BookMarked className="h-3.5 w-3.5" style={{ color: '#1D6FA5' }} />
             </span>
             Vocabulary
           </button>
+          <div className="h-5 w-px bg-border hidden sm:block" />
           <button onClick={() => setLocation('/study/planning')} className="flex items-center gap-2.5 text-[13px] font-medium text-foreground/80 hover:text-foreground transition-colors">
             <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: '#FFE3C7' }}>
               <CalendarClock className="h-3.5 w-3.5" style={{ color: '#EA6A1F' }} />
@@ -376,7 +380,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           >
             <Plane className="absolute -right-5 -bottom-5 h-28 w-28 rotate-[18deg] opacity-[0.08] pointer-events-none" style={{ color: '#D6416A' }} />
             <div className="relative flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">✈️</div>
+              <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 bg-white"><Plane className="h-5 w-5" style={{ color: '#14142B' }} /></div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Fly — Higher Study</h2>
             </div>
             <p className="relative text-[13px] leading-relaxed text-muted-foreground mb-5">
@@ -418,7 +422,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           >
             <Leaf className="absolute -right-4 -bottom-6 h-28 w-28 rotate-[-12deg] opacity-[0.08] pointer-events-none" style={{ color: '#108888' }} />
             <div className="relative flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 bg-white">📚</div>
+              <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 bg-white"><BookOpen className="h-5 w-5" style={{ color: '#14142B' }} /></div>
               <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>Study Journey</h2>
             </div>
             <p className="relative text-[13px] leading-relaxed text-muted-foreground mb-5">
