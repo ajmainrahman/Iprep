@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Target, Calendar as CalendarIcon, Edit2, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X, Clock } from 'lucide-react';
+import { Target, Calendar as CalendarIcon, Edit2, Headphones, MessageCircle, BookOpen, TrendingUp, TrendingDown, Minus, Flame, Trophy, Sparkles, ChevronLeft, ChevronRight, Plus, X, Clock, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip
@@ -751,6 +751,46 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
   );
 }
 
+/* ─── NEW: Vocabulary Progress Card (reads the same data as Vocabulary Bank) ── */
+function VocabularyProgressCard({ words }: { words: any[] }) {
+  const total = words.length;
+  const learned = words.filter((w: any) => w.known === 'true').length;
+  const remaining = total - learned;
+  const percent = total === 0 ? 0 : (learned / total) * 100;
+
+  return (
+    <Card className="shadow-sm border-none">
+      <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-6 bg-[#E3DEFA]/40 rounded-xl">
+        <div className="flex items-center gap-2 shrink-0">
+          <BookOpen className="w-5 h-5 text-[#4A3B8C]" />
+          <h3 className="font-semibold text-base text-foreground">Vocabulary Progress</h3>
+        </div>
+        <div className="flex gap-8 flex-1 justify-around sm:justify-start">
+          <div className="text-center sm:text-left">
+            <p className="text-[11px] text-[#4A3B8C] font-bold uppercase tracking-wider mb-1">Total</p>
+            <p className="text-2xl font-heading font-bold text-foreground">{total}</p>
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="text-[11px] text-[#1B6B5B] font-bold uppercase tracking-wider mb-1">Learned</p>
+            <p className="text-2xl font-heading font-bold text-foreground">{learned}</p>
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="text-[11px] text-[#8A5A0A] font-bold uppercase tracking-wider mb-1">Remaining</p>
+            <p className="text-2xl font-heading font-bold text-foreground">{remaining}</p>
+          </div>
+        </div>
+        <div className="w-full sm:w-48">
+          <div className="flex justify-between text-[10px] font-medium text-muted-foreground mb-1.5">
+            <span>Mastery</span>
+            <span className="text-[#4A3B8C] font-semibold">{Math.round(percent)}%</span>
+          </div>
+          <Progress value={percent} className="h-2 [&>div]:bg-[#4A3B8C] bg-[#E3DEFA]" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ─── Main ────────────────────────────────────────────────────────────────── */
 export function Dashboard() {
   const [, setLocation] = useLocation();
@@ -905,6 +945,9 @@ export function Dashboard() {
         </Card>
 
       </div>
+
+      {/* ── Vocabulary Progress ── */}
+      <VocabularyProgressCard words={vocabWords as any[]} />
 
       {/* ── Lesson Schedule (calendar widget) ── */}
       <section>
