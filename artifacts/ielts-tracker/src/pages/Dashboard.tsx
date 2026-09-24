@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +68,13 @@ const MOTIVATIONAL_QUOTES = [
 /* ─── 52-week heatmap ─────────────────────────────────────────────────────── */
 function StudyHeatmap({ sessions }: { sessions: any[] }) {
   const [tooltip, setTooltip] = useState<{ date: string; mins: number; x: number; y: number } | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, []);
 
   const dayMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -103,21 +110,24 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
   const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto" ref={scrollRef}>
       <div className="flex gap-1 min-w-max">
         <div className="flex flex-col gap-1 mr-1 pt-5">
           {DAYS.map((d, i) => (
             <div key={i} className="h-3 w-3 text-[9px] text-muted-foreground flex items-center">{i % 2 === 1 ? d : ''}</div>
           ))}
         </div>
-        {weeks.map((week, wi) => (
+        {weeks.map((week, wi) => {
+          const showLabel = wi === 0 || week[0].date.getMonth() !== weeks[wi - 1][0].date.getMonth();
+          return (
           <div key={wi} className="flex flex-col gap-1">
-            {wi % 4 === 0 && (
+            {showLabel ? (
               <div className="text-[9px] text-muted-foreground h-4 leading-4">
                 {week[0].date.toLocaleDateString(undefined, { month: 'short' })}
               </div>
+            ) : (
+              <div className="h-4" />
             )}
-            {wi % 4 !== 0 && <div className="h-4" />}
             {week.map((day, di) => (
               <div
                 key={di}
@@ -131,7 +141,8 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
               />
             ))}
           </div>
-        ))}
+          );
+        })}
       </div>
       {/* Legend */}
       <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
@@ -159,7 +170,7 @@ function SemiCircleGauge({ value, target, scoredModules }: { value: number; targ
   const percent = Math.min(100, Math.max(0, target > 0 ? (value / target) * 100 : 0));
 
   return (
-    <div className="relative mx-auto w-full max-w-[280px]" aria-label={`Overall band ${value.toFixed(1)} of ${target.toFixed(1)}`}>
+    <div className="relative mx-auto w-full max-w-[220px]" aria-label={`Overall band ${value.toFixed(1)} of ${target.toFixed(1)}`}>
       <svg viewBox="0 0 240 140" className="w-full overflow-visible" role="img">
         <defs>
           <linearGradient id="overall-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -189,7 +200,7 @@ function SemiCircleGauge({ value, target, scoredModules }: { value: number; targ
         />
       </svg>
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="text-4xl font-heading font-bold tracking-tight text-foreground">
+        <span className="text-3xl font-heading font-bold tracking-tight text-foreground">
           {value > 0 ? value.toFixed(1) : '—'}
         </span>
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -219,7 +230,7 @@ function ModuleProgressRing({
   const progress = Math.min(100, Math.max(0, target > 0 ? (current / target) * 100 : 0));
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card/80 p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative h-[76px] w-[76px] shrink-0">
         <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90" role="img" aria-label={`${module} progress`}>
           <circle cx="38" cy="38" r={radius} fill="none" stroke="currentColor" className="text-muted" strokeWidth="7" />
@@ -589,7 +600,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
                 type="button"
                 key={i}
                 onClick={() => setSelectedDate(cell.dateStr as string)}
-                className={`text-xs rounded-full h-8 w-8 flex items-center justify-center mx-auto font-medium transition-colors ${
+                className={`text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto font-medium transition-colors ${
                   isSelected ? 'bg-[#15181A] text-white font-bold' :
                   isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' :
                   hasSessions ? 'bg-[#CFEEE0] text-[#1B6B5B] font-semibold' :
@@ -713,7 +724,7 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
 
   return (
     <Card className="col-span-1 shadow-lg border-none overflow-hidden">
-      <CardContent className="p-6 h-full flex flex-col justify-center bg-gradient-to-br from-navy to-navy/80 rounded-xl text-white">
+      <CardContent className="p-4 h-full flex flex-col justify-center bg-gradient-to-br from-navy to-navy/80 rounded-xl text-white">
         {isPast ? (
           <div className="flex flex-col items-center justify-center gap-2 py-4">
             <span className="text-4xl">🎓</span>
@@ -721,16 +732,16 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-4 gap-1.5 mb-3">
               {[
                 { value: days, label: 'Days' },
                 { value: hours, label: 'Hrs' },
                 { value: minutes, label: 'Mins' },
                 { value: seconds, label: 'Secs' },
               ].map(({ value, label }) => (
-                <div key={label} className="flex flex-col items-center bg-white/10 rounded-xl py-3">
-                  <span className="text-2xl font-heading font-bold tabular-nums">{pad(value)}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-white/60 mt-1">{label}</span>
+                <div key={label} className="flex flex-col items-center bg-white/10 rounded-xl py-2">
+                  <span className="text-xl font-heading font-bold tabular-nums">{pad(value)}</span>
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mt-0.5">{label}</span>
                 </div>
               ))}
             </div>
@@ -760,23 +771,23 @@ function VocabularyProgressCard({ words }: { words: any[] }) {
 
   return (
     <Card className="shadow-sm border-none">
-      <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-6 bg-[#E3DEFA]/40 rounded-xl">
+      <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4 bg-[#E3DEFA]/40 rounded-xl">
         <div className="flex items-center gap-2 shrink-0">
           <BookOpen className="w-5 h-5 text-[#4A3B8C]" />
           <h3 className="font-semibold text-base text-foreground">Vocabulary Progress</h3>
         </div>
         <div className="flex gap-8 flex-1 justify-around sm:justify-start">
           <div className="text-center sm:text-left">
-            <p className="text-[11px] text-[#4A3B8C] font-bold uppercase tracking-wider mb-1">Total</p>
-            <p className="text-2xl font-heading font-bold text-foreground">{total}</p>
+            <p className="text-[10px] text-[#4A3B8C] font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p className="text-xl font-heading font-bold text-foreground">{total}</p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[11px] text-[#1B6B5B] font-bold uppercase tracking-wider mb-1">Learned</p>
-            <p className="text-2xl font-heading font-bold text-foreground">{learned}</p>
+            <p className="text-[10px] text-[#1B6B5B] font-bold uppercase tracking-wider mb-0.5">Learned</p>
+            <p className="text-xl font-heading font-bold text-foreground">{learned}</p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[11px] text-[#8A5A0A] font-bold uppercase tracking-wider mb-1">Remaining</p>
-            <p className="text-2xl font-heading font-bold text-foreground">{remaining}</p>
+            <p className="text-[10px] text-[#8A5A0A] font-bold uppercase tracking-wider mb-0.5">Remaining</p>
+            <p className="text-xl font-heading font-bold text-foreground">{remaining}</p>
           </div>
         </div>
         <div className="w-full sm:w-48">
@@ -938,8 +949,8 @@ export function Dashboard() {
         <ExamCountdownTimer examDate={hasExamDate ? (settings?.examDate as string) : null} examTime={(settings as any)?.examTime ?? null} />
 
         <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className="p-6 h-full flex flex-col justify-center items-center text-center bg-[#F6FBF8] rounded-xl">
-            <h3 className="font-semibold text-lg text-foreground mb-4 w-full text-left">Overall Band</h3>
+          <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center bg-[#F6FBF8] rounded-xl">
+            <h3 className="font-semibold text-base text-foreground mb-2 w-full text-left">Overall Band</h3>
             <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
           </CardContent>
         </Card>
@@ -949,32 +960,9 @@ export function Dashboard() {
       {/* ── Vocabulary Progress ── */}
       <VocabularyProgressCard words={vocabWords as any[]} />
 
-      {/* ── Lesson Schedule (calendar widget) ── */}
-      <section>
-        <div className="flex items-center gap-2 mb-4 border-l-4 border-teal pl-3">
-          <CalendarIcon className="w-5 h-5 text-teal" />
-          <h2 className="text-2xl font-heading font-bold text-foreground">Lesson Schedule</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
-        </div>
-      </section>
-
-      {/* ── 2-col: Radar + Streak tracker ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[0.85fr_1.15fr] gap-6">
-        {/* Radar chart */}
-        <Card className="shadow-sm border-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              🎯 Band Score vs Target
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BandRadar scores={scores as any[]} targets={targets as Record<string, number>} />
-          </CardContent>
-        </Card>
-
-        <StreakTracker sessions={sessions as any[]} />
+      {/* ── Lesson Schedule (moved here; Band Score vs Target and Study Streak removed) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
       </div>
 
       {/* ── Module Progress ── */}
