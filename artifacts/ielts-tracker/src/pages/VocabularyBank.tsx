@@ -18,7 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const TOPICS = [
   'Environment', 'Technology', 'Health', 'Society', 'Education',
-  'Economy', 'Politics', 'Science', 'Arts & Media', 'History'
+  'Economy', 'Politics', 'Science', 'Arts & Media', 'History',
+  'IELTS', 'Others'
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -317,7 +318,6 @@ export function VocabularyBank() {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {TOPICS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                        <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -368,6 +368,16 @@ export function VocabularyBank() {
         <Tabs value={activeTopic} onValueChange={setActiveTopic} className="w-full">
           <div className="overflow-x-auto pb-2 scrollbar-hide">
             <TabsList className="bg-transparent border-b w-max min-w-full justify-start rounded-none h-12 p-0 space-x-6">
+              <TabsTrigger
+                value="__LEARNED__"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-green-600 data-[state=active]:text-green-600 data-[state=active]:shadow-none rounded-none px-2 font-medium text-muted-foreground bg-transparent"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                Learned
+                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  {learnedWords}
+                </span>
+              </TabsTrigger>
               {TOPICS.map(topic => (
                 <TabsTrigger
                   key={topic}
@@ -382,6 +392,61 @@ export function VocabularyBank() {
               ))}
             </TabsList>
           </div>
+
+          <TabsContent value="__LEARNED__" className="pt-6 outline-none">
+            {isLoading ? (
+              <div className="h-32 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            ) : (words as any[]).filter(w => w.known === 'true' && w.word.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              <div className="bg-card rounded-xl border border-dashed">
+                <StudyEmptyState
+                  icon={<VocabularyBadge size={56} />}
+                  title="No learned words yet"
+                  subtitle="Mark words as Learned from any topic and they'll show up here."
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {(words as any[]).filter(w => w.known === 'true' && w.word.toLowerCase().includes(searchTerm.toLowerCase())).map((w: any) => (
+                  <Card
+                    key={w.id}
+                    className="relative overflow-hidden transition-all duration-300 rounded-xl bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-800"
+                  >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-green-500 rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none" />
+                    <CardContent className="p-5 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground leading-tight">{w.word}</h3>
+                          <span className="text-xs font-medium text-purple-600 italic">{w.pos} · {w.topic}</span>
+                        </div>
+                        <Button
+                          variant="ghost" size="icon"
+                          onClick={() => removeWord(w.id)}
+                          disabled={deleteWord.isPending}
+                          className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-2 shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-3 mb-6 flex-1">
+                        <p className="text-sm text-foreground">{w.definition}</p>
+                        <div className="bg-muted p-3 rounded-lg border-l-4 border-l-purple-300">
+                          <p className="text-sm text-muted-foreground italic">"{w.example}"</p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => toggleKnown.mutate(w.id)}
+                        disabled={toggleKnown.isPending}
+                        variant="outline"
+                        className="w-full mt-auto border-green-500 text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" /> Learned ✓
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
           {TOPICS.map(topic => (
             <TabsContent key={topic} value={topic} className="pt-6 outline-none">
