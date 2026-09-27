@@ -960,9 +960,10 @@ export function Dashboard() {
       {/* ── Vocabulary Progress ── */}
       <VocabularyProgressCard words={vocabWords as any[]} />
 
-      {/* ── Lesson Schedule (moved here; Band Score vs Target and Study Streak removed) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* ── Lesson Schedule + Study Streak (Band Score vs Target still removed) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
+        <StreakTracker sessions={sessions as any[]} />
       </div>
 
       {/* ── Module Progress ── */}
