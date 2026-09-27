@@ -101,4 +101,14 @@ export const api = {
   updateScheduledSession: (id: number, body: Record<string, unknown>) => put(`/api/scheduled-sessions/${id}`, body),
   deleteScheduledSession: (id: number) => del(`/api/scheduled-sessions/${id}`),
   completeScheduledSession: (id: number) => post(`/api/scheduled-sessions/${id}/complete`, {}),
+
+  getSpellingSession: (params?: { topic?: string; count?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.topic) query.set('topic', params.topic);
+    if (params?.count) query.set('count', String(params.count));
+    const qs = query.toString();
+    return getList(`/api/spelling/session${qs ? `?${qs}` : ''}`);
+  },
+  logSpellingAttempt: (body: Record<string, unknown>) => post('/api/spelling/attempts', body),
+  getSpellingStats: () => get('/api/spelling/stats'),
 };
