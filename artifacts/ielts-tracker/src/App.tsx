@@ -18,12 +18,14 @@ import { api } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import SignInPage from '@/pages/SignInPage';
 import SignUpPage from '@/pages/SignUpPage';
+import { SpellingPractice } from '@/pages/SpellingPractice';
 import {
   type LucideIcon, ArrowLeft, Menu, PanelLeftClose, PanelLeftOpen, LogOut, Plane, BookOpenCheck,
   LayoutDashboard, GraduationCap, BarChart3, Trophy, FileText, NotebookPen,
   Home, TrendingUp, BookOpen, Target, BookMarked, Compass, CalendarClock,
   ChevronRight, Quote, ClipboardCheck, Clock, Gauge, Headphones, PenLine, FilePlus2,
   Rocket, ArrowUpRight, ListChecks, CircleCheckBig, ChevronDown, Zap, Linkedin, Youtube, Twitter, Leaf, Mountain,
+  SpellCheck,
 } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
@@ -40,7 +42,7 @@ const queryClient = new QueryClient({
 
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'templates' | 'notepad';
-type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'planning' | 'journey';
+type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
 /** YYYY-MM-DD in LOCAL timezone — never use toISOString() for date comparisons */
@@ -580,6 +582,7 @@ const STUDY_TABS: NavItem<StudyTab>[] = [
   { id: 'study',     label: 'Study Log',        icon: BookOpen },
   { id: 'practice',  label: 'Practice Tracker', icon: Target },
   { id: 'vocab',     label: 'Vocab Bank',       icon: BookMarked },
+  { id: 'spelling',  label: 'Spelling Practice', icon: SpellCheck },
   { id: 'journey',   label: 'My Journey',       icon: Compass },
   { id: 'planning',  label: 'Planning',         icon: CalendarClock },
 ];
@@ -971,6 +974,7 @@ function StudyLayout() {
             {tab === 'study'     && <StudyLog />}
             {tab === 'practice'  && <PracticeTracker />}
             {tab === 'vocab'     && <VocabularyBank />}
+            {tab === 'spelling'  && <SpellingPractice />}
             {tab === 'journey'   && <IELTSJourneyPlanner />}
             {tab === 'planning'  && <PlanningCorner />}
           </div>
