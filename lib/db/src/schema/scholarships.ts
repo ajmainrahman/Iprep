@@ -12,6 +12,7 @@ export const scholarshipsTable = pgTable("scholarships", {
   currency: text("currency").default("USD"),
   fundingType: text("funding_type").notNull().default("partial"),
   deadline: text("deadline"),
+  startDate: text("start_date"),
   status: text("status").notNull().default("planning"),
   priority: text("priority").notNull().default("medium"),
   linkedApplicationId: integer("linked_application_id"),

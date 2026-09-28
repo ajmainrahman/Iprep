@@ -29,6 +29,7 @@ const bodySchema = z.object({
   degreeType: z.string(),
   status: z.string().optional(),
   deadline: z.string().nullable().optional(),
+  startDate: z.string().nullable().optional(),
   appliedDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   websiteUrl: z.string().nullable().optional(),

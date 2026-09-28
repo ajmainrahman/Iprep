@@ -55,6 +55,44 @@ const DOC_STATUS_META: Record<DocStatus, { label: string; color: string; bg: str
   verified: { label: 'Verified', color: 'text-emerald-700', bg: 'bg-emerald-100 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
 };
 const DOC_STATUS_ORDER: DocStatus[] = ['missing', 'draft', 'ready', 'uploaded', 'verified'];
+// Ongoing = the portal is open right now: start date reached (or none set),
+// deadline still ahead, and the status is not a finished/closed one.
+const APP_CLOSED_STATUSES = ['accepted', 'offer', 'rejected', 'waitlisted', 'deferred', 'withdrawn', 'missed_deadline'];
+const SCH_CLOSED_STATUSES = ['awarded', 'rejected', 'expired', 'not_eligible'];
+
+function daysOrNull(value: unknown): number | null {
+  const raw = String(value || '');
+  if (!raw) return null;
+  const d = daysUntil(raw);
+  return typeof d === 'number' && Number.isFinite(d) ? d : null;
+}
+
+function isOngoingItem(item: Record<string, unknown> | undefined, closedStatuses: string[]): boolean {
+  if (!item) return false;
+  if (closedStatuses.includes(String(item.status || ''))) return false;
+  const untilDeadline = daysOrNull(item.deadline);
+  const untilStart = daysOrNull(item.startDate);
+  if (untilDeadline !== null && untilDeadline < 0) return false;
+  if (untilStart !== null && untilStart > 0) return false;
+  return untilDeadline !== null || untilStart !== null;
+}
+
+function isOngoingRecord(record: { app?: Record<string, unknown>; scholarship?: Record<string, unknown> }): boolean {
+  return isOngoingItem(record.app, APP_CLOSED_STATUSES) || isOngoingItem(record.scholarship, SCH_CLOSED_STATUSES);
+}
+
+function OngoingTag() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 ring-1 ring-emerald-200">
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      </span>
+      Ongoing
+    </span>
+  );
+}
+
 function reqStatus(item: ReqItem): DocStatus {
   return item.status ?? (item.done ? 'verified' : 'missing');
 }
@@ -607,6 +645,9 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     })
     .sort((a, b) => (daysUntil(a.deadline || '') ?? 999) - (daysUntil(b.deadline || '') ?? 999));
   const next30Days = upcomingDeadlines.filter(record => (daysUntil(record.deadline || '') ?? 999) <= 30);
+  const ongoingRecords = unifiedRecords
+    .filter(record => isOngoingRecord(record))
+    .sort((a, b) => (daysUntil(a.deadline || '') ?? 9999) - (daysUntil(b.deadline || '') ?? 9999));
   const highPriorityCount = unifiedRecords.filter(record => record.priority === 'high').length;
   const latestTest = (tests as { id: number; testName: string; totalScore?: number | null; attemptDate: string }[])
     .slice().sort((a, b) => new Date(b.attemptDate).getTime() - new Date(a.attemptDate).getTime())[0];
@@ -685,7 +726,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
               <TypeMark type={record.type} />
               <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] ${priorityMeta.color}`}><span className={`h-1.5 w-1.5 rounded-full ${priorityMeta.dot}`} />{priorityMeta.label} priority</span>
             </div>
-            <h3 className="mt-2 truncate text-base font-bold tracking-tight" style={{ color: 'var(--apps-text-primary)' }}>{recordTitle(record)}</h3>
+            <div className="mt-2 flex min-w-0 items-center gap-2"><h3 className="truncate text-base font-bold tracking-tight" style={{ color: 'var(--apps-text-primary)' }}>{recordTitle(record)}</h3>{isOngoingRecord(record) && <OngoingTag />}</div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{recordSubtitle(record)}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -801,18 +842,38 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         ))}
       </div>
 
-      <div className="rounded-2xl border border-[#f2d7a2] bg-[#fffaf0] p-4 shadow-[0_10px_28px_rgba(204,147,45,0.08)] sm:p-5">
+      <div data-testid="overview-ongoing-card" className="rounded-2xl border border-[#bfe8d6] bg-[#f3fcf8] p-4 shadow-[0_10px_28px_rgba(16,140,110,0.08)] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex min-w-0 items-start gap-3 lg:w-[31%]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f6c976] text-[#5f4814]"><CalendarClock className="h-5 w-5" /></span>
-            <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9a6700]">Deadline radar</p><h3 className="mt-1 text-lg font-bold tracking-tight text-[#3f3214]">{next30Days.length ? `${next30Days.length} target${next30Days.length === 1 ? '' : 's'} need attention` : 'No urgent deadlines'}</h3><p className="mt-1 text-xs text-[#947c42]">{next30Days.length ? 'The next 30 days, across applications and scholarships.' : 'You have breathing room. Keep adding dates as you find them.'}</p></div>
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#a6e6cd]">
+              <span className="absolute h-3 w-3 animate-ping rounded-full bg-emerald-500 opacity-60" />
+              <span className="relative h-3 w-3 rounded-full bg-emerald-600" />
+            </span>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0f7a5c]">Ongoing now</p>
+              <h3 className="mt-1 text-lg font-bold tracking-tight text-[#0f3d2e]">{ongoingRecords.length ? `${ongoingRecords.length} portal${ongoingRecords.length === 1 ? '' : 's'} open right now` : 'Nothing ongoing right now'}</h3>
+              <p className="mt-1 text-xs text-[#4f8a75]">{ongoingRecords.length ? 'Applications and scholarships that have opened and are still before their deadline.' : 'Add a start date and deadline to a target and it will appear here while it is open.'}</p>
+            </div>
           </div>
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
-            {upcomingDeadlines.slice(0, 3).map(record => {
+            {ongoingRecords.slice(0, 6).map(record => {
               const days = daysUntil(record.deadline || '');
-              return <button type="button" data-testid={`button-deadline-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#f1dfbb] bg-white/80 p-3 text-left transition-colors hover:bg-white"><div className="flex items-center justify-between gap-2"><TypeMark type={record.type} /><span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-red-600' : 'text-amber-700'}`}>{days === 0 ? 'Today' : `${days}d`}</span></div><p className="mt-2 truncate text-xs font-bold text-[#3f3214]">{recordTitle(record)}</p><p className="mt-1 truncate text-[10px] text-[#947c42]">{record.deadline ? fmtDate(record.deadline) : 'No deadline'}</p></button>;
+              return (
+                <button type="button" data-testid={`button-ongoing-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#cdeee0] bg-white/80 p-3 text-left transition-colors hover:bg-white">
+                  <div className="flex items-center justify-between gap-2">
+                    <TypeMark type={record.type} />
+                    <span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-red-600' : 'text-emerald-700'}`}>{days === null ? 'Open' : days === 0 ? 'Today' : `${days}d left`}</span>
+                  </div>
+                  <div className="mt-2 flex min-w-0 items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-xs font-bold text-[#0f3d2e]">{recordTitle(record)}</p>
+                    <OngoingTag />
+                  </div>
+                  <p className="mt-1 truncate text-[10px] text-[#4f8a75]">{record.deadline ? `Closes ${fmtDate(record.deadline)}` : 'No deadline set'}</p>
+                </button>
+              );
             })}
-            {upcomingDeadlines.length === 0 && <div className="col-span-3 flex items-center justify-center rounded-xl border border-dashed border-[#f1dfbb] p-4 text-xs text-[#947c42]">Add a deadline to see it here.</div>}
+            {ongoingRecords.length > 6 && <p className="px-1 text-[11px] text-[#4f8a75] sm:col-span-3">+{ongoingRecords.length - 6} more ongoing. Open Applications or Scholarships to see them all.</p>}
+            {ongoingRecords.length === 0 && <div className="flex items-center justify-center rounded-xl border border-dashed border-[#cdeee0] p-4 text-xs text-[#4f8a75] sm:col-span-3">Nothing open right now.</div>}
           </div>
         </div>
       </div>
@@ -1222,7 +1283,7 @@ function ApplicationsTab() {
 
   const emptyBase = {
     universityName: '', country: '', program: '', degreeType: 'MS',
-    status: 'researching', priority: 'medium', deadline: '', appliedDate: '', notes: '',
+    status: 'researching', priority: 'medium', deadline: '', startDate: '', appliedDate: '', notes: '',
     websiteUrl: '', comments: '',
   };
   const [formBase,    setFormBase]    = useState(emptyBase);
@@ -1262,6 +1323,7 @@ function ApplicationsTab() {
       deadline:       String(app.deadline || ''),
       appliedDate:    String(app.appliedDate || ''),
       notes:          String(app.notes || ''),
+      startDate: String(app.startDate || ''),
       websiteUrl:     String(app.websiteUrl || ''),
       comments:       String(app.comments || ''),
     });
@@ -1292,6 +1354,7 @@ function ApplicationsTab() {
     const payload = {
       ...formBase,
       deadline:    formBase.deadline || null,
+      startDate: formBase.startDate || null,
       appliedDate: formBase.appliedDate || null,
       websiteUrl:  formBase.websiteUrl || null,
       comments:    formBase.comments || null,
@@ -1720,6 +1783,15 @@ function ApplicationsTab() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Start Date (portal opens)</Label>
+                <Input
+                  data-testid="input-application-start-date"
+                  type="date"
+                  value={formBase.startDate}
+                  onChange={e => setFormBase(p => ({ ...p, startDate: e.target.value }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Application Deadline</Label>
@@ -2812,7 +2884,7 @@ function ScholarshipsTab() {
 
   const emptyForm = {
     name: '', provider: '', country: '', degreeLevel: "Master's", fundingType: 'Fully Funded',
-    amount: '', currency: 'USD', deadline: '', status: 'researching', priority: 'medium',
+    amount: '', currency: 'USD', deadline: '', startDate: '', status: 'researching', priority: 'medium',
     linkedApplicationId: '', notes: '',
     dateApplied: '', portalUrl: '', websiteUrl: '', profileMatch: '', relatedUniversities: '',
     requirements: [] as ReqItem[],
@@ -2854,6 +2926,7 @@ function ScholarshipsTab() {
       linkedApplicationId: s.linkedApplicationId ? String(s.linkedApplicationId) : '',
       notes:        String(s.notes || ''),
       dateApplied:  String(s.dateApplied || ''),
+      startDate: String(s.startDate || ''),
       portalUrl:    String(s.portalUrl || ''),
       websiteUrl:   String(s.websiteUrl || s.link || ''),
       profileMatch: s.profileMatch !== null && s.profileMatch !== undefined && s.profileMatch !== '' ? String(s.profileMatch) : '',
@@ -2869,6 +2942,7 @@ function ScholarshipsTab() {
     const payload = {
       ...rest,
       deadline:         form.deadline || null,
+      startDate: form.startDate || null,
       dateApplied:      form.dateApplied || null,
       portalUrl:        form.portalUrl || null,
       websiteUrl:       form.websiteUrl || null,
@@ -3286,6 +3360,10 @@ function ScholarshipsTab() {
               <div className="space-y-1">
                 <Label className="flex items-center gap-1"><Percent className="w-3 h-3" /> Profile Match (%)</Label>
                 <Input data-testid="input-scholarship-profile-match" type="number" min={0} max={100} placeholder="e.g. 82" value={form.profileMatch} onChange={e => setForm(p => ({ ...p, profileMatch: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Start Date (portal opens)</Label>
+                <Input data-testid="input-scholarship-start-date" type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} />
               </div>
               <div className="space-y-1">
                 <Label>Application Deadline</Label>

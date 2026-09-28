@@ -26,6 +26,7 @@ const bodySchema = z.object({
   currency: z.string().optional(),
   fundingType: z.string().optional(),
   deadline: z.string().nullable().optional(),
+  startDate: z.string().nullable().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
   linkedApplicationId: z.number().int().nullable().optional(),
