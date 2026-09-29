@@ -70,11 +70,12 @@ function daysOrNull(value: unknown): number | null {
 function isOngoingItem(item: Record<string, unknown> | undefined, closedStatuses: string[]): boolean {
   if (!item) return false;
   if (closedStatuses.includes(String(item.status || ''))) return false;
-  const untilDeadline = daysOrNull(item.deadline);
   const untilStart = daysOrNull(item.startDate);
-  if (untilDeadline !== null && untilDeadline < 0) return false;
-  if (untilStart !== null && untilStart > 0) return false;
-  return untilDeadline !== null || untilStart !== null;
+  if (untilStart === null) return false; // no start date set — cannot be "ongoing"
+  if (untilStart > 0) return false; // start date is in the future — not open yet
+  const untilDeadline = daysOrNull(item.deadline);
+  if (untilDeadline !== null && untilDeadline < 0) return false; // deadline already passed
+  return true;
 }
 
 function isOngoingRecord(record: { app?: Record<string, unknown>; scholarship?: Record<string, unknown> }): boolean {
