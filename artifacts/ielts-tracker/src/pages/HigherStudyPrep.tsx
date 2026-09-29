@@ -855,7 +855,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
               <p className="mt-1 text-xs text-[#4f8a75]">{ongoingRecords.length ? 'Applications and scholarships that have opened and are still before their deadline.' : 'Add a start date and deadline to a target and it will appear here while it is open.'}</p>
             </div>
           </div>
-          <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
+          <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {ongoingRecords.slice(0, 6).map(record => {
               const days = daysUntil(record.deadline || '');
               return (
