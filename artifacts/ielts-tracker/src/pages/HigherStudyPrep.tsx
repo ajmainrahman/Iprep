@@ -864,11 +864,8 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
                     <TypeMark type={record.type} />
                     <span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-red-600' : 'text-emerald-700'}`}>{days === null ? 'Open' : days === 0 ? 'Today' : `${days}d left`}</span>
                   </div>
-                  <div className="mt-2 flex min-w-0 items-center gap-2">
-                    <p className="min-w-0 flex-1 truncate text-xs font-bold text-[#0f3d2e]">{recordTitle(record)}</p>
-                    <OngoingTag />
-                  </div>
-                  <p className="mt-1 truncate text-[10px] text-[#4f8a75]">{record.deadline ? `Closes ${fmtDate(record.deadline)}` : 'No deadline set'}</p>
+                  <p className="mt-2 line-clamp-2 text-xs font-bold leading-snug text-[#0f3d2e]" title={recordTitle(record)}>{recordTitle(record)}</p>
+                  <p className="mt-1.5 text-[10px] text-[#4f8a75]">{record.deadline ? `Closes ${fmtDate(record.deadline)}` : 'No deadline set'}</p>
                 </button>
               );
             })}
