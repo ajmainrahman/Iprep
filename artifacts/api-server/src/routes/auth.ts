@@ -9,8 +9,8 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 const JWT_SECRET = () => {
-  const s = process.env.JWT_SECRET;
-  if (!s) throw new Error("JWT_SECRET is not set");
+  const s = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  if (!s) throw new Error("JWT_SECRET or SESSION_SECRET is not set");
   return s;
 };
 

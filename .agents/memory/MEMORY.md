@@ -1,0 +1,1 @@
+- [Replit PostgreSQL driver compatibility](replit-postgres-driver.md) — use node-postgres for Replit PostgreSQL; Neon HTTP may fail on ordinary Replit DB queries.

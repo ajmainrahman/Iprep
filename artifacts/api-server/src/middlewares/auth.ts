@@ -18,7 +18,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
   try {
     const token = auth.slice(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number; email: string };
+    const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+    if (!secret) {
+      res.status(500).json({ error: "Authentication is not configured." });
+      return;
+    }
+    const decoded = jwt.verify(token, secret) as { userId: number; email: string };
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
     next();

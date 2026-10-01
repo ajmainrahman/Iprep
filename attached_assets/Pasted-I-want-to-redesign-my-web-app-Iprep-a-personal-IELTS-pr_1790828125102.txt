@@ -1,0 +1,62 @@
+I want to redesign my web app "Iprep" (a personal IELTS prep + study-abroad
+application tracker, deployed as "Within a Few Weeks"). Please read this
+whole message before making any changes.
+
+PROJECT CONTEXT
+- Monorepo: pnpm workspaces. Frontend: React + TypeScript + Tailwind CSS +
+  shadcn/ui components. Backend: Express API server. Database: Drizzle ORM
+  on Neon Postgres. Deployed via Vercel (connected to GitHub).
+- Two linked products sharing one shell: "Fly" (higher-study applications
+  and scholarships tracker) and "Study" (IELTS prep tracker — dashboard,
+  mock tests, study log, practice tracker, vocabulary bank, spelling
+  practice, my journey, planning).
+
+CURRENT DESIGN STATE — BUILD ON THIS, DON'T CLASH WITH IT
+Part of the Study dashboard already uses this palette — extend it
+consistently across every page rather than introducing a different look:
+- Background: cream (#F5F1E6)
+- Primary accent: mint green (#6FD9A0, deep variant #1B6B5B)
+- Secondary accents: coral (#F4A972), lavender (#E3DEFA), amber (#FCE7B8),
+  pink (#FBDCE6)
+- Typography: "Space Grotesk" for headings, "Inter" for body text
+- Cards: white/soft background, rounded corners (16–20px), soft borders
+  instead of heavy shadows
+
+WHAT I WANT
+- Subtle gradients (soft, two-tone, not garish) on hero sections and key cards
+- Minimalist UI/UX: reduce visual clutter, clear typographic hierarchy,
+  generous whitespace, fewer competing colors fighting for attention per view
+- Light, purposeful micro-animations: hover states, smooth transitions
+  between states, nothing distracting or slow
+- Fully responsive on mobile (iPhone Safari and Android Chrome both need
+  to look correct, not just desktop Chrome)
+- Go page by page rather than rewriting everything in one giant change
+
+HARD CONSTRAINTS — PLEASE FOLLOW THESE EXACTLY
+1. This is a visual/layout redesign only. Do not change any business logic,
+   calculations, data-fetching, filtering conditions, or API behavior unless
+   I explicitly ask for a logic change.
+2. Never delete, rename, or alter a database column or table without
+   asking me first and showing me exactly what will change. This project's
+   database has drifted from its schema files before and caused real risk
+   of data loss — treat any schema-affecting command as high-risk.
+3. The correct production database environment variable is
+   NEON_DATABASE_URL. Do not assume DATABASE_URL is correct — in this
+   project DATABASE_URL points at a local Postgres instance, not the real
+   Neon production database.
+4. Before editing a file, show me its current real content first if you
+   haven't already read it in this session — don't guess at existing code
+   structure.
+5. After every change, run the project's typecheck command and show me the
+   output before considering the change done. Don't tell me something is
+   complete if typecheck is failing.
+6. Make changes in small, separately committed steps rather than one huge
+   commit, so anything that goes wrong is easy to identify and roll back.
+7. Do not remove any existing working feature, page, or piece of
+   functionality without telling me first and getting a yes.
+8. Check `git status` before and after each change to confirm only the
+   files you intended to touch were actually modified — don't leave
+   unrelated files uncommitted or accidentally staged.
+
+Start by telling me which pages exist in the project and proposing an order
+to redesign them in, before changing any code.
