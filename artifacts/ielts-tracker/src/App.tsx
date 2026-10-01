@@ -622,31 +622,31 @@ function AppSidebar<T extends string>({
 }: SidebarProps<T>) {
   return (
     <aside
-      className={`hidden md:flex flex-col ${collapsed ? 'w-[72px]' : 'w-64'} bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen shrink-0 transition-[width] duration-200 ease-out`}
+      className={`hidden md:flex flex-col ${collapsed ? 'w-20' : 'w-[17rem]'} bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen shrink-0 transition-[width] duration-200 ease-out`}
     >
       <div className={`flex items-center gap-2 p-4 ${collapsed ? 'justify-center' : ''}`}>
         <button
           onClick={onBack}
           aria-label="Back to home"
           title="Back to home"
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0"
+          className="flex items-center justify-center w-9 h-9 rounded-xl text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         {!collapsed && (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-primary) / 0.18)' }}>
-              <ProductIcon className="w-4 h-4" style={{ color: 'hsl(var(--sidebar-primary))' }} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-primary) / 0.18)' }}>
+              <ProductIcon className="w-5 h-5" style={{ color: 'hsl(var(--sidebar-primary))' }} />
             </div>
             <div className="min-w-0">
-              <p className="font-heading font-semibold text-[14px] leading-tight truncate">{productName}</p>
-              <p className="text-[10.5px] text-sidebar-foreground/50 truncate">{productSubtitle}</p>
+              <p className="font-heading font-semibold text-[15px] leading-tight truncate">{productName}</p>
+              <p className="text-[11px] text-sidebar-foreground/60 truncate">{productSubtitle}</p>
             </div>
           </div>
         )}
       </div>
 
-      <nav className="flex-1 px-2.5 space-y-0.5 mt-1 overflow-y-auto">
+      <nav className="flex-1 px-3 space-y-1 mt-2 overflow-y-auto">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
@@ -655,8 +655,8 @@ function AppSidebar<T extends string>({
               key={tab.id}
               onClick={() => onTab(tab.id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`w-full flex items-center gap-3 rounded-lg text-[13px] transition-colors ${collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'} ${
-                isActive ? 'bg-sidebar-primary text-white font-medium' : 'text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+              className={`w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-200 ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'} ${
+                isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -689,7 +689,7 @@ function AppSidebar<T extends string>({
         type="button"
         onClick={onToggleCollapsed}
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className="flex items-center justify-center gap-2 mx-2.5 mb-3 h-8 rounded-lg text-sidebar-foreground/45 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-[11px] font-medium shrink-0"
+        className="flex items-center justify-center gap-2 mx-3 mb-4 h-9 rounded-xl text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-xs font-medium shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       >
         {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <><PanelLeftClose className="w-4 h-4" /> Collapse</>}
       </button>
@@ -716,19 +716,19 @@ function MobileNavDrawer<T extends string>({
 }: MobileNavDrawerProps<T>) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border [&_svg.absolute]:text-sidebar-foreground/60">
+      <SheetContent side="left" className="w-[min(20rem,88vw)] p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border [&_svg.absolute]:text-sidebar-foreground/60">
         <SheetTitle className="sr-only">{productName} navigation</SheetTitle>
-        <div className="flex items-center gap-2.5 p-4 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-primary) / 0.18)' }}>
-            <ProductIcon className="w-4 h-4" style={{ color: 'hsl(var(--sidebar-primary))' }} />
+        <div className="flex items-center gap-3 p-5 border-b border-sidebar-border">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-primary) / 0.18)' }}>
+            <ProductIcon className="w-5 h-5" style={{ color: 'hsl(var(--sidebar-primary))' }} />
           </div>
           <div className="min-w-0">
-            <p className="font-heading font-semibold text-[14px] leading-tight">{productName}</p>
-            <p className="text-[10.5px] text-sidebar-foreground/50">{productSubtitle}</p>
+            <p className="font-heading font-semibold text-[15px] leading-tight">{productName}</p>
+            <p className="text-[11px] text-sidebar-foreground/60">{productSubtitle}</p>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2.5 py-2 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
           {tabs.map(tab => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -737,7 +737,7 @@ function MobileNavDrawer<T extends string>({
                 key={tab.id}
                 onClick={() => { onTab(tab.id); onOpenChange(false); }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors ${isActive ? 'bg-sidebar-primary text-white font-medium' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent'}`}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 ${isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm' : 'text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent'}`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-left">{tab.label}</span>
@@ -752,7 +752,7 @@ function MobileNavDrawer<T extends string>({
         <button
           type="button"
           onClick={() => { onOpenChange(false); onBack(); }}
-          className="flex items-center gap-2 mx-2.5 mb-2 px-3 py-2.5 rounded-lg text-[13px] text-sidebar-foreground/60 hover:bg-sidebar-accent transition-colors"
+          className="flex items-center gap-2 mx-3 mb-3 px-3 py-3 rounded-xl text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           <ArrowLeft className="w-4 h-4" /> Back to home
         </button>
@@ -773,19 +773,19 @@ function AppHeader({
   title, subtitle, onOpenMobileNav, actions,
 }: { title: string; subtitle: string; onOpenMobileNav: () => void; actions?: React.ReactNode }) {
   return (
-    <header className="bg-card border-b border-border sticky top-0 z-40">
-      <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+    <header className="bg-card/90 backdrop-blur-xl border-b border-border/70 sticky top-0 z-40 shadow-sm">
+      <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onOpenMobileNav}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-colors hover:bg-accent text-muted-foreground"
+            className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl shrink-0 transition-colors hover:bg-accent/70 text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Open navigation menu"
           >
             <Menu className="w-[18px] h-[18px]" />
           </button>
           <div className="min-w-0">
-            <h1 className="font-heading font-semibold text-[15px] leading-tight truncate">{title}</h1>
-            <p className="text-[11px] text-muted-foreground truncate hidden sm:block">{subtitle}</p>
+            <h1 className="font-heading font-semibold text-base leading-tight truncate">{title}</h1>
+            <p className="text-xs text-muted-foreground truncate hidden sm:block">{subtitle}</p>
           </div>
         </div>
         {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}

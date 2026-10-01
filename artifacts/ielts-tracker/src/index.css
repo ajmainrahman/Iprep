@@ -193,40 +193,38 @@
   --sidebar-ring: 148 58% 64%;
 }
 
-/* ── FLY MODE (Attention purple sidebar — strategic, academic, administrative;
-   hue matches the extracted brand palette, #684888) ──────────────────────── */
+/* ── FLY MODE (shared deep-mint navigation for study and application tools) ── */
 .fly-mode {
-  --sidebar: 210 30% 8%;
+  --sidebar: 168 60% 26%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 210 30% 14%;
+  --sidebar-border: 168 40% 34%;
   --sidebar-primary: 148 58% 64%;
   --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 210 30% 14%;
+  --sidebar-accent: 168 40% 34%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 148 58% 64%;
 }
 .fly-mode.dark {
-  --sidebar: 210 30% 6%;
-  --sidebar-border: 210 30% 12%;
-  --sidebar-accent: 210 30% 12%;
+  --sidebar: 168 40% 16%;
+  --sidebar-border: 168 30% 24%;
+  --sidebar-accent: 168 30% 24%;
 }
 
-/* ── STUDY MODE (Energy teal sidebar — focused, personal, learning-oriented;
-   hue matches the extracted brand palette, #108888) ──────────────────────── */
+/* ── STUDY MODE (same palette; content, not navigation color, distinguishes it) */
 .study-mode {
-  --sidebar: 210 30% 9%;
+  --sidebar: 168 60% 26%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 210 30% 15%;
+  --sidebar-border: 168 40% 34%;
   --sidebar-primary: 148 58% 64%;
   --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 210 30% 15%;
+  --sidebar-accent: 168 40% 34%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 148 58% 64%;
 }
 .study-mode.dark {
-  --sidebar: 210 30% 7%;
-  --sidebar-border: 210 30% 13%;
-  --sidebar-accent: 210 30% 13%;
+  --sidebar: 168 40% 16%;
+  --sidebar-border: 168 30% 24%;
+  --sidebar-accent: 168 30% 24%;
 }
 
 /* ── SHARED DESIGN TOKENS (section 2) — spacing, shadow, transition scales.
