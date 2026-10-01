@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -58,19 +57,19 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   /* Brand colours */
-  --color-navy:   #1E1B4B;
-  --color-teal:   #0a6650;
-  --color-glacier: #6ee7c8;
-  --color-sandstone: #c8b08a;
-  --color-indigo: #6366F1;
-  --color-coral:  #FF6B6B;
-  --color-yellow: #FFD166;
-  --color-purple: #6c3fe8;
-  --color-green:  #06D6A0;
-  --color-orange: #F97316;
+  --color-navy:   #1B6B5B;
+  --color-teal:   #1B6B5B;
+  --color-glacier: #6FD9A0;
+  --color-sandstone: #F4A972;
+  --color-indigo: #7668A8;
+  --color-coral:  #F4A972;
+  --color-yellow: #FCE7B8;
+  --color-purple: #7668A8;
+  --color-green:  #6FD9A0;
+  --color-orange: #F4A972;
 
-  --font-sans:    'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
-  --font-heading: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -80,20 +79,20 @@
 
 /* ── LIGHT MODE ────────────────────────────────────────────────────────── */
 :root {
-  --background: 245 20% 97%;
-  --foreground: 224 47% 11%;
+  --background: 44 43% 93%;
+  --foreground: 156 14% 18%;
 
   /* Applications tracker palette */
-  --apps-bg-page: #F7F8FA;
-  --apps-bg-card: #FFFFFF;
-  --apps-border: #E5E7EF;
-  --apps-text-primary: #14142B;
-  --apps-text-secondary: #6B7280;
-  --apps-text-muted: #9CA3AF;
-  --apps-accent: #6c3fe8;
-  --apps-accent-light: #a972ed;
-  --apps-accent-pale: #dae5f7;
-  --apps-progress-track: #EEF0F5;
+  --apps-bg-page: #F5F1E6;
+  --apps-bg-card: #FFFEFC;
+  --apps-border: #E9E5D9;
+  --apps-text-primary: #23322C;
+  --apps-text-secondary: #64736C;
+  --apps-text-muted: #8A9890;
+  --apps-accent: #1B6B5B;
+  --apps-accent-light: #6FD9A0;
+  --apps-accent-pale: #E7F3EB;
+  --apps-progress-track: #EDEAE2;
   --apps-priority-high-bg: #FEE2E2;
   --apps-priority-high: #DC2626;
   --apps-priority-medium-bg: #FEF3C7;
@@ -107,49 +106,49 @@
   --apps-deadline-normal-bg: #F3F4F6;
   --apps-deadline-normal-text: #6B7280;
 
-  --border: 240 14% 89%;
-  --input: 240 14% 89%;
-  --ring: 256 79% 58%;
+  --border: 45 27% 88%;
+  --input: 45 27% 88%;
+  --ring: 148 58% 64%;
 
   --card: 0 0% 100%;
   --card-foreground: 224 47% 11%;
-  --card-border: 240 14% 89%;
+  --card-border: 45 27% 88%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 224 47% 11%;
-  --popover-border: 240 14% 89%;
+  --popover-border: 45 27% 88%;
 
-  --primary: 256 79% 58%;
+  --primary: 168 60% 26%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 30% 14%;
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 251 74% 93%;
+  --secondary-foreground: 156 14% 18%;
 
-  --muted: 240 17% 94%;
-  --muted-foreground: 240 9% 48%;
+  --muted: 45 30% 92%;
+  --muted-foreground: 150 10% 40%;
 
-  --accent: 256 79% 58%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 148 58% 64%;
+  --accent-foreground: 168 60% 20%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 166 82% 22%;
-  --chart-2: 180 79% 30%;
-  --chart-3: 158 64% 52%;
-  --chart-4: 43 96% 56%;
-  --chart-5: 304 89% 28%;
+  --chart-1: 168 60% 26%;
+  --chart-2: 148 58% 64%;
+  --chart-3: 25 86% 70%;
+  --chart-4: 251 27% 45%;
+  --chart-5: 341 58% 50%;
 
-  --sidebar: 224 47% 11%;
+  --sidebar: 156 24% 17%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 224 47% 18%;
-  --sidebar-primary: 166 82% 22%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 224 47% 18%;
+  --sidebar-border: 156 16% 25%;
+  --sidebar-primary: 148 58% 64%;
+  --sidebar-primary-foreground: 168 60% 20%;
+  --sidebar-accent: 156 16% 25%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 166 82% 22%;
 
-  --radius: 0.75rem;
+  --radius: 1rem;
 }
 
 /* ── DARK MODE ─────────────────────────────────────────────────────────── */
@@ -169,8 +168,8 @@
   --popover-foreground: 240 17% 94%;
   --popover-border: 240 20% 18%;
 
-  --primary: 166 82% 22%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 148 58% 64%;
+  --primary-foreground: 168 60% 20%;
 
   --secondary: 210 30% 14%;
   --secondary-foreground: 240 17% 94%;
@@ -178,8 +177,8 @@
   --muted: 224 47% 15%;
   --muted-foreground: 240 9% 68%;
 
-  --accent: 166 82% 22%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 148 58% 64%;
+  --accent-foreground: 168 60% 20%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -187,11 +186,11 @@
   --sidebar: 224 47% 8%;
   --sidebar-foreground: 240 17% 94%;
   --sidebar-border: 240 20% 18%;
-  --sidebar-primary: 166 82% 22%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary: 148 58% 64%;
+  --sidebar-primary-foreground: 168 60% 20%;
   --sidebar-accent: 224 47% 15%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 166 82% 22%;
+  --sidebar-ring: 148 58% 64%;
 }
 
 /* ── FLY MODE (Attention purple sidebar — strategic, academic, administrative;
@@ -200,11 +199,11 @@
   --sidebar: 210 30% 8%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-border: 210 30% 14%;
-  --sidebar-primary: 165 70% 65%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary: 148 58% 64%;
+  --sidebar-primary-foreground: 168 60% 20%;
   --sidebar-accent: 210 30% 14%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 165 70% 65%;
+  --sidebar-ring: 148 58% 64%;
 }
 .fly-mode.dark {
   --sidebar: 210 30% 6%;
@@ -218,11 +217,11 @@
   --sidebar: 210 30% 9%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-border: 210 30% 15%;
-  --sidebar-primary: 165 70% 65%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary: 148 58% 64%;
+  --sidebar-primary-foreground: 168 60% 20%;
   --sidebar-accent: 210 30% 15%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 165 70% 65%;
+  --sidebar-ring: 148 58% 64%;
 }
 .study-mode.dark {
   --sidebar: 210 30% 7%;
