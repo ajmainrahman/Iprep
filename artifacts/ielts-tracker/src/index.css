@@ -56,20 +56,32 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  /* Brand colours */
-  --color-navy:   #1B6B5B;
-  --color-teal:   #1B6B5B;
-  --color-glacier: #6FD9A0;
-  --color-sandstone: #F4A972;
-  --color-indigo: #7668A8;
-  --color-coral:  #F4A972;
-  --color-yellow: #FCE7B8;
-  --color-purple: #7668A8;
-  --color-green:  #6FD9A0;
-  --color-orange: #F4A972;
+  /* Nordic brand colors */
+  --color-nordic-midnight: #17243D;
+  --color-nordic-blue: #233B63;
+  --color-nordic-sea: #176B73;
+  --color-aurora-teal: #19C7B7;
+  --color-aurora-green: #42E6B8;
+  --color-aurora-violet: #7C6CFF;
+  --color-polar-glow: #C56CFF;
+  --color-country-gold: #F2C75C;
+  --color-country-red: #D95757;
+  --color-ice-blue: #A9DCE8;
+  --color-frost: #DDF4F7;
+  /* Existing semantic aliases retained for page-level utilities. */
+  --color-navy: #17243D;
+  --color-teal: #176B73;
+  --color-glacier: #A9DCE8;
+  --color-sandstone: #F2C75C;
+  --color-indigo: #7C6CFF;
+  --color-coral: #D95757;
+  --color-yellow: #F2C75C;
+  --color-purple: #7C6CFF;
+  --color-green: #176B73;
+  --color-orange: #F2C75C;
 
   --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -79,152 +91,187 @@
 
 /* ── LIGHT MODE ────────────────────────────────────────────────────────── */
 :root {
-  --background: 44 43% 93%;
-  --foreground: 156 14% 18%;
+  --background: 210 40% 98%;
+  --foreground: 221 40% 16%;
 
   /* Applications tracker palette */
-  --apps-bg-page: #F5F1E6;
-  --apps-bg-card: #FFFEFC;
-  --apps-border: #E9E5D9;
-  --apps-text-primary: #23322C;
-  --apps-text-secondary: #64736C;
-  --apps-text-muted: #8A9890;
-  --apps-accent: #1B6B5B;
-  --apps-accent-light: #6FD9A0;
-  --apps-accent-pale: #E7F3EB;
-  --apps-progress-track: #EDEAE2;
-  --apps-priority-high-bg: #FEE2E2;
-  --apps-priority-high: #DC2626;
-  --apps-priority-medium-bg: #FEF3C7;
-  --apps-priority-medium: #D97706;
+  --apps-bg-page: #F8FAFC;
+  --apps-bg-card: #FFFFFF;
+  --apps-border: #E3EAF0;
+  --apps-text-primary: #182238;
+  --apps-text-secondary: #64748B;
+  --apps-text-muted: #8290A1;
+  --apps-accent: #176B73;
+  --apps-accent-light: #19C7B7;
+  --apps-accent-pale: #DDF4F7;
+  --apps-progress-track: #E3EAF0;
+  --apps-priority-high-bg: #FCE8E8;
+  --apps-priority-high: #D95757;
+  --apps-priority-medium-bg: #FFF4D6;
+  --apps-priority-medium: #8A681D;
   --apps-priority-low-bg: #F1F5F9;
   --apps-priority-low: #64748B;
-  --apps-deadline-urgent-bg: #FEE2E2;
-  --apps-deadline-urgent-text: #DC2626;
-  --apps-deadline-soon-bg: #FEF3C7;
-  --apps-deadline-soon-text: #B45309;
-  --apps-deadline-normal-bg: #F3F4F6;
-  --apps-deadline-normal-text: #6B7280;
+  --apps-deadline-urgent-bg: #FCE8E8;
+  --apps-deadline-urgent-text: #B33F3F;
+  --apps-deadline-soon-bg: #FFF4D6;
+  --apps-deadline-soon-text: #806018;
+  --apps-deadline-normal-bg: #F1F5F9;
+  --apps-deadline-normal-text: #64748B;
 
-  --border: 45 27% 88%;
-  --input: 45 27% 88%;
-  --ring: 148 58% 64%;
+  --border: 208 30% 92%;
+  --input: 208 30% 92%;
+  --ring: 174 78% 44%;
 
   --card: 0 0% 100%;
-  --card-foreground: 224 47% 11%;
-  --card-border: 45 27% 88%;
+  --card-foreground: 221 40% 16%;
+  --card-border: 208 30% 92%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 224 47% 11%;
-  --popover-border: 45 27% 88%;
+  --popover-foreground: 221 40% 16%;
+  --popover-border: 208 30% 92%;
 
-  --primary: 168 60% 26%;
+  --primary: 218 48% 26%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 251 74% 93%;
-  --secondary-foreground: 156 14% 18%;
+  --secondary: 187 62% 92%;
+  --secondary-foreground: 221 40% 16%;
 
-  --muted: 45 30% 92%;
-  --muted-foreground: 150 10% 40%;
+  --muted: 210 30% 96%;
+  --muted-foreground: 215 16% 47%;
 
-  --accent: 148 58% 64%;
-  --accent-foreground: 168 60% 20%;
+  --accent: 174 78% 44%;
+  --accent-foreground: 221 40% 16%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 63% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 168 60% 26%;
-  --chart-2: 148 58% 64%;
-  --chart-3: 25 86% 70%;
-  --chart-4: 251 27% 45%;
-  --chart-5: 341 58% 50%;
+  --chart-1: 185 67% 27%;
+  --chart-2: 174 78% 44%;
+  --chart-3: 247 100% 71%;
+  --chart-4: 43 85% 65%;
+  --chart-5: 0 63% 60%;
 
-  --sidebar: 156 24% 17%;
+  --sidebar: 219 45% 16%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 156 16% 25%;
-  --sidebar-primary: 148 58% 64%;
-  --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 156 16% 25%;
+  --sidebar-border: 218 48% 26%;
+  --sidebar-primary: 174 78% 44%;
+  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-accent: 218 48% 26%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 166 82% 22%;
+  --sidebar-ring: 174 78% 44%;
 
   --radius: 1rem;
 }
 
 /* ── DARK MODE ─────────────────────────────────────────────────────────── */
 .dark {
-  --background: 224 47% 8%;
-  --foreground: 240 17% 94%;
+  --background: 219 45% 10%;
+  --foreground: 210 40% 98%;
 
-  --border: 240 20% 18%;
-  --input: 240 20% 18%;
-  --ring: 166 82% 22%;
+  --border: 218 35% 24%;
+  --input: 218 35% 24%;
+  --ring: 174 78% 44%;
 
-  --card: 224 47% 11%;
-  --card-foreground: 240 17% 94%;
-  --card-border: 240 20% 18%;
+  --card: 219 38% 13%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 218 35% 24%;
 
-  --popover: 224 47% 11%;
-  --popover-foreground: 240 17% 94%;
-  --popover-border: 240 20% 18%;
+  --popover: 219 38% 13%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 218 35% 24%;
 
-  --primary: 148 58% 64%;
-  --primary-foreground: 168 60% 20%;
+  --primary: 174 78% 44%;
+  --primary-foreground: 220 46% 9%;
 
-  --secondary: 210 30% 14%;
-  --secondary-foreground: 240 17% 94%;
+  --secondary: 218 34% 22%;
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 224 47% 15%;
-  --muted-foreground: 240 9% 68%;
+  --muted: 219 30% 18%;
+  --muted-foreground: 215 20% 72%;
 
-  --accent: 148 58% 64%;
-  --accent-foreground: 168 60% 20%;
+  --accent: 247 100% 71%;
+  --accent-foreground: 220 46% 9%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 63% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 224 47% 8%;
+  --sidebar: 219 45% 10%;
   --sidebar-foreground: 240 17% 94%;
-  --sidebar-border: 240 20% 18%;
-  --sidebar-primary: 148 58% 64%;
-  --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 224 47% 15%;
+  --sidebar-border: 218 35% 24%;
+  --sidebar-primary: 174 78% 44%;
+  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-accent: 218 34% 22%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 148 58% 64%;
+  --sidebar-ring: 174 78% 44%;
 }
 
-/* ── FLY MODE (shared deep-mint navigation for study and application tools) ── */
+/* ── FLY MODE (shared midnight Nordic navigation for study and applications) ── */
 .fly-mode {
-  --sidebar: 168 60% 26%;
+  --sidebar: 219 45% 16%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 168 40% 34%;
-  --sidebar-primary: 148 58% 64%;
-  --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 168 40% 34%;
+  --sidebar-border: 218 48% 26%;
+  --sidebar-primary: 174 78% 44%;
+  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-accent: 218 48% 26%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 148 58% 64%;
+  --sidebar-ring: 174 78% 44%;
 }
 .fly-mode.dark {
-  --sidebar: 168 40% 16%;
-  --sidebar-border: 168 30% 24%;
-  --sidebar-accent: 168 30% 24%;
+  --sidebar: 219 45% 10%;
+  --sidebar-border: 218 35% 24%;
+  --sidebar-accent: 218 34% 22%;
 }
 
 /* ── STUDY MODE (same palette; content, not navigation color, distinguishes it) */
 .study-mode {
-  --sidebar: 168 60% 26%;
+  --sidebar: 219 45% 16%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 168 40% 34%;
-  --sidebar-primary: 148 58% 64%;
-  --sidebar-primary-foreground: 168 60% 20%;
-  --sidebar-accent: 168 40% 34%;
+  --sidebar-border: 218 48% 26%;
+  --sidebar-primary: 174 78% 44%;
+  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-accent: 218 48% 26%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 148 58% 64%;
+  --sidebar-ring: 174 78% 44%;
 }
 .study-mode.dark {
-  --sidebar: 168 40% 16%;
-  --sidebar-border: 168 30% 24%;
-  --sidebar-accent: 168 30% 24%;
+  --sidebar: 219 45% 10%;
+  --sidebar-border: 218 35% 24%;
+  --sidebar-accent: 218 34% 22%;
+}
+
+.fly-mode [aria-current='page'],
+.study-mode [aria-current='page'] {
+  color: hsl(var(--sidebar-primary-foreground)) !important;
+  background-color: #19C7B7 !important;
+  background-image: linear-gradient(90deg, #19C7B7, #7C6CFF) !important;
+  box-shadow: 0 6px 18px rgba(25, 199, 183, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.fly-mode button.bg-primary,
+.study-mode button.bg-primary,
+.landing-page button.bg-primary {
+  background-color: #19C7B7;
+  background-image: linear-gradient(90deg, #19C7B7, #7C6CFF);
+  color: #101827;
+  box-shadow: 0 6px 18px rgba(25, 199, 183, 0.18);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.fly-mode button.bg-primary:hover,
+.study-mode button.bg-primary:hover,
+.landing-page button.bg-primary:hover {
+  filter: saturate(1.08) brightness(1.02);
+  box-shadow: 0 9px 22px rgba(25, 199, 183, 0.22);
+}
+
+.fly-mode nav button:not([aria-current='page']),
+.study-mode nav button:not([aria-current='page']) {
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.fly-mode nav button:not([aria-current='page']):hover,
+.study-mode nav button:not([aria-current='page']):hover {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* ── SHARED DESIGN TOKENS (section 2) — spacing, shadow, transition scales.
