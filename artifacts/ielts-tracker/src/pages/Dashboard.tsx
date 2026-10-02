@@ -100,11 +100,11 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
   }
 
   const cellColor = (mins: number) => {
-    if (mins === 0) return '#e5e7eb';
-    if (mins < 20) return '#c7d2fe';
-    if (mins < 45) return '#818cf8';
-    if (mins < 90) return '#4f46e5';
-    return '#3730a3';
+    if (mins === 0) return '#E8EEF2';
+    if (mins < 20) return '#BCECE5';
+    if (mins < 45) return '#73D7C9';
+    if (mins < 90) return '#249F99';
+    return '#176B73';
   };
 
   const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -147,7 +147,7 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
       {/* Legend */}
       <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
         <span>Less</span>
-        {['#e5e7eb', '#c7d2fe', '#818cf8', '#4f46e5', '#3730a3'].map(c => (
+        {['#E8EEF2', '#BCECE5', '#73D7C9', '#249F99', '#176B73'].map(c => (
           <div key={c} className="h-3 w-3 rounded-sm" style={{ backgroundColor: c }} />
         ))}
         <span>More</span>
@@ -155,7 +155,7 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none"
+          className="fixed z-50 bg-[#17243D] text-white text-xs px-2 py-1.5 rounded-lg shadow-lg pointer-events-none"
           style={{ top: tooltip.y - 36, left: tooltip.x - 20 }}
         >
           {tooltip.date}: {tooltip.mins > 0 ? `${tooltip.mins} min` : 'No study'}
@@ -230,7 +230,7 @@ function ModuleProgressRing({
   const progress = Math.min(100, Math.max(0, target > 0 ? (current / target) * 100 : 0));
 
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div className="flex items-center gap-3 rounded-2xl border border-[#E3EAF0] bg-white p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative h-[76px] w-[76px] shrink-0">
         <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90" role="img" aria-label={`${module} progress`}>
           <circle cx="38" cy="38" r={radius} fill="none" stroke="currentColor" className="text-muted" strokeWidth="7" />
@@ -253,7 +253,7 @@ function ModuleProgressRing({
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}18`, color }}>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}18`, color }}>
             <Icon className="h-3.5 w-3.5" />
           </span>
           <p className="truncate text-sm font-semibold text-foreground">{module}</p>
@@ -316,12 +316,12 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
   }, [sessions]);
 
   return (
-    <Card className="h-full overflow-hidden border-0 shadow-sm">
-      <CardHeader className="border-b border-border/60 bg-[#FCE7B8]/40 pb-4">
+    <Card className="h-full overflow-hidden border border-[#E3EAF0] shadow-[0_8px_30px_rgba(23,36,61,.045)]">
+      <CardHeader className="border-b border-[#E3EAF0] bg-[#FFF9E9] pb-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FCE7B8] text-[#8A5A0A]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F8E8B3] text-[#806018]">
                 <Flame className="h-4 w-4 fill-current" />
               </span>
               Study streak
@@ -329,18 +329,18 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
             <p className="mt-1 text-xs text-muted-foreground">Build a rhythm, one focused session at a time.</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-heading font-bold leading-none text-[#8A5A0A]">{currentStreak}</p>
+            <p className="text-3xl font-heading font-bold leading-none text-[#806018]">{currentStreak}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">days</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-4 sm:p-5">
-        <div className="flex items-center justify-between rounded-2xl border border-[#FCE7B8] bg-[#FCE7B8]/40 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-2xl border border-[#F1E3B8] bg-[#FFFBF1] px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-[#8A5A0A]" />
+            <Trophy className="h-4 w-4 text-[#B08A27]" />
             <span className="text-xs font-medium text-foreground">Your record</span>
           </div>
-          <span className="text-sm font-bold text-[#8A5A0A]">{record} days</span>
+          <span className="text-sm font-bold text-[#806018]">{record} days</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
@@ -350,8 +350,8 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
                 title={`${day.key}: ${day.minutes > 0 ? `${day.minutes} minutes` : 'No study'}`}
                 className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
                   day.active
-                    ? 'bg-[#FCE7B8] text-[#8A5A0A]'
-                    : 'bg-muted/70 text-muted-foreground/40'
+                    ? 'bg-[#FFF0C2] text-[#806018]'
+                    : 'bg-[#F1F5F7] text-[#AAB6C2]'
                 }`}
               >
                 <Flame className={`h-4 w-4 ${day.active ? 'fill-current' : ''}`} />
@@ -362,7 +362,7 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
         </div>
 
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+          <Sparkles className="h-3.5 w-3.5 text-[#7C6CFF]" />
           Activity heatmap
           <span className="ml-auto normal-case tracking-normal font-medium">{activeDays.size} active days</span>
         </div>
@@ -394,7 +394,7 @@ function BandRadar({ scores, targets }: { scores: any[]; targets: Record<string,
   if (!hasData) {
     return (
       <div className="h-48 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-        <span className="text-3xl">📊</span>
+        <Target className="h-7 w-7 text-[#176B73]" />
         <p className="text-sm">Log your first score to see your radar chart.</p>
       </div>
     );
@@ -480,13 +480,12 @@ function WeeklyProgress({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[
-        { label: 'Study Minutes', cur: thisWeekMins, prev: lastWeekMins, unit: 'min', emoji: '⏱️' },
-        { label: 'Practice Logs', cur: thisWeekPractice, prev: lastWeekPractice, unit: '', emoji: '🎯' },
-        { label: 'New Vocab', cur: thisWeekVocab, prev: lastWeekVocab, unit: '', emoji: '📚' },
-        { label: 'Goal Days', cur: daysMet, prev: null, unit: '/7', emoji: '✅' },
-      ].map(({ label, cur, prev, unit, emoji }) => (
+        { label: 'Study Minutes', cur: thisWeekMins, prev: lastWeekMins, unit: 'min' },
+        { label: 'Practice Logs', cur: thisWeekPractice, prev: lastWeekPractice, unit: '' },
+        { label: 'New Vocab', cur: thisWeekVocab, prev: lastWeekVocab, unit: '' },
+        { label: 'Goal Days', cur: daysMet, prev: null, unit: '/7' },
+      ].map(({ label, cur, prev, unit }) => (
         <div key={label} className="flex flex-col gap-1 p-4 rounded-xl bg-white dark:bg-gray-900 border border-border shadow-sm">
-          <span className="text-lg">{emoji}</span>
           <p className="text-2xl font-bold text-foreground">{cur}{unit}</p>
           <p className="text-xs text-muted-foreground font-medium">{label}</p>
           {prev !== null ? <Arrow cur={cur} prev={prev} /> : <span className="text-xs text-muted-foreground">this week</span>}
@@ -565,11 +564,11 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
   };
 
   return (
-    <Card className="shadow-sm border-none h-full">
+    <Card className="shadow-[0_8px_30px_rgba(23,36,61,.045)] border border-[#E3EAF0] h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold flex items-center justify-between gap-2">
+        <CardTitle className="text-base font-semibold flex items-center justify-between gap-2 text-[#17243D]">
           <span className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-teal" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#DDF4F7]"><CalendarIcon className="w-4 h-4 text-[#176B73]" /></span>
             {monthLabel}
           </span>
           <span className="flex items-center gap-1.5">
@@ -585,7 +584,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
       <CardContent>
         <div className="grid grid-cols-7 gap-1 text-center mb-2">
           {DOW.map(d => (
-            <div key={d} className="text-[10px] font-semibold uppercase text-muted-foreground">{d}</div>
+            <div key={d} className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1 mb-4">
@@ -600,12 +599,13 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
                 type="button"
                 key={i}
                 onClick={() => setSelectedDate(cell.dateStr as string)}
-                className={`text-xs rounded-full h-7 w-7 flex items-center justify-center mx-auto font-medium transition-colors ${
-                  isSelected ? 'bg-[#15181A] text-white font-bold' :
-                  isExam ? 'bg-[#FBDCE6] text-[#9C2B55] font-bold' :
-                  hasSessions ? 'bg-[#CFEEE0] text-[#1B6B5B] font-semibold' :
-                  isToday ? 'border border-dashed border-muted-foreground text-foreground' :
-                  'text-foreground hover:bg-muted'
+                aria-label={`${cell.dateStr}${isExam ? ', exam day' : ''}${hasSessions ? ', scheduled study' : ''}`}
+                className={`text-xs rounded-xl h-9 w-9 flex items-center justify-center mx-auto font-medium transition-colors ${
+                  isSelected ? 'bg-[#233B63] text-white font-bold shadow-sm' :
+                  isExam ? 'bg-[#FFF0C2] text-[#806018] font-bold ring-1 ring-[#F2C75C]' :
+                  hasSessions ? 'bg-[#DDF4F7] text-[#176B73] font-semibold' :
+                  isToday ? 'border border-dashed border-[#176B73] text-[#176B73]' :
+                  'text-[#334155] hover:bg-[#F1F7F8]'
                 }`}
               >
                 {cell.label}
@@ -614,7 +614,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
           })}
         </div>
 
-        <div className="border-t border-border pt-3">
+        <div className="border-t border-[#E3EAF0] pt-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-foreground">
               {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -622,33 +622,33 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
             <button
               type="button"
               onClick={() => setShowAddForm(v => !v)}
-              className="flex items-center gap-1 text-xs font-medium text-[#1B6B5B] hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-[#176B73] hover:underline"
             >
               <Plus className="w-3.5 h-3.5" /> Add task
             </button>
           </div>
 
           {showAddForm && (
-            <div className="mb-3 p-3 rounded-lg bg-[#F6FBF8] border border-[#CFEEE0] space-y-2">
+            <div className="mb-3 p-3 rounded-xl bg-[#F3FBFA] border border-[#CDEDE8] space-y-2">
               <input
                 type="text"
                 placeholder="Task title, e.g. Writing Task 2 practice"
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
-                className="w-full text-xs rounded-md border border-border px-2 py-1.5 bg-white"
+                className="w-full text-xs rounded-md border border-[#D9E3E9] px-2 py-1.5 bg-white"
               />
               <div className="flex gap-2">
-                <select value={newModule} onChange={e => setNewModule(e.target.value)} className="flex-1 text-xs rounded-md border border-border px-2 py-1.5 bg-white">
+                <select value={newModule} onChange={e => setNewModule(e.target.value)} className="flex-1 min-w-0 text-xs rounded-md border border-[#D9E3E9] px-2 py-1.5 bg-white">
                   {MODULES_LIST.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} className="text-xs rounded-md border border-border px-2 py-1.5 bg-white" />
-                <input type="number" min={5} step={5} value={newDuration} onChange={e => setNewDuration(Number(e.target.value))} className="w-16 text-xs rounded-md border border-border px-2 py-1.5 bg-white" />
+                <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} className="text-xs rounded-md border border-[#D9E3E9] px-2 py-1.5 bg-white" />
+                <input type="number" min={5} step={5} value={newDuration} onChange={e => setNewDuration(Number(e.target.value))} className="w-16 text-xs rounded-md border border-[#D9E3E9] px-2 py-1.5 bg-white" />
               </div>
               <button
                 type="button"
                 onClick={handleAdd}
                 disabled={addMutation.isPending || !newTitle.trim()}
-                className="w-full text-xs font-medium bg-[#1B6B5B] text-white rounded-md py-1.5 disabled:opacity-50"
+                className="w-full text-xs font-semibold bg-gradient-to-r from-[#19C7B7] to-[#7C6CFF] text-[#17243D] rounded-md py-1.5 disabled:opacity-50"
               >
                 {addMutation.isPending ? 'Saving…' : 'Save task'}
               </button>
@@ -660,13 +660,13 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
           ) : (
             <div className="space-y-2">
               {selectedSessions.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-3 rounded-2xl bg-[#CFEEE0]/60 px-3 py-2.5 text-xs">
+                <div key={s.id} className="flex items-center gap-3 rounded-xl border border-[#DDF4F7] bg-[#F4FBFC] px-3 py-2.5 text-xs">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shrink-0">
-                    <CalendarIcon className="w-3.5 h-3.5 text-[#1B6B5B]" />
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#176B73]" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground truncate">{s.title}</p>
-                    <p className="text-[#1B6B5B]">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
+                    <p className="text-[#64748B]">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
                   </div>
                   <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-[#1B6B5B]/60 hover:text-red-500 shrink-0">
                     <X className="w-3.5 h-3.5" />
@@ -679,7 +679,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
 
         {examDate && (
           <p className="mt-3 text-[10px] text-muted-foreground text-center border-t border-border pt-2">
-            🎓 Exam day: {new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+            Exam day · {new Date(examDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         )}
       </CardContent>
@@ -698,13 +698,13 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
 
   if (!examDate) {
     return (
-      <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-        <CardContent className="p-6 h-full flex flex-col justify-center bg-gray-50 rounded-xl">
+      <Card className="col-span-1 shadow-sm border border-[#E3EAF0]">
+        <CardContent className="p-6 h-full flex flex-col justify-center bg-[#F2F8F9] rounded-xl">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarIcon className="w-5 h-5 text-gray-400" />
-            <h3 className="font-semibold text-lg text-gray-800">Exam Countdown</h3>
+            <CalendarIcon className="w-5 h-5 text-[#176B73]" />
+            <h3 className="font-semibold text-lg text-[#17243D]">Exam Countdown</h3>
           </div>
-          <p className="text-sm text-gray-400">Set your exam date in Settings to see the countdown.</p>
+          <p className="text-sm text-[#64748B]">Set your exam date in Settings to see the countdown.</p>
         </CardContent>
       </Card>
     );
@@ -723,11 +723,13 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
   const isPast = target.getTime() <= now.getTime();
 
   return (
-    <Card className="col-span-1 shadow-lg border-none overflow-hidden">
-      <CardContent className="p-4 h-full flex flex-col justify-center bg-gradient-to-br from-navy to-navy/80 rounded-xl text-white">
+      <Card className="col-span-1 shadow-[0_12px_28px_rgba(23,36,61,.14)] border-none overflow-hidden">
+      <CardContent className="relative p-5 h-full flex flex-col justify-center bg-[#17243D] rounded-xl text-white overflow-hidden">
+        <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
+        <div className="absolute right-8 top-7 h-28 w-28 rounded-full border border-[#19C7B7]/20" />
         {isPast ? (
           <div className="flex flex-col items-center justify-center gap-2 py-4">
-            <span className="text-4xl">🎓</span>
+            <CheckCircle2 className="h-9 w-9 text-[#42E6B8]" />
             <p className="text-sm font-medium text-white/80">Exam day has arrived — good luck!</p>
           </div>
         ) : (
@@ -740,13 +742,13 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
                 { value: seconds, label: 'Secs' },
               ].map(({ value, label }) => (
                 <div key={label} className="flex flex-col items-center bg-white/10 rounded-xl py-2">
-                  <span className="text-xl font-heading font-bold tabular-nums">{pad(value)}</span>
+                  <span className="text-xl font-heading font-bold tabular-nums text-[#F8FAFC]">{pad(value)}</span>
                   <span className="text-[9px] uppercase tracking-wider text-white/60 mt-0.5">{label}</span>
                 </div>
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-medium">
+                  <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-medium">
                 <CalendarIcon className="w-3.5 h-3.5" />
                 {target.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
@@ -770,32 +772,32 @@ function VocabularyProgressCard({ words }: { words: any[] }) {
   const percent = total === 0 ? 0 : (learned / total) * 100;
 
   return (
-    <Card className="shadow-sm border-none">
-      <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4 bg-[#E3DEFA]/40 rounded-xl">
+    <Card className="shadow-[0_8px_30px_rgba(23,36,61,.045)] border border-[#E3EAF0]">
+      <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 bg-white rounded-xl">
         <div className="flex items-center gap-2 shrink-0">
-          <BookOpen className="w-5 h-5 text-[#4A3B8C]" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0EEFF]"><BookOpen className="w-4 h-4 text-[#6A5CE0]" /></span>
           <h3 className="font-semibold text-base text-foreground">Vocabulary Progress</h3>
         </div>
         <div className="flex gap-8 flex-1 justify-around sm:justify-start">
           <div className="text-center sm:text-left">
-            <p className="text-[10px] text-[#4A3B8C] font-bold uppercase tracking-wider mb-0.5">Total</p>
+            <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mb-0.5">Total</p>
             <p className="text-xl font-heading font-bold text-foreground">{total}</p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10px] text-[#1B6B5B] font-bold uppercase tracking-wider mb-0.5">Learned</p>
+            <p className="text-[10px] text-[#176B73] font-bold uppercase tracking-wider mb-0.5">Learned</p>
             <p className="text-xl font-heading font-bold text-foreground">{learned}</p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10px] text-[#8A5A0A] font-bold uppercase tracking-wider mb-0.5">Remaining</p>
+            <p className="text-[10px] text-[#806018] font-bold uppercase tracking-wider mb-0.5">Remaining</p>
             <p className="text-xl font-heading font-bold text-foreground">{remaining}</p>
           </div>
         </div>
         <div className="w-full sm:w-48">
           <div className="flex justify-between text-[10px] font-medium text-muted-foreground mb-1.5">
             <span>Mastery</span>
-            <span className="text-[#4A3B8C] font-semibold">{Math.round(percent)}%</span>
+            <span className="text-[#6A5CE0] font-semibold">{Math.round(percent)}%</span>
           </div>
-          <Progress value={percent} className="h-2 [&>div]:bg-[#4A3B8C] bg-[#E3DEFA]" />
+          <Progress value={percent} className="h-2 [&>div]:bg-[#7C6CFF] bg-[#EEEAFE]" />
         </div>
       </CardContent>
     </Card>
@@ -877,116 +879,125 @@ export function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="study-dashboard space-y-6 sm:space-y-8">
+      <style>{`
+        .study-dashboard { color:#182238; }
+        .study-dashboard .dashboard-card { border:1px solid #E3EAF0; background:#fff; box-shadow:0 8px 28px rgba(23,36,61,.045); }
+        .study-dashboard button { -webkit-tap-highlight-color:transparent; }
+        .study-dashboard .dashboard-entrance { animation:dashboard-enter 520ms cubic-bezier(.2,.75,.25,1) both; }
+        .study-dashboard .dashboard-entrance:nth-child(2) { animation-delay:60ms; }
+        .study-dashboard .dashboard-entrance:nth-child(3) { animation-delay:110ms; }
+        @keyframes dashboard-enter { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @media (prefers-reduced-motion:reduce) { .study-dashboard .dashboard-entrance { animation:none; } }
+      `}</style>
 
-      {/* Hero */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E7ECE9] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#CFEEE0] opacity-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FBDCE6] opacity-40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-        <div className="relative z-10 flex items-center justify-between gap-6">
-          <div>
-            <p className="text-[#1B6B5B] font-medium tracking-wide mb-1 uppercase text-sm">
+      <header className="dashboard-entrance relative isolate overflow-hidden rounded-[26px] bg-[#17243D] px-5 py-6 text-white shadow-[0_16px_36px_rgba(23,36,61,.14)] sm:px-8 sm:py-8 lg:px-10">
+        <div className="pointer-events-none absolute -right-12 -top-28 h-72 w-72 rounded-full border border-white/[.09]" />
+        <div className="pointer-events-none absolute right-10 top-7 h-44 w-44 rounded-full border border-[#19C7B7]/20" />
+        <div className="pointer-events-none absolute bottom-[-90px] left-[38%] h-56 w-56 rounded-full bg-[#176B73]/25 blur-3xl" />
+        <div className="relative flex items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[.2em] text-[#A9DCE8]">
               {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
-            <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-4 text-foreground">
-              Welcome back, {settings?.name || 'Student'}! Keep going.
+            <h1 className="font-heading text-[27px] font-bold leading-tight tracking-[-.035em] text-white sm:text-[36px]">
+              Welcome back, {settings?.name || 'Student'}.
             </h1>
-            <div className="bg-[#F4F5F6] border border-[#E7ECE9] rounded-lg p-4 inline-block">
-              <p className="text-muted-foreground italic font-serif">"{quote}"</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">One focused session at a time. Your IELTS plan is taking shape.</p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button onClick={() => setLocation('/study/study')} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#19C7B7] to-[#7C6CFF] px-4 py-2.5 text-xs font-bold text-[#17243D] shadow-sm transition-transform hover:-translate-y-0.5">
+                <Clock className="h-4 w-4" /> Log a study session
+              </button>
+              <button onClick={() => setLocation('/study/scores')} className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[.07] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/[.13]">
+                View score progress <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
+            <p className="mt-5 max-w-xl border-l-2 border-[#42E6B8]/70 pl-3 text-xs italic leading-5 text-white/65">“{quote}”</p>
           </div>
-          <div className="hidden md:block shrink-0">
-            <DashboardHeroIllustration size={160} />
+          <div className="hidden shrink-0 md:block">
+            <DashboardHeroIllustration size={150} />
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Quick stat row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <button onClick={() => setLocation('/study/study')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #FDEEE8 0%, #FBE9F0 100%)' }}>
-          <div className="flex items-start justify-between">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><Flame className="h-4 w-4" style={{ color: '#EA6A1F' }} /></span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
+      <section className="dashboard-entrance grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Study overview">
+        {[
+          { label: 'Study streak', value: `${calcCurrentStreak(sessions as any[])} ${calcCurrentStreak(sessions as any[]) === 1 ? 'day' : 'days'}`, detail: 'Keep your rhythm', Icon: Flame, tone: '#B88620', bg: '#FFF8E7', action: '/study/study' },
+          { label: 'IELTS exam', value: !hasExamDate ? 'Not set' : daysRemaining < 0 ? 'Passed' : `${daysRemaining} days`, detail: hasExamDate ? 'Time to prepare' : 'Add an exam date', Icon: CalendarIcon, tone: '#176B73', bg: '#EAF8F8', action: '/study/scores' },
+          { label: 'Modules scored', value: `${totalScores.length} / 4`, detail: 'Latest score coverage', Icon: BookOpen, tone: '#6A5CE0', bg: '#F2F0FF', action: '/study/scores' },
+          { label: 'Target band', value: overallTarget.toFixed(1), detail: 'Your overall goal', Icon: Target, tone: '#233B63', bg: '#EEF3F8', action: '/study/scores' },
+        ].map(({ label, value, detail, Icon, tone, bg, action }) => (
+          <button key={label} onClick={() => setLocation(action)} className="dashboard-card group rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5 hover:shadow-md sm:p-5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: bg, color: tone }}><Icon className="h-4 w-4" /></span>
+            <p className="mt-4 text-[11px] font-semibold text-[#64748B]">{label}</p>
+            <div className="mt-1 flex items-end justify-between gap-2">
+              <p className="font-heading text-[22px] font-bold leading-none tracking-tight text-[#17243D] sm:text-2xl">{value}</p>
+              <ChevronRight className="mb-0.5 h-4 w-4 text-[#A8B4C0] transition-transform group-hover:translate-x-0.5" />
+            </div>
+            <p className="mt-2 text-[10px] text-[#8492A2]">{detail}</p>
+          </button>
+        ))}
+      </section>
+
+      <section className="dashboard-entrance grid grid-cols-1 gap-4 lg:grid-cols-[1.05fr_.95fr]">
+        <div className="dashboard-card overflow-hidden rounded-2xl p-5 sm:p-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Your benchmark</p>
+              <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Overall band</h2>
+              <p className="mt-1 text-xs text-[#64748B]">Latest results compared with your goal</p>
+            </div>
+            <span className="rounded-xl bg-[#F2F8F9] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">IELTS</span>
           </div>
-          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Study Streak</p>
-          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{calcCurrentStreak(sessions as any[])} {calcCurrentStreak(sessions as any[]) === 1 ? 'day' : 'days'}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Keep it up!</p>
-        </button>
-
-        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #F3EEFC 0%, #EFEAF9 100%)' }}>
-          <div className="flex items-start justify-between">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><Target className="h-4 w-4" style={{ color: '#6B46C1' }} /></span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
-          </div>
-          <p className="text-[11px] font-semibold text-muted-foreground mt-3">IELTS Exam</p>
-          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{!hasExamDate ? 'Not set' : daysRemaining < 0 ? 'Passed' : `${daysRemaining} days`}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Left to apply</p>
-        </button>
-
-        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #EAFBF5 0%, #E8F5F0 100%)' }}>
-          <div className="flex items-start justify-between">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><BookOpen className="h-4 w-4" style={{ color: '#108888' }} /></span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
-          </div>
-          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Modules</p>
-          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{totalScores.length} / 4</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Completed</p>
-        </button>
-
-        <button onClick={() => setLocation('/study/scores')} className="text-left rounded-2xl p-5 transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(160deg, #DCEFFB 0%, #E4F0FB 100%)' }}>
-          <div className="flex items-start justify-between">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white"><TrendingUp className="h-4 w-4" style={{ color: '#1D6FA5' }} /></span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50 mt-1" />
-          </div>
-          <p className="text-[11px] font-semibold text-muted-foreground mt-3">Target Band</p>
-          <p className="text-2xl font-black leading-none mt-1" style={{ color: '#14142B' }}>{overallTarget.toFixed(1)}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Overall</p>
-        </button>
-      </div>
-
-      {/* Top cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
+        </div>
         <ExamCountdownTimer examDate={hasExamDate ? (settings?.examDate as string) : null} examTime={(settings as any)?.examTime ?? null} />
+      </section>
 
-        <Card className="col-span-1 shadow-sm hover-elevate transition-all border-none">
-          <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center bg-[#F6FBF8] rounded-xl">
-            <h3 className="font-semibold text-base text-foreground mb-2 w-full text-left">Overall Band</h3>
-            <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
-          </CardContent>
-        </Card>
-
-      </div>
-
-      {/* ── Vocabulary Progress ── */}
-      <VocabularyProgressCard words={vocabWords as any[]} />
-
-      {/* ── Lesson Schedule + Study Streak (Band Score vs Target still removed) ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
-        <StreakTracker sessions={sessions as any[]} />
-      </div>
-
-      {/* ── Module Progress ── */}
-      <section>
-        <div className="flex items-center justify-between mb-4 border-l-4 border-teal pl-3">
-          <h2 className="text-2xl font-heading font-bold text-foreground">Module Progress</h2>
+      <section className="dashboard-entrance">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Build your word bank</p>
+            <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Vocabulary progress</h2>
+          </div>
+          <span className="hidden text-xs text-[#64748B] sm:block">Small additions add up</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <VocabularyProgressCard words={vocabWords as any[]} />
+      </section>
+
+      <section className="dashboard-entrance grid grid-cols-1 gap-4 xl:grid-cols-[1.06fr_.94fr]">
+        <div>
+          <div className="mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Make time for practice</p>
+            <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Study schedule</h2>
+          </div>
+          <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
+        </div>
+        <div>
+          <div className="mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Consistency over intensity</p>
+            <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Your study rhythm</h2>
+          </div>
+          <StreakTracker sessions={sessions as any[]} />
+        </div>
+      </section>
+
+      <section className="dashboard-entrance pb-2">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">A clear view of every skill</p>
+            <h2 className="mt-1 font-heading text-xl font-bold tracking-tight text-[#17243D]">Module progress</h2>
+          </div>
+          <button onClick={() => setLocation('/study/scores')} className="inline-flex items-center gap-1 text-xs font-semibold text-[#176B73] hover:underline">All scores <ChevronRight className="h-3.5 w-3.5" /></button>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {['Reading', 'Listening', 'Writing', 'Speaking'].map((mod) => {
             const target = (targets as any)[mod] || 0;
             const current = latestScores[mod] || 0;
             const config = getModuleConfig(mod);
             const Icon = config.icon;
-            return (
-              <ModuleProgressRing
-                key={mod}
-                module={mod}
-                current={current}
-                target={target}
-                color={config.color.includes('coral') ? '#9C2B55' : config.color.includes('green') ? '#1B6B5B' : config.color.includes('purple') ? '#4A3B8C' : '#8A5A0A'}
-                icon={Icon}
-              />
-            );
+            const color = mod === 'Reading' ? '#D95757' : mod === 'Listening' ? '#B08A27' : mod === 'Writing' ? '#176B73' : '#7C6CFF';
+            return <ModuleProgressRing key={mod} module={mod} current={current} target={target} color={color} icon={Icon} />;
           })}
         </div>
       </section>

@@ -1,0 +1,61 @@
+Redesign the entire “Within a Few Weeks — Fly / Higher Study” website with a premium Scandinavian/Nordic visual identity inspired by Northern Lights, Arctic Snow, Nordic Sea, and Denmark–Norway–Sweden–Finland. Remove the current dominant green (#1F7567).
+
+Use this exact color system:
+
+PRIMARY BRAND:
+- Midnight Nordic: #17243D
+- Deep Nordic Blue: #233B63
+- Nordic Sea: #176B73
+
+NORTHERN LIGHT / AURORA:
+- Aurora Teal: #19C7B7
+- Aurora Green: #42E6B8
+- Aurora Violet: #7C6CFF
+- Polar Glow: #C56CFF
+
+NORDIC COUNTRY ACCENTS:
+- Sweden-inspired Gold: #F2C75C
+- Denmark/Norway-inspired Red: #D95757
+- Ice Blue: #A9DCE8
+
+SNOW / NEUTRALS:
+- Snow Background: #F8FAFC
+- Pure Snow: #FFFFFF
+- Frost: #DDF4F7
+- Primary Text: #182238
+- Secondary Text: #64748B
+- Border: #E3EAF0
+
+Use approximately 65% snow/white neutral colors, 20% midnight/deep Nordic blue, 10% Aurora colors, and 5% Nordic red/gold accents.
+
+Design direction:
+- Sidebar: #17243D with white text and icons.
+- Active sidebar item: Aurora gradient from #19C7B7 to #7C6CFF.
+- Main page background: #F8FAFC.
+- Cards: #FFFFFF with #E3EAF0 borders and very subtle shadows.
+- Hero/banner: deep Nordic gradient using #17243D → #233B63 → #176B73, with a subtle Aurora glow.
+- Primary CTA: Aurora gradient #19C7B7 → #7C6CFF.
+- Secondary CTA: #233B63 or white with a #233B63 border.
+- Success/progress: #19C7B7 with soft background #DDF4F7.
+- Scholarships/achievements: #F2C75C with a soft warm background.
+- Deadlines/alerts: #D95757 with a very soft red background.
+- Academic/brand elements: #7C6CFF with soft lavender backgrounds.
+- Information elements: #A9DCE8.
+- Do not make every card colorful; keep most cards white and use color for icons, labels, progress, and important states.
+
+Use these gradients sparingly:
+1. Aurora: linear-gradient(90deg, #19C7B7, #7C6CFF)
+2. Aurora Glow: linear-gradient(90deg, #42E6B8, #7C6CFF, #C56CFF)
+3. Hero: linear-gradient(120deg, #17243D, #233B63, #176B73)
+
+Visual inspiration:
+Northern Lights over Norwegian fjords, snowy Finland, Scandinavian winter landscapes, Nordic architecture, frozen lakes, soft Arctic light, and clean Scandinavian interiors. Use Denmark, Norway, Sweden, and Finland as subtle visual inspiration rather than covering the interface with flags.
+
+Create a calm, spacious, premium Scandinavian experience that feels like:
+“Preparing for my future in the Nordic countries.”
+
+Typography:
+- Headings: Manrope, 700
+- Body/UI: Inter, 400–600
+
+Keep the UI modern, minimal, elegant, highly readable, and consistent across the homepage, dashboard, cards, navigation, buttons, statistics, application sections, IELTS sections, and footer. Avoid the previous dominant green, excessive gradients, neon effects, overly saturated colors, and generic SaaS styling.
