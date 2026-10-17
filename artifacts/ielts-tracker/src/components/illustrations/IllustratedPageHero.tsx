@@ -24,20 +24,20 @@ export function IllustratedPageHero({
   return (
     <div
       className="flex items-center gap-8 rounded-[20px] border p-8 mb-6"
-      style={{ background: "#FFFFFF", borderColor: "#E4DECC" }}
+      style={{ background: "#FFFFFF", borderColor: "#F2C75C" }}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] mb-2" style={{ color: "#1B6B5B" }}>
+        <p className="text-[13px] mb-2" style={{ color: "#176B73" }}>
           {eyebrow}
         </p>
         <h2
           className="text-2xl font-semibold mb-2.5 leading-snug"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: "'Manrope', sans-serif" }}
         >
           {heading}
         </h2>
         {subtitle && (
-          <p className="text-[15px] mb-4 max-w-[46ch] leading-relaxed" style={{ color: "#524E45" }}>
+          <p className="text-[15px] mb-4 max-w-[46ch] leading-relaxed" style={{ color: "#182238" }}>
             {subtitle}
           </p>
         )}
@@ -45,7 +45,7 @@ export function IllustratedPageHero({
           <button
             onClick={onCtaClick}
             className="inline-flex items-center gap-2 rounded-[10px] px-4.5 py-2.5 text-sm font-medium"
-            style={{ background: "#1A1814", color: "#F5F1E6" }}
+            style={{ background: "#B8860B", color: "#FDF8EB" }}
           >
             {ctaLabel}
           </button>

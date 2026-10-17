@@ -205,7 +205,7 @@ export function PracticeTracker() {
       />
 
       {/* Top Tabs */}
-      <div className="flex overflow-x-auto gap-1.5 bg-[#F3F2ED] dark:bg-muted rounded-2xl p-1.5 w-fit">
+      <div className="flex overflow-x-auto gap-1.5 bg-[#F8FAFC] dark:bg-muted rounded-2xl p-1.5 w-fit">
         {(['Reading', 'Listening', 'Writing', 'Speaking'] as const).map(tab => {
           const active = activeTab === tab;
           const s = MODULE_STYLES[tab];
@@ -214,7 +214,7 @@ export function PracticeTracker() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className="px-4 py-2 font-medium text-sm rounded-xl transition-colors whitespace-nowrap"
-              style={active ? { backgroundColor: s.bg, color: s.text } : { color: '#8A897F' }}
+              style={active ? { backgroundColor: s.bg, color: s.text } : { color: '#94A3B8' }}
             >
               {tab}
             </button>
@@ -275,10 +275,10 @@ export function PracticeTracker() {
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                          <PolarGrid stroke="#e5e7eb" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 10 }} />
-                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                          <Radar name="Accuracy %" dataKey="accuracy" stroke="#1D9E75" fill="#1D9E75" fillOpacity={0.35} />
+                          <PolarGrid stroke="#E3EAF0" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10 }} />
+                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94A3B8', fontSize: 10 }} />
+                          <Radar name="Accuracy %" dataKey="accuracy" stroke="#176B73" fill="#176B73" fillOpacity={0.35} />
                           <RechartsTooltip />
                         </RadarChart>
                       </ResponsiveContainer>
@@ -338,11 +338,11 @@ export function PracticeTracker() {
                     <div className="h-[300px] w-full mt-4">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={listeningChartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3EAF0" />
                           <XAxis dataKey="name" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                           <YAxis domain={[0, 10]} tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                           <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.04)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.08)'}} />
-                          <Bar dataKey="avgScore" fill="#7F77DD" radius={[8, 8, 0, 0]} barSize={40} />
+                          <Bar dataKey="avgScore" fill="#7C6CFF" radius={[8, 8, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -403,13 +403,13 @@ export function PracticeTracker() {
                       {writingChartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={writingChartData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E3EAF0" vertical={false} />
                             <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, {month:'short', day:'numeric'})} />
                             <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{fontSize: 10}} />
                             <RechartsTooltip />
                             <Legend iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
-                            <Line type="monotone" name="Task 1" dataKey="Task 1" stroke="#1D9E75" strokeWidth={2} dot={{r: 3}} connectNulls />
-                            <Line type="monotone" name="Task 2" dataKey="Task 2" stroke="#7F77DD" strokeWidth={2} dot={{r: 3}} connectNulls />
+                            <Line type="monotone" name="Task 1" dataKey="Task 1" stroke="#176B73" strokeWidth={2} dot={{r: 3}} connectNulls />
+                            <Line type="monotone" name="Task 2" dataKey="Task 2" stroke="#7C6CFF" strokeWidth={2} dot={{r: 3}} connectNulls />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (
@@ -507,7 +507,7 @@ export function PracticeTracker() {
                             )}
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(l.id)} disabled={deleteLog.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(l.id)} disabled={deleteLog.isPending} className="text-muted-foreground hover:text-[#D95757] shrink-0">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

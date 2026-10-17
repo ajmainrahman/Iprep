@@ -49,10 +49,10 @@ type ReqItem = { label: string; done: boolean; category?: ReqCategory; status?: 
 
 const DOC_STATUS_META: Record<DocStatus, { label: string; color: string; bg: string; dot: string }> = {
   missing:  { label: 'Missing',  color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800',      dot: 'bg-slate-400' },
-  draft:    { label: 'Draft',    color: 'text-amber-700',   bg: 'bg-amber-100 dark:bg-amber-900/30',   dot: 'bg-amber-500' },
-  ready:    { label: 'Ready',    color: 'text-blue-700',    bg: 'bg-blue-100 dark:bg-blue-900/30',     dot: 'bg-blue-500' },
-  uploaded: { label: 'Uploaded', color: 'text-teal-700',    bg: 'bg-teal-100 dark:bg-teal-900/30',     dot: 'bg-teal-500' },
-  verified: { label: 'Verified', color: 'text-emerald-700', bg: 'bg-emerald-100 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
+  draft:    { label: 'Draft',    color: 'text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30',   dot: 'bg-[#F2C75C]' },
+  ready:    { label: 'Ready',    color: 'text-[#233B63]',    bg: 'bg-[#DDF4F7] dark:bg-[#233B63]/30',     dot: 'bg-[#233B63]' },
+  uploaded: { label: 'Uploaded', color: 'text-[#176B73]',    bg: 'bg-[#DDF4F7] dark:bg-[#19C7B7]/30',     dot: 'bg-[#19C7B7]' },
+  verified: { label: 'Verified', color: 'text-[#176B73]', bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30', dot: 'bg-[#42E6B8]' },
 };
 const DOC_STATUS_ORDER: DocStatus[] = ['missing', 'draft', 'ready', 'uploaded', 'verified'];
 // Ongoing = the portal is open right now: start date reached (or none set),
@@ -84,10 +84,10 @@ function isOngoingRecord(record: { app?: Record<string, unknown>; scholarship?: 
 
 function OngoingTag() {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 ring-1 ring-emerald-200">
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#DDF4F7] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#176B73] ring-1 ring-[#A9DCE8]">
       <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#42E6B8] opacity-75" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#42E6B8]" />
       </span>
       Ongoing
     </span>
@@ -103,20 +103,20 @@ function reqIsDone(status: DocStatus): boolean {
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
   researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  shortlisted:    { label: 'Shortlisted',    color: 'text-cyan-700',    bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  supervisor_contact: { label: 'Supervisor Contact', color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
-  preparing:      { label: 'Preparing',      color: 'text-amber-600',   bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  ready_to_apply: { label: 'Ready to Apply', color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  applied:        { label: 'Submitted',      color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  under_review:   { label: 'Under Review',   color: 'text-sky-600',     bg: 'bg-sky-100 dark:bg-sky-900/30' },
-  interview:      { label: 'Interview',      color: 'text-purple-600',  bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  offer:          { label: 'Offer',          color: 'text-green-700',   bg: 'bg-green-100 dark:bg-green-900/30' },
-  accepted:       { label: 'Accepted',       color: 'text-teal-700',    bg: 'bg-teal-100 dark:bg-teal-900/30' },
-  rejected:       { label: 'Rejected',       color: 'text-red-600',     bg: 'bg-red-100 dark:bg-red-900/30' },
-  waitlisted:     { label: 'Waitlisted',     color: 'text-orange-600',  bg: 'bg-orange-100 dark:bg-orange-900/30' },
-  deferred:       { label: 'Deferred',       color: 'text-yellow-600',  bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  shortlisted:    { label: 'Shortlisted',    color: 'text-[#233B63]',    bg: 'bg-[#DDF4F7] dark:bg-[#A9DCE8]/30' },
+  supervisor_contact: { label: 'Supervisor Contact', color: 'text-[#6A5CE0]', bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
+  preparing:      { label: 'Preparing',      color: 'text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
+  ready_to_apply: { label: 'Ready to Apply', color: 'text-[#176B73]', bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
+  applied:        { label: 'Submitted',      color: 'text-[#233B63]',    bg: 'bg-[#DDF4F7] dark:bg-[#233B63]/30' },
+  under_review:   { label: 'Under Review',   color: 'text-[#233B63]',     bg: 'bg-[#DDF4F7] dark:bg-[#A9DCE8]/30' },
+  interview:      { label: 'Interview',      color: 'text-[#6A5CE0]',  bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
+  offer:          { label: 'Offer',          color: 'text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
+  accepted:       { label: 'Accepted',       color: 'text-[#176B73]',    bg: 'bg-[#DDF4F7] dark:bg-[#19C7B7]/30' },
+  rejected:       { label: 'Rejected',       color: 'text-[#D95757]',     bg: 'bg-[#FBEEEE] dark:bg-[#D95757]/30' },
+  waitlisted:     { label: 'Waitlisted',     color: 'text-[#B8860B]',  bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
+  deferred:       { label: 'Deferred',       color: 'text-[#B8860B]',  bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
   withdrawn:      { label: 'Not Applied',    color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  missed_deadline:{ label: 'Missed Deadline',color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30' },
+  missed_deadline:{ label: 'Missed Deadline',color: 'text-[#D95757]',     bg: 'bg-[#FBEEEE] dark:bg-[#D95757]/30' },
 };
 
 /* Scholarship status colors now use pastel hex (matching @/lib/flyStyles'
@@ -129,18 +129,18 @@ const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: str
    code (e.g. UnifiedRecordCard, which renders this polymorphically alongside
    APP_STATUS_META) keeps working with no changes. */
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string; bg: string }> = {
-  researching:   { label: 'Researching',   color: 'text-[#3D4148] dark:text-[#3D4148]',   bg: 'bg-[#ECEDEF] dark:bg-[#ECEDEF]/20' },
-  eligible:      { label: 'Eligible',      color: 'text-[#2C4A36] dark:text-[#2C4A36]',   bg: 'bg-[#DEEFE3] dark:bg-[#DEEFE3]/20' },
-  shortlisted:   { label: 'Shortlisted',   color: 'text-[#3C3489] dark:text-[#3C3489]',   bg: 'bg-[#E6E3F6] dark:bg-[#E6E3F6]/20' },
-  preparing:     { label: 'Preparing',     color: 'text-[#5C441F] dark:text-[#5C441F]',   bg: 'bg-[#FBEDD2] dark:bg-[#FBEDD2]/20' },
-  applying:      { label: 'Applying',      color: 'text-[#72243E] dark:text-[#72243E]',   bg: 'bg-[#FBE4EC] dark:bg-[#FBE4EC]/20' },
-  applied:       { label: 'Applied',       color: 'text-[#1E3A6B] dark:text-[#1E3A6B]',   bg: 'bg-[#E1EBFB] dark:bg-[#E1EBFB]/20' },
-  under_review:  { label: 'Under Review',  color: 'text-[#1C4F5C] dark:text-[#1C4F5C]',   bg: 'bg-[#DDF1F6] dark:bg-[#DDF1F6]/20' },
-  interview:     { label: 'Interview',     color: 'text-[#402C56] dark:text-[#402C56]',   bg: 'bg-[#EAD4FB] dark:bg-[#EAD4FB]/20' },
-  awarded:       { label: 'Awarded',       color: 'text-[#1D5C36] dark:text-[#1D5C36]',   bg: 'bg-[#DCF3E4] dark:bg-[#DCF3E4]/20' },
-  rejected:      { label: 'Rejected',      color: 'text-[#7A2020] dark:text-[#7A2020]',   bg: 'bg-[#FBE0E0] dark:bg-[#FBE0E0]/20' },
-  expired:       { label: 'Expired',       color: 'text-[#444441] dark:text-[#444441]',   bg: 'bg-[#EFEEE9] dark:bg-[#EFEEE9]/20' },
-  not_eligible:  { label: 'Not Eligible',  color: 'text-[#791F1F] dark:text-[#791F1F]',   bg: 'bg-[#FBE4E4] dark:bg-[#FBE4E4]/20' },
+  researching:   { label: 'Researching',   color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
+  eligible:      { label: 'Eligible',      color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  shortlisted:   { label: 'Shortlisted',   color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
+  preparing:     { label: 'Preparing',     color: 'text-[#B8860B] dark:text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#FDF8EB]/20' },
+  applying:      { label: 'Applying',      color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F4ECFF] dark:bg-[#F4ECFF]/20' },
+  applied:       { label: 'Applied',       color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  under_review:  { label: 'Under Review',  color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  interview:     { label: 'Interview',     color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
+  awarded:       { label: 'Awarded',       color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  rejected:      { label: 'Rejected',      color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
+  expired:       { label: 'Expired',       color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
+  not_eligible:  { label: 'Not Eligible',  color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
 };
 
 // Legacy → Phase 2 status mapping. Old rows keep their raw DB value until the user
@@ -170,8 +170,8 @@ function normalizeFundingType(raw: unknown): string {
 const DEGREE_LEVELS = ["Bachelor's", "Master's", 'PhD', 'Postdoc', 'Diploma / Certificate', 'Other'] as const;
 
 const PRIORITY_META: Record<Priority, { label: string; color: string; bg: string; dot: string }> = {
-  high:   { label: 'High',   color: 'text-red-600',    bg: 'bg-red-50 border-red-200 dark:bg-red-900/20',       dot: 'bg-red-500' },
-  medium: { label: 'Medium', color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200 dark:bg-orange-900/20', dot: 'bg-orange-400' },
+  high:   { label: 'High',   color: 'text-[#D95757]',    bg: 'bg-[#FBEEEE] border-[#FBEEEE] dark:bg-[#D95757]/20',       dot: 'bg-[#D95757]' },
+  medium: { label: 'Medium', color: 'text-[#F2C75C]', bg: 'bg-[#FDF8EB] border-[#F2C75C] dark:bg-[#F2C75C]/20', dot: 'bg-[#F2C75C]' },
   low:    { label: 'Low',    color: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200 dark:bg-slate-800',    dot: 'bg-slate-400' },
 };
 
@@ -348,7 +348,7 @@ function DeadlineCue({ deadline }: { deadline: unknown }) {
   const urgent = days !== null && days >= 0 && days <= 7;
   const soon = days !== null && days > 7 && days <= 30;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium ${urgent ? 'text-red-600' : soon ? 'text-amber-700' : 'text-muted-foreground'}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-medium ${urgent ? 'text-[#D95757]' : soon ? 'text-[#B8860B]' : 'text-muted-foreground'}`}>
       <CalendarDays className="h-3.5 w-3.5" />
       {date ? fmtDate(date) : 'No deadline'}
       {days !== null && days >= 0 && <span className="font-bold">· {days === 0 ? 'Today' : `${days}d left`}</span>}
@@ -377,7 +377,7 @@ function computeReadiness(app: TrackedRow): number {
 }
 
 function ReadinessBar({ value, compact = false }: { value: number; compact?: boolean }) {
-  const tone = value >= 70 ? '#16a34a' : value >= 40 ? '#d97706' : '#94a3b8';
+  const tone = value >= 70 ? '#176B73' : value >= 40 ? '#B8860B' : '#94A3B8';
   return (
     <div className="flex items-center gap-2" data-testid="readiness-bar">
       <div className={`flex-1 overflow-hidden rounded-full bg-muted ${compact ? 'h-1' : 'h-1.5'}`}>
@@ -392,11 +392,11 @@ function ReadinessBar({ value, compact = false }: { value: number; compact?: boo
 type UrgencyTier = 'critical' | 'upcoming' | 'soon' | 'later' | 'none';
 function deadlineUrgency(days: number | null): { tier: UrgencyTier; text: string; className: string } {
   if (days === null) return { tier: 'none', text: 'No deadline', className: 'text-muted-foreground' };
-  if (days < 0) return { tier: 'critical', text: 'Deadline passed', className: 'text-red-600 font-semibold' };
-  if (days === 0) return { tier: 'critical', text: 'Due today · Critical', className: 'text-red-600 font-semibold' };
-  if (days <= 7) return { tier: 'critical', text: `${days} day${days === 1 ? '' : 's'} left · Critical`, className: 'text-red-600 font-semibold' };
-  if (days <= 30) return { tier: 'upcoming', text: `${days} days left · Upcoming`, className: 'text-orange-600 font-medium' };
-  if (days <= 60) return { tier: 'soon', text: `${days} days left · Soon`, className: 'text-amber-600 font-medium' };
+  if (days < 0) return { tier: 'critical', text: 'Deadline passed', className: 'text-[#D95757] font-semibold' };
+  if (days === 0) return { tier: 'critical', text: 'Due today · Critical', className: 'text-[#D95757] font-semibold' };
+  if (days <= 7) return { tier: 'critical', text: `${days} day${days === 1 ? '' : 's'} left · Critical`, className: 'text-[#D95757] font-semibold' };
+  if (days <= 30) return { tier: 'upcoming', text: `${days} days left · Upcoming`, className: 'text-[#B8860B] font-medium' };
+  if (days <= 60) return { tier: 'soon', text: `${days} days left · Soon`, className: 'text-[#B8860B] font-medium' };
   return { tier: 'later', text: `${days} days left`, className: 'text-muted-foreground' };
 }
 
@@ -459,11 +459,11 @@ function NoticeBoardCard({
   });
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-sm ${boardKey === 'left' ? 'bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/60 dark:from-indigo-950/30 dark:via-card dark:to-sky-950/20' : 'bg-gradient-to-br from-amber-50/90 via-white to-rose-50/60 dark:from-amber-950/20 dark:via-card dark:to-rose-950/20'}`}>
-      <div className={`h-1 ${boardKey === 'left' ? 'bg-gradient-to-r from-indigo-500 to-sky-400' : 'bg-gradient-to-r from-amber-400 to-rose-400'}`} />
+    <Card className={`overflow-hidden border-0 shadow-sm ${boardKey === 'left' ? 'bg-gradient-to-br from-[#F2F0FF]/90 via-white to-[#DDF4F7]/60 dark:from-[#7C6CFF]/30 dark:via-card dark:to-[#A9DCE8]/20' : 'bg-gradient-to-br from-[#FDF8EB]/90 via-white to-[#FBEEEE]/60 dark:from-[#F2C75C]/20 dark:via-card dark:to-[#D95757]/20'}`}>
+      <div className={`h-1 ${boardKey === 'left' ? 'bg-gradient-to-r from-[#7C6CFF] to-[#A9DCE8]' : 'bg-gradient-to-r from-[#F2C75C] to-[#D95757]'}`} />
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${boardKey === 'left' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'}`}>
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${boardKey === 'left' ? 'bg-[#F2F0FF] text-[#6A5CE0] dark:bg-[#7C6CFF]/40 dark:text-[#DAD6FF]' : 'bg-[#FDF8EB] text-[#B8860B] dark:bg-[#F2C75C]/40 dark:text-[#F2C75C]'}`}>
             <Bell className="w-4 h-4" />
           </div>
           {editing ? (
@@ -692,7 +692,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
 
   function TypeMark({ type }: { type: UnifiedRecord['type'] }) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ borderColor: type === 'scholarship' ? '#f4c978' : type === 'both' ? '#a6b7f7' : '#9adfd2', color: type === 'scholarship' ? '#9a6700' : type === 'both' ? '#4654a8' : '#087f73', backgroundColor: type === 'scholarship' ? '#fff8e8' : type === 'both' ? '#f1f3ff' : '#eefbf8' }}>
+      <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ borderColor: type === 'scholarship' ? '#F2C75C' : type === 'both' ? '#DAD6FF' : '#A9DCE8', color: type === 'scholarship' ? '#B8860B' : type === 'both' ? '#7C6CFF' : '#176B73', backgroundColor: type === 'scholarship' ? '#FDF8EB' : type === 'both' ? '#F2F0FF' : '#DDF4F7' }}>
         {type === 'scholarship' ? <Trophy className="h-3 w-3" /> : type === 'both' ? <CircleCheckBig className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
         {type === 'both' ? 'Combined target' : type === 'scholarship' ? 'Scholarship' : 'Application'}
       </span>
@@ -702,7 +702,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
   function DeadlineLabel({ deadline }: { deadline: string | null }) {
     const days = daysUntil(deadline || '');
     return (
-      <div className={`flex items-center gap-2 text-xs ${days !== null && days >= 0 && days <= 7 ? 'text-red-600' : days !== null && days >= 0 && days <= 30 ? 'text-amber-700' : 'text-muted-foreground'}`}>
+      <div className={`flex items-center gap-2 text-xs ${days !== null && days >= 0 && days <= 7 ? 'text-[#D95757]' : days !== null && days >= 0 && days <= 30 ? 'text-[#B8860B]' : 'text-muted-foreground'}`}>
         <CalendarDays className="h-3.5 w-3.5 shrink-0" />
         <span>{deadline ? fmtDate(deadline) : 'No deadline set'}</span>
         {days !== null && (
@@ -720,7 +720,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     const application = record.app;
     const scholarship = record.scholarship;
     return (
-      <article data-testid={`unified-record-${record.key}`} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${timeline ? 'bg-white/90' : 'bg-white'}`} style={{ borderColor: record.type === 'both' ? '#bfc8fa' : 'var(--apps-border)', boxShadow: '0 1px 2px rgba(20, 20, 43, 0.04)' }}>
+      <article data-testid={`unified-record-${record.key}`} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${timeline ? 'bg-white/90' : 'bg-white'}`} style={{ borderColor: record.type === 'both' ? '#DAD6FF' : 'var(--apps-border)', boxShadow: '0 1px 2px rgba(35, 59, 99, 0.04)' }}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -731,22 +731,22 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{recordSubtitle(record)}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {application && <button type="button" data-testid={`button-open-application-${application.id}`} onClick={() => onTabChange('applications')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#eefbf8] hover:text-[#087f73]" title="Open application" aria-label="Open application"><GraduationCap className="h-4 w-4" /></button>}
-            {scholarship && <button type="button" data-testid={`button-open-scholarship-${scholarship.id}`} onClick={() => onTabChange('scholarships')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#fff8e8] hover:text-[#9a6700]" title="Open scholarship" aria-label="Open scholarship"><Trophy className="h-4 w-4" /></button>}
+            {application && <button type="button" data-testid={`button-open-application-${application.id}`} onClick={() => onTabChange('applications')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#DDF4F7] hover:text-[#176B73]" title="Open application" aria-label="Open application"><GraduationCap className="h-4 w-4" /></button>}
+            {scholarship && <button type="button" data-testid={`button-open-scholarship-${scholarship.id}`} onClick={() => onTabChange('scholarships')} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[#FDF8EB] hover:text-[#B8860B]" title="Open scholarship" aria-label="Open scholarship"><Trophy className="h-4 w-4" /></button>}
           </div>
         </div>
 
         {record.type === 'both' && (
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#dce5f1] bg-[#f6f9fc] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#5f7187]">Application status</p>
-              <p className="mt-1 text-sm font-semibold text-[#26384c]">{statusLabel(application?.status, 'application')}</p>
-              <p className="mt-1 text-[11px] text-[#6f8194]">{String(application?.universityName || '')}</p>
+            <div className="rounded-xl border border-[#DDF4F7] bg-[#DDF4F7] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#5F7187]">Application status</p>
+              <p className="mt-1 text-sm font-semibold text-[#233B63]">{statusLabel(application?.status, 'application')}</p>
+              <p className="mt-1 text-[11px] text-[#6F8194]">{String(application?.universityName || '')}</p>
             </div>
-            <div className="rounded-xl border border-[#f2e4c8] bg-[#fffaf0] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#8f6f2c]">Scholarship status</p>
-              <p className="mt-1 text-sm font-semibold text-[#654f18]">{statusLabel(scholarship?.status, 'scholarship')}</p>
-              <p className="mt-1 text-[11px] text-[#947c42]">{String(scholarship?.fundingType || 'Funding opportunity')}</p>
+            <div className="rounded-xl border border-[#F2C75C] bg-[#FDF8EB] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#B8860B]">Scholarship status</p>
+              <p className="mt-1 text-sm font-semibold text-[#B8860B]">{statusLabel(scholarship?.status, 'scholarship')}</p>
+              <p className="mt-1 text-[11px] text-[#B8860B]">{String(scholarship?.fundingType || 'Funding opportunity')}</p>
             </div>
           </div>
         )}
@@ -771,7 +771,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground"><ClipboardList className="h-3.5 w-3.5" />Documents / requirements</p>
             <span className="text-xs font-bold text-foreground">{doneCount}/{reqs.length} done</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[#edf0f4]"><div className="h-full rounded-full bg-[#12a594] transition-all" style={{ width: `${progress}%` }} /></div>
+          <div className="h-2 overflow-hidden rounded-full bg-[#EDF0F4]"><div className="h-full rounded-full bg-[#176B73] transition-all" style={{ width: `${progress}%` }} /></div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-xs text-muted-foreground" style={{ borderColor: 'var(--apps-border)' }}>
@@ -791,16 +791,16 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
       <button type="button" data-testid={`button-toggle-country-${country}`} onClick={() => setCollapsedCountries(previous => ({ ...previous, [country]: !previous[country] }))} className="mb-3 flex w-full items-center gap-2 text-left">
         {collapsedCountries[country] ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         <span className="text-sm font-bold tracking-tight text-foreground">{country}</span>
-        <span className="rounded-full bg-[#edf0f4] px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{groups[country].length}</span>
+        <span className="rounded-full bg-[#EDF0F4] px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{groups[country].length}</span>
         <span className="text-[10px] text-muted-foreground">{groups[country].filter(record => record.app).length} apps · {groups[country].filter(record => record.scholarship).length} scholarships</span>
         <div className="ml-2 h-px flex-1 bg-border" />
       </button>
       {!collapsedCountries[country] && (
         <div className={timeline ? 'relative space-y-4 pl-7' : 'space-y-3'}>
-          {timeline && <div className="absolute bottom-3 left-2.5 top-2 w-px bg-[#dce5f1]" />}
+          {timeline && <div className="absolute bottom-3 left-2.5 top-2 w-px bg-[#DDF4F7]" />}
           {groups[country].map(record => timeline ? (
             <div key={record.key} className="relative">
-              <span className="absolute -left-[1.42rem] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#12a594] shadow-sm" />
+              <span className="absolute -left-[1.42rem] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#176B73] shadow-sm" />
               <UnifiedRecordCard record={record} timeline />
             </div>
           ) : <UnifiedRecordCard key={record.key} record={record} />)}
@@ -811,30 +811,30 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
 
   return (
     <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
-      <div className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-[0_16px_40px_rgba(31,41,76,0.16)] sm:p-8" style={{ background: 'linear-gradient(115deg, #17223b 0%, #263f63 52%, #147f79 100%)' }}>
-        <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#89e4d7]/15 blur-3xl" />
-        <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-[#f6c976]/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-[0_16px_40px_rgba(35, 59, 99, 0.16)] sm:p-8" style={{ background: 'linear-gradient(115deg, #17243D 0%, #233B63 52%, #176B73 100%)' }}>
+        <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#A9DCE8]/15 blur-3xl" />
+        <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-[#F2C75C]/10 blur-3xl" />
         <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div className="max-w-2xl">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#a7e8df]">Fly · Higher Study</p>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#A9DCE8]">Fly · Higher Study</p>
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Everything that moves your future forward.</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/70">One focused view for university applications and funding opportunities, ordered by what needs your attention next.</p>
           </div>
           <div className="flex shrink-0 gap-2">
             <Button size="sm" data-testid="button-overview-add-application" onClick={() => onTabChange('applications')} className="border border-white/20 bg-white/10 text-white hover:bg-white/20"><GraduationCap className="mr-1.5 h-3.5 w-3.5" />Add application</Button>
-            <Button size="sm" data-testid="button-overview-add-scholarship" onClick={() => onTabChange('scholarships')} className="bg-[#f6c976] text-[#3f3214] hover:bg-[#f9d998]"><Trophy className="mr-1.5 h-3.5 w-3.5" />Add scholarship</Button>
+            <Button size="sm" data-testid="button-overview-add-scholarship" onClick={() => onTabChange('scholarships')} className="bg-[#F2C75C] text-[#B8860B] hover:bg-[#F2C75C]"><Trophy className="mr-1.5 h-3.5 w-3.5" />Add scholarship</Button>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#eefbf8', ink: '#087f73', testId: 'total-applications' },
-          { label: 'Scholarships', value: scholarshipRows.length, icon: Trophy, tone: '#fff8e8', ink: '#9a6700', testId: 'total-scholarships' },
-          { label: 'Docs / requirements', value: `${completedRequirementItems}/${totalRequirementItems}`, icon: ClipboardList, tone: '#f1f3ff', ink: '#4654a8', testId: 'completed-requirements' },
-          { label: 'Due in 30 days', value: next30Days.length, icon: CalendarClock, tone: '#fff0ed', ink: '#c64b3c', testId: 'upcoming-deadlines' },
+          { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#DDF4F7', ink: '#176B73', testId: 'total-applications' },
+          { label: 'Scholarships', value: scholarshipRows.length, icon: Trophy, tone: '#FDF8EB', ink: '#B8860B', testId: 'total-scholarships' },
+          { label: 'Docs / requirements', value: `${completedRequirementItems}/${totalRequirementItems}`, icon: ClipboardList, tone: '#F2F0FF', ink: '#7C6CFF', testId: 'completed-requirements' },
+          { label: 'Due in 30 days', value: next30Days.length, icon: CalendarClock, tone: '#FBEEEE', ink: '#D95757', testId: 'upcoming-deadlines' },
         ].map(stat => (
-          <div key={stat.label} data-testid={`unified-stat-${stat.testId}`} className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
+          <div key={stat.label} data-testid={`unified-stat-${stat.testId}`} className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
             <div className="flex items-start justify-between gap-2">
               <div><p className="font-heading text-2xl font-bold" style={{ color: 'var(--apps-text-primary)' }}>{stat.value}</p><p className="mt-1 text-[11px] font-medium text-muted-foreground">{stat.label}</p></div>
               <span className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: stat.tone, color: stat.ink }}><stat.icon className="h-4 w-4" /></span>
@@ -843,61 +843,61 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         ))}
       </div>
 
-      <div data-testid="overview-ongoing-card" className="rounded-2xl border border-[#bfe8d6] bg-[#f3fcf8] p-4 shadow-[0_10px_28px_rgba(16,140,110,0.08)] sm:p-5">
+      <div data-testid="overview-ongoing-card" className="rounded-2xl border border-[#A9DCE8] bg-[#DDF4F7] p-4 shadow-[0_10px_28px_rgba(23, 107, 115, 0.08)] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex min-w-0 items-start gap-3 lg:w-[31%]">
-            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#a6e6cd]">
-              <span className="absolute h-3 w-3 animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative h-3 w-3 rounded-full bg-emerald-600" />
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#A9DCE8]">
+              <span className="absolute h-3 w-3 animate-ping rounded-full bg-[#42E6B8] opacity-60" />
+              <span className="relative h-3 w-3 rounded-full bg-[#176B73]" />
             </span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0f7a5c]">Ongoing now</p>
-              <h3 className="mt-1 text-lg font-bold tracking-tight text-[#0f3d2e]">{ongoingRecords.length ? `${ongoingRecords.length} portal${ongoingRecords.length === 1 ? '' : 's'} open right now` : 'Nothing ongoing right now'}</h3>
-              <p className="mt-1 text-xs text-[#4f8a75]">{ongoingRecords.length ? 'Applications and scholarships that have opened and are still before their deadline.' : 'Add a start date and deadline to a target and it will appear here while it is open.'}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#176B73]">Ongoing now</p>
+              <h3 className="mt-1 text-lg font-bold tracking-tight text-[#176B73]">{ongoingRecords.length ? `${ongoingRecords.length} portal${ongoingRecords.length === 1 ? '' : 's'} open right now` : 'Nothing ongoing right now'}</h3>
+              <p className="mt-1 text-xs text-[#176B73]">{ongoingRecords.length ? 'Applications and scholarships that have opened and are still before their deadline.' : 'Add a start date and deadline to a target and it will appear here while it is open.'}</p>
             </div>
           </div>
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {ongoingRecords.slice(0, 6).map(record => {
               const days = daysUntil(record.deadline || '');
               return (
-                <button type="button" data-testid={`button-ongoing-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#cdeee0] bg-white/80 p-3 text-left transition-colors hover:bg-white">
+                <button type="button" data-testid={`button-ongoing-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#A9DCE8] bg-white/80 p-3 text-left transition-colors hover:bg-white">
                   <div className="flex items-center justify-between gap-2">
                     <TypeMark type={record.type} />
-                    <span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-red-600' : 'text-emerald-700'}`}>{days === null ? 'Open' : days === 0 ? 'Today' : `${days}d left`}</span>
+                    <span className={`text-xs font-bold ${days !== null && days <= 7 ? 'text-[#D95757]' : 'text-[#176B73]'}`}>{days === null ? 'Open' : days === 0 ? 'Today' : `${days}d left`}</span>
                   </div>
-                  <p className="mt-2 line-clamp-2 text-xs font-bold leading-snug text-[#0f3d2e]" title={recordTitle(record)}>{recordTitle(record)}</p>
-                  <p className="mt-1.5 text-[10px] text-[#4f8a75]">{record.deadline ? `Closes ${fmtDate(record.deadline)}` : 'No deadline set'}</p>
+                  <p className="mt-2 line-clamp-2 text-xs font-bold leading-snug text-[#176B73]" title={recordTitle(record)}>{recordTitle(record)}</p>
+                  <p className="mt-1.5 text-[10px] text-[#176B73]">{record.deadline ? `Closes ${fmtDate(record.deadline)}` : 'No deadline set'}</p>
                 </button>
               );
             })}
-            {ongoingRecords.length > 6 && <p className="px-1 text-[11px] text-[#4f8a75] sm:col-span-3">+{ongoingRecords.length - 6} more ongoing. Open Applications or Scholarships to see them all.</p>}
-            {ongoingRecords.length === 0 && <div className="flex items-center justify-center rounded-xl border border-dashed border-[#cdeee0] p-4 text-xs text-[#4f8a75] sm:col-span-3">Nothing open right now.</div>}
+            {ongoingRecords.length > 6 && <p className="px-1 text-[11px] text-[#176B73] sm:col-span-3">+{ongoingRecords.length - 6} more ongoing. Open Applications or Scholarships to see them all.</p>}
+            {ongoingRecords.length === 0 && <div className="flex items-center justify-center rounded-xl border border-dashed border-[#A9DCE8] p-4 text-xs text-[#176B73] sm:col-span-3">Nothing open right now.</div>}
           </div>
         </div>
       </div>
 
-      <div data-testid="overview-priority-actions" className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,20,43,0.04)] sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+      <div data-testid="overview-priority-actions" className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)] sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#c64b3c]">Next actions</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#D95757]">Next actions</p>
             <h3 className="mt-1 text-xl font-bold tracking-tight">Priority actions</h3>
             <p className="mt-1 text-xs text-muted-foreground">Deadline proximity, priority, status, and incomplete requirements decide what rises to the top.</p>
           </div>
-          <span className="hidden rounded-full bg-[#fff0ed] px-2.5 py-1 text-[10px] font-bold text-[#c64b3c] sm:block">{priorityActions.length} to review</span>
+          <span className="hidden rounded-full bg-[#FBEEEE] px-2.5 py-1 text-[10px] font-bold text-[#D95757] sm:block">{priorityActions.length} to review</span>
         </div>
         {priorityActions.length === 0 ? (
-          <div data-testid="overview-priority-actions-empty" className="mt-4 rounded-xl border border-dashed border-border bg-[#fbfcfd] p-5 text-center text-xs text-muted-foreground">You’re all clear for now. Add a target or a deadline to keep your plan moving.</div>
+          <div data-testid="overview-priority-actions-empty" className="mt-4 rounded-xl border border-dashed border-border bg-[#DDF4F7] p-5 text-center text-xs text-muted-foreground">You’re all clear for now. Add a target or a deadline to keep your plan moving.</div>
         ) : (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {priorityActions.map(({ record, task, openRequirements }) => (
-              <div key={record.key} data-testid={`priority-action-${record.key}`} className="flex min-w-0 items-center gap-3 rounded-xl border bg-[#fbfcfd] p-3.5" style={{ borderColor: 'var(--apps-border)' }}>
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${record.priority === 'high' ? 'bg-red-500' : record.priority === 'medium' ? 'bg-orange-400' : 'bg-slate-400'}`} title={`${PRIORITY_META[record.priority].label} priority`} />
+              <div key={record.key} data-testid={`priority-action-${record.key}`} className="flex min-w-0 items-center gap-3 rounded-xl border bg-[#DDF4F7] p-3.5" style={{ borderColor: 'var(--apps-border)' }}>
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${record.priority === 'high' ? 'bg-[#D95757]' : record.priority === 'medium' ? 'bg-[#F2C75C]' : 'bg-slate-400'}`} title={`${PRIORITY_META[record.priority].label} priority`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-bold text-foreground">{recordTitle(record)}</p>
                     <TypeMark type={record.type} />
                   </div>
-                  <p className="mt-1 truncate text-xs font-semibold text-[#4654a8]">{task}</p>
+                  <p className="mt-1 truncate text-xs font-semibold text-[#7C6CFF]">{task}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
                     <DeadlineCue deadline={record.deadline} />
                     <span>{record.app ? statusLabel(record.app.status, 'application') : statusLabel(record.scholarship?.status, 'scholarship')}</span>
@@ -911,11 +911,11 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         )}
       </div>
 
-      <div className="rounded-2xl border bg-white p-3 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
+      <div className="rounded-2xl border bg-white p-3 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <div className="flex flex-wrap gap-2">
             {(['all', 'application', 'scholarship'] as const).map(type => (
-              <button type="button" data-testid={`button-filter-type-${type}`} key={type} onClick={() => setRecordType(type)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors" style={recordType === type ? { borderColor: '#263f63', backgroundColor: '#263f63', color: '#fff' } : { borderColor: 'var(--apps-border)', color: 'var(--apps-text-secondary)' }}>{type === 'all' ? 'All targets' : type === 'application' ? 'Applications' : 'Scholarships'}</button>
+              <button type="button" data-testid={`button-filter-type-${type}`} key={type} onClick={() => setRecordType(type)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors" style={recordType === type ? { borderColor: '#233B63', backgroundColor: '#233B63', color: '#fff' } : { borderColor: 'var(--apps-border)', color: 'var(--apps-text-secondary)' }}>{type === 'all' ? 'All targets' : type === 'application' ? 'Applications' : 'Scholarships'}</button>
             ))}
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row xl:justify-end">
@@ -932,17 +932,17 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
               <SelectContent><SelectItem value="all">All priority</SelectItem><SelectItem value="high">High priority</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
             </Select>
             <div className="flex shrink-0 rounded-lg border p-0.5" style={{ borderColor: 'var(--apps-border)' }}>
-              <button type="button" data-testid="button-view-timeline" onClick={() => setViewMode('timeline')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-[#17223b] text-white' : 'text-muted-foreground'}`}><GitBranch className="mr-1 inline h-3.5 w-3.5" />Timeline</button>
-              <button type="button" data-testid="button-view-list" onClick={() => setViewMode('list')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-[#17223b] text-white' : 'text-muted-foreground'}`}><List className="mr-1 inline h-3.5 w-3.5" />List</button>
+              <button type="button" data-testid="button-view-timeline" onClick={() => setViewMode('timeline')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-[#17243D] text-white' : 'text-muted-foreground'}`}><GitBranch className="mr-1 inline h-3.5 w-3.5" />Timeline</button>
+              <button type="button" data-testid="button-view-list" onClick={() => setViewMode('list')} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-[#17243D] text-white' : 'text-muted-foreground'}`}><List className="mr-1 inline h-3.5 w-3.5" />List</button>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.65fr)]">
-        <div className="rounded-2xl border bg-[#fbfcfd] p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+        <div className="rounded-2xl border bg-[#DDF4F7] p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
           <div className="mb-5 flex items-end justify-between gap-3">
-            <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#087f73]">Unified deadline stream</p><h3 className="mt-1 text-xl font-bold tracking-tight">Your targets, by region</h3></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#176B73]">Unified deadline stream</p><h3 className="mt-1 text-xl font-bold tracking-tight">Your targets, by region</h3></div>
             <span className="text-xs text-muted-foreground">{filteredRecords.length} shown</span>
           </div>
           {appsLoading || scholarshipsLoading ? <div className="space-y-3"><div className="h-28 animate-pulse rounded-2xl bg-muted" /><div className="h-28 animate-pulse rounded-2xl bg-muted" /></div> : sortedCountries.length === 0 ? <div data-testid="unified-empty-state" className="rounded-2xl border border-dashed border-border bg-white p-10 text-center"><Target className="mx-auto h-8 w-8 text-muted-foreground/50" /><p className="mt-3 text-sm font-semibold">No targets match these filters</p><p className="mt-1 text-xs text-muted-foreground">Try clearing a filter or add a new application or scholarship.</p></div> : <div className="space-y-6">{sortedCountries.map(country => renderGroup(country, viewMode === 'timeline'))}</div>}
@@ -950,8 +950,8 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
 
         <aside className="space-y-4">
           <div className="rounded-2xl border bg-white p-5" style={{ borderColor: 'var(--apps-border)' }}>
-            <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#4654a8]">Coverage</p><h3 className="mt-1 text-base font-bold">How ready are you?</h3></div><span className="font-heading text-2xl font-bold text-[#4654a8]">{requirementsPercent}%</span></div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#edf0f4]"><div className="h-full rounded-full bg-[#4654a8]" style={{ width: `${requirementsPercent}%` }} /></div>
+            <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7C6CFF]">Coverage</p><h3 className="mt-1 text-base font-bold">How ready are you?</h3></div><span className="font-heading text-2xl font-bold text-[#7C6CFF]">{requirementsPercent}%</span></div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#EDF0F4]"><div className="h-full rounded-full bg-[#7C6CFF]" style={{ width: `${requirementsPercent}%` }} /></div>
             <p className="mt-2 text-xs text-muted-foreground">{completedRequirementItems} of {totalRequirementItems} documents or requirements completed.</p>
             <div className="mt-5 space-y-3 border-t pt-4" style={{ borderColor: 'var(--apps-border)' }}>
               <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">High priority targets</span><strong>{highPriorityCount}</strong></div>
@@ -959,11 +959,11 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
               <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Targets with deadlines</span><strong>{upcomingDeadlines.length}</strong></div>
             </div>
           </div>
-          <div className="rounded-2xl border bg-[#17223b] p-5 text-white" style={{ borderColor: '#17223b' }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#a7e8df]">Keep momentum</p>
+          <div className="rounded-2xl border bg-[#17243D] p-5 text-white" style={{ borderColor: '#17243D' }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A9DCE8]">Keep momentum</p>
             <h3 className="mt-2 text-base font-bold">{latestTest ? `${latestTest.testName} · ${latestTest.totalScore ?? '—'}` : 'Your next best action'}</h3>
             <p className="mt-2 text-xs leading-5 text-white/65">{latestTest ? `Latest score recorded ${fmtDate(latestTest.attemptDate)}. Keep every deadline and document moving together.` : 'Add a test score or start a checklist so your targets become actionable.'}</p>
-            <button type="button" data-testid="button-overview-tests" onClick={() => onTabChange('tests')} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#a7e8df] hover:text-white">View test scores <ArrowUpRight className="h-3.5 w-3.5" /></button>
+            <button type="button" data-testid="button-overview-tests" onClick={() => onTabChange('tests')} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#A9DCE8] hover:text-white">View test scores <ArrowUpRight className="h-3.5 w-3.5" /></button>
           </div>
         </aside>
       </div>
@@ -1000,21 +1000,21 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
   return (
     <div className="space-y-6">
       {/* Dashboard masthead */}
-      <div className="relative overflow-hidden rounded-3xl p-5 sm:p-7 text-white shadow-lg shadow-indigo-500/10"
-        style={{ background: 'linear-gradient(120deg, #17153d 0%, #312e81 48%, #0f766e 100%)' }}>
+      <div className="relative overflow-hidden rounded-3xl p-5 sm:p-7 text-white shadow-lg shadow-[#7C6CFF]/10"
+        style={{ background: 'linear-gradient(120deg, #233B63 0%, #233B63 48%, #176B73 100%)' }}>
         <div className="absolute -right-10 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute right-24 -bottom-20 w-48 h-48 rounded-full bg-sky-300/15 blur-3xl" />
+        <div className="absolute right-24 -bottom-20 w-48 h-48 rounded-full bg-[#A9DCE8]/15 blur-3xl" />
         <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-5">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-indigo-200 font-semibold mb-2">Fly · Higher Study</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-[#DAD6FF] font-semibold mb-2">Fly · Higher Study</p>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Your application command center</h2>
-            <p className="text-sm text-indigo-100/75 mt-2 max-w-xl">Keep every university, scholarship, deadline and document in view — then take the next best action.</p>
+            <p className="text-sm text-[#F2F0FF]/75 mt-2 max-w-xl">Keep every university, scholarship, deadline and document in view — then take the next best action.</p>
           </div>
           <div className="flex gap-2 shrink-0">
             <Button size="sm" variant="secondary" className="bg-white/15 hover:bg-white/25 text-white border-white/20" onClick={() => onTabChange('applications')}>
               <Plus className="w-3.5 h-3.5 mr-1" /> Add target
             </Button>
-            <Button size="sm" variant="secondary" className="bg-white text-indigo-900 hover:bg-indigo-50" onClick={() => onTabChange('scholarships')}>
+            <Button size="sm" variant="secondary" className="bg-white text-[#7C6CFF] hover:bg-[#F2F0FF]" onClick={() => onTabChange('scholarships')}>
               Scholarships <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </div>
@@ -1035,15 +1035,15 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
 
       {/* ── Deadline Reminder Banner ── */}
       {urgentApps.length > 0 && (
-        <div className="rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fff3cd 100%)' }}>
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-orange-100 dark:border-orange-900">
+        <div className="rounded-2xl border border-[#F2C75C] dark:border-[#B8860B] overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #FDF8EB 0%, #FDF8EB 100%)' }}>
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#FDF8EB] dark:border-[#F2C75C]">
             <span className="text-xl">⏰</span>
             <div>
-              <p className="text-sm font-bold text-orange-800 dark:text-orange-200">
+              <p className="text-sm font-bold text-[#B8860B] dark:text-[#F2C75C]">
                 {urgentApps.length} application deadline{urgentApps.length > 1 ? 's' : ''} approaching!
               </p>
-              <p className="text-xs text-orange-600 dark:text-orange-400">
+              <p className="text-xs text-[#B8860B] dark:text-[#F2C75C]">
                 Don't miss these — submit early
               </p>
             </div>
@@ -1052,13 +1052,13 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
             {urgentApps.map((a: any) => {
               const d = daysUntil(a.deadline as string) as number;
               return (
-                <div key={a.id} className="flex items-center gap-2 bg-white dark:bg-orange-950 rounded-xl px-3 py-2 border border-orange-100 dark:border-orange-800 shadow-sm">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${d <= 7 ? 'bg-red-500' : 'bg-orange-400'}`} />
+                <div key={a.id} className="flex items-center gap-2 bg-white dark:bg-[#F2C75C] rounded-xl px-3 py-2 border border-[#FDF8EB] dark:border-[#B8860B] shadow-sm">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${d <= 7 ? 'bg-[#D95757]' : 'bg-[#F2C75C]'}`} />
                   <div>
                     <p className="text-xs font-semibold text-foreground leading-tight">{String(a.universityName)}</p>
                     <p className="text-[10px] text-muted-foreground">{String(a.country)}</p>
                   </div>
-                  <span className={`ml-1 text-xs font-bold shrink-0 ${d <= 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                  <span className={`ml-1 text-xs font-bold shrink-0 ${d <= 7 ? 'text-[#D95757]' : 'text-[#B8860B]'}`}>
                     {d === 0 ? 'Today!' : `${d}d`}
                   </span>
                 </div>
@@ -1072,9 +1072,9 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: 'Universities',  value: (apps as unknown[]).length,   color: 'text-navy dark:text-indigo',  tab: 'applications', emoji: '🎓' },
-          { label: 'Applied',       value: appliedCount,                 color: 'text-blue-600',               tab: 'applications', emoji: '📨' },
-          { label: 'Ready to Apply', value: admittedCount,                color: 'text-emerald-600',            tab: 'applications', emoji: '✅' },
-          { label: 'Scholarships',  value: (schols as unknown[]).length, color: 'text-yellow-600',             tab: 'scholarships', emoji: '🏆' },
+          { label: 'Applied',       value: appliedCount,                 color: 'text-[#233B63]',               tab: 'applications', emoji: '📨' },
+          { label: 'Ready to Apply', value: admittedCount,                color: 'text-[#176B73]',            tab: 'applications', emoji: '✅' },
+          { label: 'Scholarships',  value: (schols as unknown[]).length, color: 'text-[#B8860B]',             tab: 'scholarships', emoji: '🏆' },
         ].map(({ label, value, color, tab, emoji }) => (
           <Card
             key={label}
@@ -1082,7 +1082,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
             onClick={() => onTabChange(tab)}
           >
             <CardContent className="p-4 text-center">
-              <div className={`w-9 h-9 mx-auto mb-2 rounded-xl flex items-center justify-center text-lg ${label === 'Scholarships' ? 'bg-amber-100 dark:bg-amber-900/30' : label === 'Applied' ? 'bg-sky-100 dark:bg-sky-900/30' : label === 'Ready to Apply' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'}`}>{emoji}</div>
+              <div className={`w-9 h-9 mx-auto mb-2 rounded-xl flex items-center justify-center text-lg ${label === 'Scholarships' ? 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' : label === 'Applied' ? 'bg-[#DDF4F7] dark:bg-[#A9DCE8]/30' : label === 'Ready to Apply' ? 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' : 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30'}`}>{emoji}</div>
               <p className={`text-3xl font-bold font-heading ${color}`}>{value}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
             </CardContent>
@@ -1116,8 +1116,8 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
                         {days !== null && (
                           <span className={`text-xs font-semibold ${
                             days < 0 ? 'text-muted-foreground' :
-                            days <= 7 ? 'text-red-500' :
-                            days <= 30 ? 'text-orange-500' : 'text-muted-foreground'
+                            days <= 7 ? 'text-[#D95757]' :
+                            days <= 30 ? 'text-[#F2C75C]' : 'text-muted-foreground'
                           }`}>
                             {days < 0 ? 'Past' : days === 0 ? 'Today!' : `${days}d`}
                           </span>
@@ -1176,10 +1176,10 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
       <Card className="overflow-hidden border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
           <div>
-            <CardTitle className="text-sm flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" /> Scholarship tracker</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2"><Trophy className="w-4 h-4 text-[#F2C75C]" /> Scholarship tracker</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">Your funding opportunities at a glance</p>
           </div>
-          <Button size="sm" variant="ghost" className="text-xs text-indigo-600 dark:text-indigo-300" onClick={() => onTabChange('scholarships')}>
+          <Button size="sm" variant="ghost" className="text-xs text-[#6A5CE0] dark:text-[#DAD6FF]" onClick={() => onTabChange('scholarships')}>
             View all <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </CardHeader>
@@ -1197,11 +1197,11 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
                   const done = reqs.filter(r => r.done).length;
                   const meta = SCH_STATUS_META[normalizeScholarshipStatus(s.status)];
                   return (
-                    <button key={s.id} onClick={() => onTabChange('scholarships')} className="w-full grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-3 px-5 py-3 text-left border-t border-border/60 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors">
+                    <button key={s.id} onClick={() => onTabChange('scholarships')} className="w-full grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-3 px-5 py-3 text-left border-t border-border/60 hover:bg-[#F2F0FF]/50 dark:hover:bg-[#7C6CFF]/20 transition-colors">
                       <span className="font-medium text-sm truncate">{String(s.name)}</span>
                       <span className="text-xs text-muted-foreground truncate">{String(s.country || '—')}</span>
                       <span className="text-xs text-muted-foreground">{s.deadline ? fmtDate(String(s.deadline)) : 'No deadline'}</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1"><CircleCheckBig className="w-3 h-3 text-emerald-500" /> {reqs.length ? `${done}/${reqs.length}` : '—'}</span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1"><CircleCheckBig className="w-3 h-3 text-[#42E6B8]" /> {reqs.length ? `${done}/${reqs.length}` : '—'}</span>
                       <span className={`text-[11px] font-semibold ${meta.color}`}>{meta.label}</span>
                     </button>
                   );
@@ -1563,7 +1563,7 @@ function ApplicationsTab() {
                 data-testid={`filter-application-status-${status}`}
                 onClick={() => setStatusFilter(active ? null : status)}
                 aria-pressed={active}
-                className="rounded-lg border px-2.5 py-2 text-left transition-colors hover:border-indigo-300"
+                className="rounded-lg border px-2.5 py-2 text-left transition-colors hover:border-[#DAD6FF]"
                 style={{ borderColor: active ? 'var(--apps-accent)' : 'var(--apps-border)', backgroundColor: active ? 'var(--apps-accent-light)' : 'var(--apps-bg-page)' }}
               >
                 <span className={`block truncate text-[10px] font-semibold ${meta.color}`}>{meta.label}</span>
@@ -1881,7 +1881,7 @@ function ApplicationsTab() {
                         type="button"
                         data-testid={`button-remove-application-requirement-${i}`}
                         onClick={() => removeReqItem(i)}
-                        className="shrink-0 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
+                        className="shrink-0 p-1 rounded-md hover:bg-[#FBEEEE] dark:hover:bg-[#D95757]/20 text-muted-foreground hover:text-[#D95757] transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1981,14 +1981,14 @@ function ApplicationsTab() {
                       const done = reqs.filter(item => item.done).length;
                       const days = daysUntil(String(app.deadline || ''));
                       return (
-                        <article key={app.id} data-testid={`kanban-card-application-${app.id}`} className="rounded-lg border p-3 shadow-[0_1px_2px_rgba(20,20,43,0.04)]" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
+                        <article key={app.id} data-testid={`kanban-card-application-${app.id}`} className="rounded-lg border p-3 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]" style={{ borderColor: 'var(--apps-border)', backgroundColor: 'var(--apps-bg-card)' }}>
                           <div className="flex items-start justify-between gap-2">
                             <h4 className="line-clamp-2 text-xs font-bold leading-4" style={{ color: 'var(--apps-text-primary)' }}>{String(app.universityName)}</h4>
                             <span className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_META[String(app.priority || 'medium') as Priority]?.dot || PRIORITY_META.medium.dot}`} title={`${String(app.priority || 'medium')} priority`} />
                           </div>
                           <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{String(app.program || 'Programme')} · {countryFlag(String(app.country || ''))} {String(app.country || 'Country')}</p>
                           <div className="mt-2 flex items-center justify-between gap-2 text-[10px]">
-                            <span className={days !== null && days >= 0 && days <= 7 ? 'font-bold text-red-600' : 'text-muted-foreground'}>{app.deadline ? (days !== null && days >= 0 ? `${days}d left` : fmtDate(String(app.deadline))) : 'No deadline'}</span>
+                            <span className={days !== null && days >= 0 && days <= 7 ? 'font-bold text-[#D95757]' : 'text-muted-foreground'}>{app.deadline ? (days !== null && days >= 0 ? `${days}d left` : fmtDate(String(app.deadline))) : 'No deadline'}</span>
                             <span className="text-muted-foreground">{reqs.length ? `${done}/${reqs.length} docs` : 'No docs'}</span>
                           </div>
                           <div className="mt-2">
@@ -2001,7 +2001,7 @@ function ApplicationsTab() {
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
-                            <button type="button" data-testid={`button-view-kanban-application-${app.id}`} onClick={() => openAppDetail(app)} className="truncate text-[10px] font-medium text-indigo-600 hover:underline">{nextApplicationAction(app)}</button>
+                            <button type="button" data-testid={`button-view-kanban-application-${app.id}`} onClick={() => openAppDetail(app)} className="truncate text-[10px] font-medium text-[#6A5CE0] hover:underline">{nextApplicationAction(app)}</button>
                             <button type="button" data-testid={`button-edit-kanban-application-${app.id}`} aria-label={`Edit ${String(app.universityName)}`} onClick={() => startEdit(app)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Edit2 className="h-3 w-3" /></button>
                           </div>
                         </article>
@@ -2040,18 +2040,18 @@ function ApplicationsTab() {
                 const urgent = days !== null && days >= 0 && days <= 7;
                 const dotColor: Partial<Record<AppStatus, string>> = {
                   researching:    'bg-slate-400',
-                  ready_to_apply: 'bg-emerald-500',
-                  applied:        'bg-blue-500',
-                  interview:      'bg-purple-500',
-                  rejected:       'bg-red-400',
-                  waitlisted:     'bg-orange-400',
-                  deferred:       'bg-yellow-400',
+                  ready_to_apply: 'bg-[#42E6B8]',
+                  applied:        'bg-[#233B63]',
+                  interview:      'bg-[#7C6CFF]',
+                  rejected:       'bg-[#D95757]',
+                  waitlisted:     'bg-[#F2C75C]',
+                  deferred:       'bg-[#F2C75C]',
                 };
                 return (
                   <div key={app.id} className="relative">
                     {/* Dot on spine */}
                     <div className={`absolute -left-8 top-4 w-4 h-4 rounded-full border-2 border-background shadow ${dotColor[app.status as AppStatus] || 'bg-slate-400'}`} />
-                    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${urgent ? 'border-red-300 dark:border-red-700' : ''}`}>
+                    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${urgent ? 'border-[#FBEEEE] dark:border-[#D95757]' : ''}`}>
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="min-w-0">
@@ -2059,7 +2059,7 @@ function ApplicationsTab() {
                               <h3 className="font-semibold text-navy dark:text-white">{String(app.universityName)}</h3>
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta.bg} ${meta.color}`}>{meta.label}</span>
                               {urgent && (
-                                <span className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800">
+                                <span className="text-xs font-bold text-[#D95757] bg-[#FBEEEE] dark:bg-[#D95757]/20 px-2 py-0.5 rounded-full border border-[#FBEEEE] dark:border-[#D95757]">
                                   ⚠️ Due in {days}d
                                 </span>
                               )}
@@ -2085,7 +2085,7 @@ function ApplicationsTab() {
                           <button onClick={() => startEdit(app)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => deleteMutation.mutate(app.id)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-red-500">
+                          <button onClick={() => deleteMutation.mutate(app.id)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-[#D95757]">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -2179,7 +2179,7 @@ function ApplicationsTab() {
                         </span>
                         {Boolean(app.appliedDate) && (
                           <span className="flex items-center gap-1 text-muted-foreground">
-                            <Check className="w-3 h-3 text-green-500" />
+                            <Check className="w-3 h-3 text-[#42E6B8]" />
                             Applied: {fmtDate(app.appliedDate as string)}
                           </span>
                         )}
@@ -2241,7 +2241,7 @@ function ApplicationsTab() {
                         data-testid={`button-delete-application-${app.id}`}
                         onClick={() => deleteMutation.mutate(app.id)}
                         aria-label={`Delete ${String(app.universityName)}`}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-500"
+                        className="p-1.5 rounded-lg hover:bg-[#FBEEEE] dark:hover:bg-[#D95757]/20 transition-colors text-muted-foreground hover:text-[#D95757]"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -2249,7 +2249,7 @@ function ApplicationsTab() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{ borderColor: 'var(--apps-border)' }}>
-                    <span data-testid={`next-action-application-${app.id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600">
+                    <span data-testid={`next-action-application-${app.id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6A5CE0]">
                       <ArrowUpRight className="h-3.5 w-3.5" /> Next: {nextApplicationAction(app)}
                     </span>
                     <Select value={String(app.status || 'researching')} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
@@ -2265,7 +2265,7 @@ function ApplicationsTab() {
                     <div className="mt-3 flex items-center gap-2">
                       <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                         <div
-                          className="h-1.5 rounded-full bg-green-500 transition-all duration-500"
+                          className="h-1.5 rounded-full bg-[#42E6B8] transition-all duration-500"
                           style={{ width: `${(doneCount / reqs.length) * 100}%` }}
                         />
                       </div>
@@ -2307,7 +2307,7 @@ function ApplicationsTab() {
                                   </Select>
                                   <button
                                     onClick={() => removeReqFromApp(app, idx)}
-                                    className="opacity-0 group-hover/doc:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0"
+                                    className="opacity-0 group-hover/doc:opacity-100 transition-opacity text-muted-foreground hover:text-[#D95757] shrink-0"
                                     aria-label={`Remove ${r.label}`}
                                   >
                                     <X className="w-3 h-3" />
@@ -2462,7 +2462,7 @@ function ApplicationDetailDrawer({
                 ))}
               </div>
             )}
-            <p className="mt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1.5">
+            <p className="mt-2 text-xs font-semibold text-[#6A5CE0] flex items-center gap-1.5">
               <ArrowUpRight className="h-3.5 w-3.5" /> Next: {nextApplicationAction(app)}
             </p>
           </section>
@@ -2750,7 +2750,7 @@ function TestScoresTab() {
                         <span className="text-muted-foreground">Latest: <strong className="text-foreground">{latest.totalScore ?? '–'}</strong></span>
                       )}
                       {best && (
-                        <span className="text-muted-foreground">Best: <strong className="text-emerald-600 dark:text-emerald-400">{best.totalScore}</strong></span>
+                        <span className="text-muted-foreground">Best: <strong className="text-[#176B73] dark:text-[#42E6B8]">{best.totalScore}</strong></span>
                       )}
                     </div>
                   </div>
@@ -2768,7 +2768,7 @@ function TestScoresTab() {
                         <div key={s.id} className="flex items-start gap-3 px-4 py-3">
                           <div className="w-16 shrink-0 text-center">
                             <p className="text-xl font-bold text-navy dark:text-teal leading-none">{s.totalScore ?? '–'}</p>
-                            {isBest && <span className="mt-1 inline-block text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Best</span>}
+                            {isBest && <span className="mt-1 inline-block text-[10px] font-semibold text-[#176B73] dark:text-[#42E6B8]">Best</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{fmtDate(s.attemptDate)}</p>
@@ -2794,7 +2794,7 @@ function TestScoresTab() {
                             <button
                               onClick={() => deleteMutation.mutate(s.id)}
                               aria-label={`Delete ${name} score from ${fmtDate(s.attemptDate)}`}
-                              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
+                              className="p-2 rounded-lg hover:bg-[#FBEEEE] dark:hover:bg-[#D95757]/20 text-muted-foreground hover:text-[#D95757] transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -3269,7 +3269,7 @@ function ScholarshipsTab() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <Trophy className="w-4 h-4 text-yellow-500" />
+              <Trophy className="w-4 h-4 text-[#F2C75C]" />
               {editId ? 'Edit Scholarship' : 'New Scholarship'}
             </DialogTitle>
           </DialogHeader>
@@ -3475,7 +3475,7 @@ function ScholarshipsTab() {
                           reqs[i] = { ...reqs[i], done: !reqs[i].done };
                           return { ...p, requirements: reqs };
                         })}
-                        className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border bg-background hover:border-emerald-400'}`}
+                        className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${r.done ? 'bg-[#42E6B8] border-[#42E6B8] text-white' : 'border-border bg-background hover:border-[#42E6B8]'}`}
                       >
                         {r.done && <Check className="w-2.5 h-2.5" />}
                       </button>
@@ -3504,7 +3504,7 @@ function ScholarshipsTab() {
                       <button
                         type="button"
                         onClick={() => setForm(p => ({ ...p, requirements: p.requirements.filter((_, j) => j !== i) }))}
-                        className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                        className="p-1 rounded hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757] transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -3559,7 +3559,7 @@ function ScholarshipsTab() {
           <div className="absolute left-3 top-1 bottom-1 w-0.5 bg-border" />
           {filteredScholarships.map(s => (
             <div key={s.id} className="relative">
-              <span className="absolute -left-[1.45rem] top-4 h-3 w-3 rounded-full border-2 border-background bg-amber-400 shadow" />
+              <span className="absolute -left-[1.45rem] top-4 h-3 w-3 rounded-full border-2 border-background bg-[#F2C75C] shadow" />
               {renderSchCard(s, { timeline: true })}
             </div>
           ))}
@@ -3638,7 +3638,7 @@ function ScholarshipsTab() {
               <p className="text-xs text-muted-foreground mt-0.5">
                 {[s.provider, s.country ? `🌍 ${String(s.country)}` : null, s.degreeLevel].filter(Boolean).join(' · ')}
               </p>
-              {linkedApplication && <p data-testid={`linked-application-scholarship-${s.id}`} className="mt-1 text-[11px] font-medium text-indigo-600">For {linkedApplication.universityName}{linkedApplication.program ? ` · ${linkedApplication.program}` : ''}</p>}
+              {linkedApplication && <p data-testid={`linked-application-scholarship-${s.id}`} className="mt-1 text-[11px] font-medium text-[#6A5CE0]">For {linkedApplication.universityName}{linkedApplication.program ? ` · ${linkedApplication.program}` : ''}</p>}
             </button>
             <div className="flex gap-1 shrink-0">
               <button type="button" data-testid={`button-view-scholarship-${s.id}`} aria-label={`View ${String(s.name)}`} title="View scholarship" onClick={() => openSchDetail(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
@@ -3658,7 +3658,7 @@ function ScholarshipsTab() {
               <button type="button" data-testid={`button-edit-scholarship-${s.id}`} aria-label={`Edit ${String(s.name)}`} title="Edit scholarship" onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground">
                 <Pencil className="w-3.5 h-3.5" />
               </button>
-              <button type="button" data-testid={`button-delete-scholarship-${s.id}`} aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-500">
+              <button type="button" data-testid={`button-delete-scholarship-${s.id}`} aria-label={`Delete ${String(s.name)}`} title="Delete scholarship" onClick={() => deleteMutation.mutate(s.id)} className="p-1.5 rounded-md hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757]">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -3667,14 +3667,14 @@ function ScholarshipsTab() {
           <div className="flex flex-wrap gap-2 mt-2">
             <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{normalizeFundingType(s.fundingType)}</span>
             {Boolean(s.amount) && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 font-semibold">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#FDF8EB] text-[#B8860B] dark:bg-[#F2C75C]/20 dark:text-[#F2C75C] font-semibold">
                 {Number(s.amount).toLocaleString()} {String(s.currency)}
               </span>
             )}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{ borderColor: 'var(--apps-border)' }}>
-            <span data-testid={`next-action-scholarship-${s.id}`} className="truncate text-xs font-semibold text-indigo-600">{nextScholarshipAction(s)}</span>
+            <span data-testid={`next-action-scholarship-${s.id}`} className="truncate text-xs font-semibold text-[#6A5CE0]">{nextScholarshipAction(s)}</span>
             <Select value={status} onValueChange={value => changeScholarshipStatus(s, value as ScholarshipStatus)}>
               <SelectTrigger data-testid={`select-list-scholarship-status-${s.id}`} className="h-7 w-[132px] text-[11px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -3713,7 +3713,7 @@ function ScholarshipsTab() {
             </div>
             {Boolean(s.dateApplied) && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-500" />
+                <Check className="w-3 h-3 text-[#42E6B8]" />
                 Applied: {fmtDate(s.dateApplied as string)}
               </p>
             )}
@@ -3730,21 +3730,21 @@ function ScholarshipsTab() {
                 <div><span className="text-muted-foreground">Funding Type</span><p className="font-medium">{normalizeFundingType(s.fundingType)}</p></div>
                 {Boolean(s.degreeLevel) && <div><span className="text-muted-foreground">Degree Level</span><p className="font-medium">{String(s.degreeLevel)}</p></div>}
                 {Boolean(s.country) && <div><span className="text-muted-foreground">Country / Region</span><p className="font-medium">🌍 {String(s.country)}</p></div>}
-                {Boolean(s.amount) && <div><span className="text-muted-foreground">Amount</span><p className="font-medium text-yellow-700 dark:text-yellow-400">{Number(s.amount).toLocaleString()} {String(s.currency)}</p></div>}
+                {Boolean(s.amount) && <div><span className="text-muted-foreground">Amount</span><p className="font-medium text-[#B8860B] dark:text-[#F2C75C]">{Number(s.amount).toLocaleString()} {String(s.currency)}</p></div>}
                 <div><span className="text-muted-foreground">Status</span><p className={`font-medium ${meta.color}`}>{meta.label}</p></div>
                 {Boolean(s.deadline) && <div><span className="text-muted-foreground">Deadline</span><p className="font-medium">{fmtDate(String(s.deadline))}</p></div>}
-                {Boolean(s.dateApplied) && <div><span className="text-muted-foreground">Date Applied</span><p className="font-medium text-emerald-600 dark:text-emerald-400">{fmtDate(String(s.dateApplied))}</p></div>}
+                {Boolean(s.dateApplied) && <div><span className="text-muted-foreground">Date Applied</span><p className="font-medium text-[#176B73] dark:text-[#42E6B8]">{fmtDate(String(s.dateApplied))}</p></div>}
               </div>
 
               {(Boolean(s.portalUrl) || Boolean(s.websiteUrl || s.link)) && (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {Boolean(s.portalUrl) && (
-                    <a href={String(s.portalUrl)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-indigo dark:text-indigo-300 hover:underline bg-indigo/5 px-2.5 py-1.5 rounded-lg border border-indigo/20 max-w-full">
+                    <a href={String(s.portalUrl)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-indigo dark:text-[#DAD6FF] hover:underline bg-indigo/5 px-2.5 py-1.5 rounded-lg border border-indigo/20 max-w-full">
                       <ExternalLink className="w-3 h-3 shrink-0" /> <span className="truncate">Application URL</span>
                     </a>
                   )}
                   {Boolean(s.websiteUrl || s.link) && (
-                    <a href={String(s.websiteUrl || s.link)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-indigo dark:text-indigo-300 hover:underline bg-indigo/5 px-2.5 py-1.5 rounded-lg border border-indigo/20 max-w-full">
+                    <a href={String(s.websiteUrl || s.link)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-indigo dark:text-[#DAD6FF] hover:underline bg-indigo/5 px-2.5 py-1.5 rounded-lg border border-indigo/20 max-w-full">
                       <Link2 className="w-3 h-3 shrink-0" /> <span className="truncate">Official URL</span>
                     </a>
                   )}
@@ -3778,7 +3778,7 @@ function ScholarshipsTab() {
                           </Select>
                           <button
                             onClick={() => removeReq(s, i)}
-                            className="opacity-0 group-hover/req:opacity-100 p-0.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-opacity shrink-0"
+                            className="opacity-0 group-hover/req:opacity-100 p-0.5 rounded hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757] transition-opacity shrink-0"
                             aria-label={`Remove ${r.label}`}
                           >
                             <X className="w-3 h-3" />
@@ -3879,7 +3879,7 @@ function ScholarshipDetailDrawer({
         <div className="flex items-start justify-between gap-3 border-b p-4" style={{ borderColor: 'var(--apps-border)' }}>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Trophy className="h-4 w-4 shrink-0 text-yellow-500" />
+              <Trophy className="h-4 w-4 shrink-0 text-[#F2C75C]" />
               <h2 className="truncate text-lg font-heading font-bold">{String(sch.name)}</h2>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">{[sch.provider, sch.degreeLevel].filter(Boolean).join(' · ')}</p>
@@ -3933,7 +3933,7 @@ function ScholarshipDetailDrawer({
                 ))}
               </div>
             )}
-            <p className="mt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1.5">
+            <p className="mt-2 text-xs font-semibold text-[#6A5CE0] flex items-center gap-1.5">
               <ArrowUpRight className="h-3.5 w-3.5" /> Next: {nextScholarshipAction(sch)}
             </p>
           </section>
@@ -3951,8 +3951,8 @@ function ScholarshipDetailDrawer({
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Funding</h3>
             <dl className="space-y-1.5 text-sm">
               <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Type</dt><dd className="text-right font-medium">{normalizeFundingType(sch.fundingType)}</dd></div>
-              {Boolean(sch.amount) && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Amount</dt><dd className="text-right font-medium text-yellow-700 dark:text-yellow-400">{Number(sch.amount).toLocaleString()} {String(sch.currency)}</dd></div>}
-              {Boolean(sch.dateApplied) && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Date Applied</dt><dd className="text-right font-medium text-emerald-600 dark:text-emerald-400">{fmtDate(String(sch.dateApplied))}</dd></div>}
+              {Boolean(sch.amount) && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Amount</dt><dd className="text-right font-medium text-[#B8860B] dark:text-[#F2C75C]">{Number(sch.amount).toLocaleString()} {String(sch.currency)}</dd></div>}
+              {Boolean(sch.dateApplied) && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Date Applied</dt><dd className="text-right font-medium text-[#176B73] dark:text-[#42E6B8]">{fmtDate(String(sch.dateApplied))}</dd></div>}
             </dl>
           </section>
 
@@ -3969,7 +3969,7 @@ function ScholarshipDetailDrawer({
                       <span className="text-muted-foreground">{REQ_CATEGORY_META[cat].label}</span>
                       <span className="font-semibold">{bucket ? `${bucket.done}/${bucket.total} (${pct}%)` : 'No items'}</span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} /></div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-[#42E6B8]" style={{ width: `${pct}%` }} /></div>
                   </div>
                 );
               })}
@@ -4178,7 +4178,7 @@ function ChecklistTemplates() {
                       className="flex-1 h-8 text-sm"
                     />
                     {formItems.length > 1 && (
-                      <button onClick={() => removeFormItem(i)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors">
+                      <button onClick={() => removeFormItem(i)} className="p-1 rounded hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757] transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -4299,7 +4299,7 @@ function ChecklistTemplates() {
                         </button>
                         <button
                           onClick={() => deleteMutation.mutate(tmpl.id)}
-                          className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-all"
+                          className="p-1 rounded hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757] transition-all"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

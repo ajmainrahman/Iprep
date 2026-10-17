@@ -69,7 +69,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
   const card = deck[idx];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-950 dark:to-gray-900 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#F2F0FF] to-[#F2F0FF] dark:from-gray-950 dark:to-gray-900 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
           <button
             key={f}
             onClick={() => { setFilter(f); setTopicFilter(''); }}
-            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${filter === f && !topicFilter ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-900 border-border text-muted-foreground hover:border-indigo-400'}`}
+            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${filter === f && !topicFilter ? 'bg-[#6A5CE0] text-white border-[#6A5CE0]' : 'bg-white dark:bg-gray-900 border-border text-muted-foreground hover:border-[#7C6CFF]'}`}
           >
             {f === 'all' ? 'All words' : 'Unknown only'}
           </button>
@@ -102,7 +102,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
         </select>
         <button
           onClick={shuffle}
-          className="px-3 py-1 rounded-full text-xs font-semibold border bg-white dark:bg-gray-900 border-border text-muted-foreground hover:border-indigo-400 flex items-center gap-1"
+          className="px-3 py-1 rounded-full text-xs font-semibold border bg-white dark:bg-gray-900 border-border text-muted-foreground hover:border-[#7C6CFF] flex items-center gap-1"
         >
           <Shuffle className="w-3 h-3" /> Shuffle
         </button>
@@ -129,24 +129,24 @@ function FlashcardMode({ words, onClose, onToggle }: {
             >
               {/* Front */}
               <div
-                className="absolute inset-0 rounded-2xl bg-white dark:bg-gray-900 border-2 border-indigo-200 dark:border-indigo-800 shadow-xl p-8 flex flex-col items-center justify-center gap-3"
+                className="absolute inset-0 rounded-2xl bg-white dark:bg-gray-900 border-2 border-[#DAD6FF] dark:border-[#6A5CE0] shadow-xl p-8 flex flex-col items-center justify-center gap-3"
                 style={{ backfaceVisibility: 'hidden' }}
               >
-                <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Word</span>
-                <h2 className="text-4xl font-black text-center text-indigo-700 dark:text-indigo-300">{card?.word}</h2>
-                <span className="italic text-purple-500 text-sm font-medium">{card?.pos}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-[#7C6CFF]">Word</span>
+                <h2 className="text-4xl font-black text-center text-[#6A5CE0] dark:text-[#DAD6FF]">{card?.word}</h2>
+                <span className="italic text-[#7C6CFF] text-sm font-medium">{card?.pos}</span>
                 <span className="text-xs text-muted-foreground mt-4">Tap to reveal definition →</span>
               </div>
               {/* Back */}
               <div
-                className="absolute inset-0 rounded-2xl bg-indigo-600 dark:bg-indigo-700 border-2 border-indigo-500 shadow-xl p-8 flex flex-col items-start justify-center gap-4"
+                className="absolute inset-0 rounded-2xl bg-[#6A5CE0] dark:bg-[#6A5CE0] border-2 border-[#7C6CFF] shadow-xl p-8 flex flex-col items-start justify-center gap-4"
                 style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
               >
-                <span className="text-xs font-bold uppercase tracking-widest text-indigo-200">Definition</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-[#DAD6FF]">Definition</span>
                 <p className="text-white text-lg font-semibold leading-relaxed">{card?.definition}</p>
                 {card?.example && (
                   <div className="bg-white/10 rounded-lg p-3 border-l-4 border-white/40 w-full">
-                    <p className="text-indigo-100 text-sm italic">"{card.example}"</p>
+                    <p className="text-[#F2F0FF] text-sm italic">"{card.example}"</p>
                   </div>
                 )}
               </div>
@@ -155,7 +155,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
 
           {/* Known badge */}
           {card?.known === 'true' && (
-            <div className="flex items-center gap-1.5 text-green-600 text-sm font-semibold">
+            <div className="flex items-center gap-1.5 text-[#176B73] text-sm font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Marked as Known
             </div>
           )}
@@ -168,7 +168,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
             <Button
               onClick={() => { onToggle(card.id); }}
               variant={card?.known === 'true' ? 'outline' : 'default'}
-              className={`px-6 rounded-xl ${card?.known === 'true' ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+              className={`px-6 rounded-xl ${card?.known === 'true' ? 'border-[#42E6B8] text-[#176B73] bg-[#DDF4F7] hover:bg-[#DDF4F7] dark:bg-[#42E6B8]/20 dark:text-[#42E6B8]' : 'bg-[#6A5CE0] hover:bg-[#6A5CE0] text-white'}`}
             >
               {card?.known === 'true' ? '✓ Known' : 'Mark as Known'}
             </Button>
@@ -179,7 +179,7 @@ function FlashcardMode({ words, onClose, onToggle }: {
 
           {/* Progress */}
           <div className="w-full max-w-lg">
-            <Progress value={deck.length > 0 ? ((idx + 1) / deck.length) * 100 : 0} className="h-1.5 [&>div]:bg-indigo-500 bg-indigo-100" />
+            <Progress value={deck.length > 0 ? ((idx + 1) / deck.length) * 100 : 0} className="h-1.5 [&>div]:bg-[#7C6CFF] bg-[#F2F0FF]" />
           </div>
         </div>
       )}
@@ -276,7 +276,7 @@ export function VocabularyBank() {
             <Button
               variant="outline"
               onClick={() => setFlashcardMode(true)}
-              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 whitespace-nowrap"
+              className="border-[#DAD6FF] text-[#6A5CE0] hover:bg-[#F2F0FF] dark:hover:bg-[#7C6CFF]/20 whitespace-nowrap"
             >
               <Layers className="w-4 h-4 mr-2" /> Flashcard Mode
             </Button>
@@ -286,7 +286,7 @@ export function VocabularyBank() {
             </div>
             <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-purple-600 text-white hover:bg-purple-700 shadow-sm whitespace-nowrap">
+                <Button className="bg-[#6A5CE0] text-white hover:bg-[#6A5CE0] shadow-sm whitespace-nowrap">
                   <Plus className="w-4 h-4 mr-2" /> Add New
                 </Button>
               </DialogTrigger>
@@ -329,7 +329,7 @@ export function VocabularyBank() {
                     <Label>Example Sentence</Label>
                     <Textarea placeholder="Write a sentence demonstrating how to use it..." value={newExample} onChange={e => setNewExample(e.target.value)} required className="resize-none" />
                   </div>
-                  <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={addWord.isPending}>
+                  <Button type="submit" className="w-full bg-[#6A5CE0] hover:bg-[#6A5CE0] text-white" disabled={addWord.isPending}>
                     {addWord.isPending ? "Saving..." : "Save Word"}
                   </Button>
                 </form>
@@ -339,28 +339,28 @@ export function VocabularyBank() {
         </div>
 
         {/* Stats Bar */}
-        <Card className="border-none shadow-sm bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl">
+        <Card className="border-none shadow-sm bg-gradient-to-r from-[#F2F0FF] to-[#F2F0FF] dark:from-[#7C6CFF]/20 dark:to-[#7C6CFF]/20 rounded-2xl">
           <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-6">
             <div className="flex gap-8 flex-shrink-0 w-full sm:w-auto justify-around sm:justify-start">
               <div className="text-center sm:text-left">
-                <p className="text-xs text-purple-600 font-bold uppercase tracking-wider mb-1">Total</p>
+                <p className="text-xs text-[#6A5CE0] font-bold uppercase tracking-wider mb-1">Total</p>
                 <p className="text-3xl font-heading font-bold text-navy dark:text-white">{totalWords}</p>
               </div>
               <div className="text-center sm:text-left">
-                <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-1">Learned</p>
+                <p className="text-xs text-[#176B73] font-bold uppercase tracking-wider mb-1">Learned</p>
                 <p className="text-3xl font-heading font-bold text-navy dark:text-white">{learnedWords}</p>
               </div>
               <div className="text-center sm:text-left">
-                <p className="text-xs text-orange-500 font-bold uppercase tracking-wider mb-1">Remaining</p>
+                <p className="text-xs text-[#F2C75C] font-bold uppercase tracking-wider mb-1">Remaining</p>
                 <p className="text-3xl font-heading font-bold text-navy dark:text-white">{totalWords - learnedWords}</p>
               </div>
             </div>
             <div className="w-full flex-1">
               <div className="flex justify-between text-xs font-medium text-gray-500 mb-2">
                 <span>Mastery Progress</span>
-                <span className="text-purple-600">{Math.round(progressPercent)}%</span>
+                <span className="text-[#6A5CE0]">{Math.round(progressPercent)}%</span>
               </div>
-              <Progress value={progressPercent} className="h-3 [&>div]:bg-purple-500 bg-purple-100" />
+              <Progress value={progressPercent} className="h-3 [&>div]:bg-[#7C6CFF] bg-[#F2F0FF]" />
             </div>
           </CardContent>
         </Card>
@@ -370,11 +370,11 @@ export function VocabularyBank() {
             <TabsList className="bg-transparent border-b w-max min-w-full justify-start rounded-none h-12 p-0 space-x-6">
               <TabsTrigger
                 value="__LEARNED__"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-green-600 data-[state=active]:text-green-600 data-[state=active]:shadow-none rounded-none px-2 font-medium text-muted-foreground bg-transparent"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-[#176B73] data-[state=active]:text-[#176B73] data-[state=active]:shadow-none rounded-none px-2 font-medium text-muted-foreground bg-transparent"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
                 Learned
-                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                <span className="ml-2 text-xs bg-[#DDF4F7] text-[#176B73] px-2 py-0.5 rounded-full">
                   {learnedWords}
                 </span>
               </TabsTrigger>
@@ -382,7 +382,7 @@ export function VocabularyBank() {
                 <TabsTrigger
                   key={topic}
                   value={topic}
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:shadow-none rounded-none px-2 font-medium text-muted-foreground bg-transparent"
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-[#6A5CE0] data-[state=active]:text-[#6A5CE0] data-[state=active]:shadow-none rounded-none px-2 font-medium text-muted-foreground bg-transparent"
                 >
                   {topic}
                   <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
@@ -409,27 +409,27 @@ export function VocabularyBank() {
                 {(words as any[]).filter(w => w.known === 'true' && w.word.toLowerCase().includes(searchTerm.toLowerCase())).map((w: any) => (
                   <Card
                     key={w.id}
-                    className="relative overflow-hidden transition-all duration-300 rounded-xl bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-800"
+                    className="relative overflow-hidden transition-all duration-300 rounded-xl bg-[#DDF4F7]/50 border-[#A9DCE8] dark:bg-[#42E6B8]/10 dark:border-[#176B73]"
                   >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-green-500 rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#42E6B8] rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none" />
                     <CardContent className="p-5 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="text-xl font-bold text-foreground leading-tight">{w.word}</h3>
-                          <span className="text-xs font-medium text-purple-600 italic">{w.pos} · {w.topic}</span>
+                          <span className="text-xs font-medium text-[#6A5CE0] italic">{w.pos} · {w.topic}</span>
                         </div>
                         <Button
                           variant="ghost" size="icon"
                           onClick={() => removeWord(w.id)}
                           disabled={deleteWord.isPending}
-                          className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-2 shrink-0"
+                          className="text-muted-foreground hover:text-[#D95757] h-8 w-8 -mt-1 -mr-2 shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                       <div className="space-y-3 mb-6 flex-1">
                         <p className="text-sm text-foreground">{w.definition}</p>
-                        <div className="bg-muted p-3 rounded-lg border-l-4 border-l-purple-300">
+                        <div className="bg-muted p-3 rounded-lg border-l-4 border-l-[#DAD6FF]">
                           <p className="text-sm text-muted-foreground italic">"{w.example}"</p>
                         </div>
                       </div>
@@ -437,7 +437,7 @@ export function VocabularyBank() {
                         onClick={() => toggleKnown.mutate(w.id)}
                         disabled={toggleKnown.isPending}
                         variant="outline"
-                        className="w-full mt-auto border-green-500 text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                        className="w-full mt-auto border-[#42E6B8] text-[#176B73] bg-[#DDF4F7] hover:bg-[#DDF4F7] dark:bg-[#42E6B8]/20 dark:text-[#42E6B8]"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" /> Learned ✓
                       </Button>
@@ -461,7 +461,7 @@ export function VocabularyBank() {
                   />
                   {!searchTerm && (
                     <div className="text-center pb-6 -mt-4">
-                      <Button variant="link" className="text-purple-600" onClick={() => { setNewTopic(topic); setAddModalOpen(true); }}>
+                      <Button variant="link" className="text-[#6A5CE0]" onClick={() => { setNewTopic(topic); setAddModalOpen(true); }}>
                         Add the first word
                       </Button>
                     </div>
@@ -472,27 +472,27 @@ export function VocabularyBank() {
                   {currentTopicWords.map((w: any) => (
                     <Card
                       key={w.id}
-                      className={`relative overflow-hidden transition-all duration-300 rounded-xl ${w.known === 'true' ? 'bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-800' : 'bg-card border-border hover:shadow-md hover:-translate-y-1'}`}
+                      className={`relative overflow-hidden transition-all duration-300 rounded-xl ${w.known === 'true' ? 'bg-[#DDF4F7]/50 border-[#A9DCE8] dark:bg-[#42E6B8]/10 dark:border-[#176B73]' : 'bg-card border-border hover:shadow-md hover:-translate-y-1'}`}
                     >
-                      {w.known === 'true' && <div className="absolute top-0 right-0 w-16 h-16 bg-green-500 rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none" />}
+                      {w.known === 'true' && <div className="absolute top-0 right-0 w-16 h-16 bg-[#42E6B8] rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none" />}
                       <CardContent className="p-5 flex flex-col h-full">
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <h3 className="text-xl font-bold text-foreground leading-tight">{w.word}</h3>
-                            <span className="text-xs font-medium text-purple-600 italic">{w.pos}</span>
+                            <span className="text-xs font-medium text-[#6A5CE0] italic">{w.pos}</span>
                           </div>
                           <Button
                             variant="ghost" size="icon"
                             onClick={() => removeWord(w.id)}
                             disabled={deleteWord.isPending}
-                            className="text-muted-foreground hover:text-red-500 h-8 w-8 -mt-1 -mr-2 shrink-0"
+                            className="text-muted-foreground hover:text-[#D95757] h-8 w-8 -mt-1 -mr-2 shrink-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                         <div className="space-y-3 mb-6 flex-1">
                           <p className="text-sm text-foreground">{w.definition}</p>
-                          <div className="bg-muted p-3 rounded-lg border-l-4 border-l-purple-300">
+                          <div className="bg-muted p-3 rounded-lg border-l-4 border-l-[#DAD6FF]">
                             <p className="text-sm text-muted-foreground italic">"{w.example}"</p>
                           </div>
                         </div>
@@ -500,7 +500,7 @@ export function VocabularyBank() {
                           onClick={() => toggleKnown.mutate(w.id)}
                           disabled={toggleKnown.isPending}
                           variant={w.known === 'true' ? "outline" : "default"}
-                          className={`w-full mt-auto ${w.known === 'true' ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400' : 'bg-navy text-white hover:bg-navy/90'}`}
+                          className={`w-full mt-auto ${w.known === 'true' ? 'border-[#42E6B8] text-[#176B73] bg-[#DDF4F7] hover:bg-[#DDF4F7] dark:bg-[#42E6B8]/20 dark:text-[#42E6B8]' : 'bg-navy text-white hover:bg-navy/90'}`}
                         >
                           {w.known === 'true' ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Learned ✓</> : "Mark as Learned"}
                         </Button>

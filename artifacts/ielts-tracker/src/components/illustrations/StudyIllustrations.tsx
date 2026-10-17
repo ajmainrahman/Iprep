@@ -9,10 +9,10 @@ import React from 'react';
 
 type BadgeProps = { size?: number; className?: string };
 
-const BADGE_BG = '#E1F5EE';
-const BADGE_STROKE = '#1D9E75';
-const GLYPH = '#085041';
-const GLYPH_SOFT = '#0F6E56';
+const BADGE_BG = '#DDF4F7';
+const BADGE_STROKE = '#176B73';
+const GLYPH = '#176B73';
+const GLYPH_SOFT = '#176B73';
 
 function Badge({ size = 48, className, children }: BadgeProps & { children: React.ReactNode }) {
   return (

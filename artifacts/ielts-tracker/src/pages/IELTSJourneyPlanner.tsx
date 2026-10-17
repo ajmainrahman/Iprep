@@ -199,7 +199,7 @@ function ModuleRow({
             placeholder="e.g. 28/40"
           />
         </div>
-        <button onClick={onRemove} className="text-muted-foreground hover:text-red-500 transition-colors ml-1">
+        <button onClick={onRemove} className="text-muted-foreground hover:text-[#D95757] transition-colors ml-1">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -224,7 +224,7 @@ function ModuleRow({
             {mod.tasks.length > 1 && (
               <button
                 onClick={() => removeTask(i)}
-                className="text-muted-foreground hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                className="text-muted-foreground hover:text-[#D95757] transition-colors opacity-0 group-hover:opacity-100"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -233,7 +233,7 @@ function ModuleRow({
         ))}
         <button
           onClick={addTask}
-          className="text-xs text-muted-foreground hover:text-[#1D9E75] transition-colors flex items-center gap-1 mt-1"
+          className="text-xs text-muted-foreground hover:text-[#176B73] transition-colors flex items-center gap-1 mt-1"
         >
           <Plus className="w-3 h-3" /> Add task
         </button>
@@ -348,7 +348,7 @@ function PhaseCard({
           ))}
           <button
             onClick={addModule}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1D9E75] hover:text-[#1D9E75] transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-[#176B73] hover:text-[#176B73] transition-colors text-sm"
           >
             <Plus className="w-4 h-4" /> Add module
           </button>
@@ -371,7 +371,7 @@ function OverallProgress({ phases }: { phases: Phase[] }) {
   const overallPct = totalAll === 0 ? 0 : Math.round((totalDone / totalAll) * 100);
 
   return (
-    <div className="bg-white border rounded-2xl p-5" style={{ borderColor: '#E7ECE9' }}>
+    <div className="bg-white border rounded-2xl p-5" style={{ borderColor: '#E3EAF0' }}>
       <div className="flex items-center gap-4 mb-4">
         <ProgressRing pct={overallPct} size={68} strokeWidth={6} color={MINT.bar} trackColor={MINT.bg} />
         <div>
@@ -499,7 +499,7 @@ export function IELTSJourneyPlanner() {
         <div className="flex items-center gap-2">
           {saveStatus === 'saving' && (
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#F2C75C] animate-pulse" />
               Saving…
             </span>
           )}
@@ -545,7 +545,7 @@ export function IELTSJourneyPlanner() {
       {plan.phases.length > 0 && (
         <button
           onClick={addPhase}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-[#1D9E75] hover:text-[#1D9E75] transition-colors font-medium"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-[#176B73] hover:text-[#176B73] transition-colors font-medium"
         >
           <Plus className="w-4 h-4" /> Add Phase
         </button>

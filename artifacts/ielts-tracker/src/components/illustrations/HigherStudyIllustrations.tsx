@@ -6,11 +6,11 @@ import type { SVGProps } from "react";
 
 type IllustrationProps = { size?: number } & SVGProps<SVGSVGElement>;
 
-const INK = "#1A1814";
-const MINT = "#6FD9A0";
-const MINT_DEEP = "#1B6B5B";
-const MINT_PALE = "#DCF5E7";
-const CORAL = "#F4A972";
+const INK = "#B8860B";
+const MINT = "#19C7B7";
+const MINT_DEEP = "#176B73";
+const MINT_PALE = "#DDF4F7";
+const CORAL = "#F2C75C";
 
 export function DashboardHeroIllustration({ size = 200, ...props }: IllustrationProps) {
   return (
@@ -35,7 +35,7 @@ export function OverviewHeroIllustration({ size = 200, ...props }: IllustrationP
       <ellipse cx="100" cy="180" rx="58" ry="8" fill={MINT_PALE} />
       <circle cx="60" cy="60" r="30" fill={MINT} opacity="0.9" />
       <rect x="70" y="90" width="60" height="70" rx="10" fill="#fff" stroke={INK} strokeWidth={3} />
-      <path d="M78 105h44M78 118h44M78 131h30" stroke="#E4DECC" strokeWidth={3} strokeLinecap="round" />
+      <path d="M78 105h44M78 118h44M78 131h30" stroke="#F2C75C" strokeWidth={3} strokeLinecap="round" />
       <circle cx="100" cy="70" r="20" fill="#fff" stroke={INK} strokeWidth={3} />
       <path d="M84 62 q16 -12 32 0" stroke={INK} strokeWidth={3} fill="none" strokeLinecap="round" />
       <circle cx="93" cy="70" r="2.4" fill={INK} />
@@ -65,7 +65,7 @@ export function ScholarshipHeroIllustration({ size = 200, ...props }: Illustrati
 export function JourneyHeroIllustration({ size = 200, ...props }: IllustrationProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" {...props}>
-      <path d="M20 170 Q 70 120 110 140 T 180 90" stroke="#E4DECC" strokeWidth={6} fill="none" strokeLinecap="round" strokeDasharray="2 14" />
+      <path d="M20 170 Q 70 120 110 140 T 180 90" stroke="#F2C75C" strokeWidth={6} fill="none" strokeLinecap="round" strokeDasharray="2 14" />
       <circle cx="20" cy="170" r="7" fill={MINT_DEEP} />
       <circle cx="110" cy="140" r="7" fill={MINT_DEEP} />
       <circle cx="180" cy="90" r="9" fill={CORAL} />
@@ -84,8 +84,8 @@ export function StudyLogHeroIllustration({ size = 200, ...props }: IllustrationP
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" {...props}>
       <ellipse cx="100" cy="180" rx="58" ry="8" fill={MINT_PALE} />
       <rect x="60" y="100" width="70" height="52" rx="6" fill="#fff" stroke={INK} strokeWidth={3} />
-      <path d="M95 100v52" stroke="#E4DECC" strokeWidth={3} />
-      <path d="M68 112h20M68 122h20M68 132h14M107 112h16M107 122h16M107 132h10" stroke="#E4DECC" strokeWidth={3} strokeLinecap="round" />
+      <path d="M95 100v52" stroke="#F2C75C" strokeWidth={3} />
+      <path d="M68 112h20M68 122h20M68 132h14M107 112h16M107 122h16M107 132h10" stroke="#F2C75C" strokeWidth={3} strokeLinecap="round" />
       <circle cx="140" cy="70" r="22" fill={MINT} opacity="0.9" />
       <circle cx="95" cy="75" r="20" fill="#fff" stroke={INK} strokeWidth={3} />
       <path d="M83 70 q12 -10 24 0" stroke={INK} strokeWidth={3} fill="none" strokeLinecap="round" />
@@ -100,8 +100,8 @@ export function StudyLogHeroIllustration({ size = 200, ...props }: IllustrationP
 // Dark-background variant for the existing hero (white lines, app's teal/coral).
 export function DashboardHeroIllustrationDark({ size = 160, ...props }: IllustrationProps) {
   const LINE = "#FFFFFF";
-  const TEAL = "#14b8a6";
-  const CORAL = "#f97316";
+  const TEAL = "#176B73";
+  const CORAL = "#B8860B";
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" {...props}>
       <circle cx="150" cy="55" r="26" fill={CORAL} opacity="0.35" />

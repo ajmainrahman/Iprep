@@ -24,10 +24,10 @@ interface PlanningNote {
 }
 
 const TYPE_META: Record<NoteType, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string; chip: string }> = {
-  note:   { label: 'Note',   icon: FileText,   color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800', chip: 'bg-white/70 dark:bg-black/20' },
-  plan:   { label: 'Plan',   icon: Target,     color: 'text-violet-700 dark:text-violet-300',   bg: 'bg-violet-50 border-violet-100 dark:bg-violet-900/20 dark:border-violet-800',     chip: 'bg-white/70 dark:bg-black/20' },
-  budget: { label: 'Budget', icon: DollarSign, color: 'text-amber-700 dark:text-amber-300',     bg: 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800',       chip: 'bg-white/70 dark:bg-black/20' },
-  link:   { label: 'Link',   icon: LinkIcon,   color: 'text-rose-700 dark:text-rose-300',       bg: 'bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800',           chip: 'bg-white/70 dark:bg-black/20' },
+  note:   { label: 'Note',   icon: FileText,   color: 'text-[#176B73] dark:text-[#A9DCE8]', bg: 'bg-[#DDF4F7] border-[#DDF4F7] dark:bg-[#42E6B8]/20 dark:border-[#176B73]', chip: 'bg-white/70 dark:bg-black/20' },
+  plan:   { label: 'Plan',   icon: Target,     color: 'text-[#6A5CE0] dark:text-[#DAD6FF]',   bg: 'bg-[#F2F0FF] border-[#F2F0FF] dark:bg-[#7C6CFF]/20 dark:border-[#6A5CE0]',     chip: 'bg-white/70 dark:bg-black/20' },
+  budget: { label: 'Budget', icon: DollarSign, color: 'text-[#B8860B] dark:text-[#F2C75C]',     bg: 'bg-[#FDF8EB] border-[#FDF8EB] dark:bg-[#F2C75C]/20 dark:border-[#B8860B]',       chip: 'bg-white/70 dark:bg-black/20' },
+  link:   { label: 'Link',   icon: LinkIcon,   color: 'text-[#D95757] dark:text-[#FBEEEE]',       bg: 'bg-[#FBEEEE] border-[#FBEEEE] dark:bg-[#D95757]/20 dark:border-[#D95757]',           chip: 'bg-white/70 dark:bg-black/20' },
 };
 
 export function FlyNotepad() {
@@ -222,7 +222,7 @@ export function FlyNotepad() {
                       <button onClick={() => startEdit(n)} className="p-1.5 rounded-lg hover:bg-white/70 dark:hover:bg-black/20 text-muted-foreground">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteMutation.mutate(n.id)} className="p-1.5 rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-500">
+                      <button onClick={() => deleteMutation.mutate(n.id)} className="p-1.5 rounded-lg hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757]">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

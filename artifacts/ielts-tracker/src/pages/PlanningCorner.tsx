@@ -24,10 +24,10 @@ interface PlanningNote {
 }
 
 const TYPE_META: Record<NoteType, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string }> = {
-  note:   { label: 'Note',   icon: FileText,   color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' },
-  plan:   { label: 'Plan',   icon: Target,     color: 'text-green-600',  bg: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' },
-  budget: { label: 'Budget', icon: DollarSign, color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' },
-  link:   { label: 'Link',   icon: LinkIcon,   color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800' },
+  note:   { label: 'Note',   icon: FileText,   color: 'text-[#233B63]',   bg: 'bg-[#DDF4F7] border-[#A9DCE8] dark:bg-[#233B63]/20 dark:border-[#233B63]' },
+  plan:   { label: 'Plan',   icon: Target,     color: 'text-[#176B73]',  bg: 'bg-[#DDF4F7] border-[#A9DCE8] dark:bg-[#42E6B8]/20 dark:border-[#176B73]' },
+  budget: { label: 'Budget', icon: DollarSign, color: 'text-[#B8860B]',  bg: 'bg-[#FDF8EB] border-[#F2C75C] dark:bg-[#F2C75C]/20 dark:border-[#B8860B]' },
+  link:   { label: 'Link',   icon: LinkIcon,   color: 'text-[#6A5CE0]', bg: 'bg-[#F2F0FF] border-[#DAD6FF] dark:bg-[#7C6CFF]/20 dark:border-[#6A5CE0]' },
 };
 
 export function PlanningCorner() {
@@ -212,7 +212,7 @@ export function PlanningCorner() {
                       <button onClick={() => startEdit(n)} className="p-1 rounded hover:bg-background/60 text-muted-foreground">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteMutation.mutate(n.id)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500">
+                      <button onClick={() => deleteMutation.mutate(n.id)} className="p-1 rounded hover:bg-[#FBEEEE] text-muted-foreground hover:text-[#D95757]">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

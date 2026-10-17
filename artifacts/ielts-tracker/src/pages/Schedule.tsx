@@ -45,14 +45,14 @@ function addMinutesToTime(time: string, mins: number) {
 
 const MODULES = ['Listening', 'Reading', 'Writing', 'Speaking', 'Vocabulary', 'Grammar', 'Mock Test', 'General'];
 const MODULE_COLOR: Record<string, string> = {
-  Listening: '#0EA5E9', Reading: '#FF6B6B', Writing: '#06D6A0',
-  Speaking: '#7B5EA7', Vocabulary: '#FFD166', Grammar: '#6366F1',
-  'Mock Test': '#F97316', General: '#6B7280',
+  Listening: '#233B63', Reading: '#D95757', Writing: '#176B73',
+  Speaking: '#7C6CFF', Vocabulary: '#F2C75C', Grammar: '#7C6CFF',
+  'Mock Test': '#B8860B', General: '#64748B',
 };
 const STATUS_STYLE: Record<string, string> = {
-  planned: 'bg-sky-50 text-sky-700 border-sky-200',
-  completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  missed: 'bg-red-50 text-red-700 border-red-200',
+  planned: 'bg-[#DDF4F7] text-[#233B63] border-[#A9DCE8]',
+  completed: 'bg-[#DDF4F7] text-[#176B73] border-[#A9DCE8]',
+  missed: 'bg-[#FBEEEE] text-[#D95757] border-[#FBEEEE]',
   cancelled: 'bg-gray-100 text-gray-500 border-gray-200',
 };
 
@@ -144,7 +144,7 @@ export function Schedule() {
   }
 
   function SessionBlock({ s }: { s: any }) {
-    const color = MODULE_COLOR[s.module] ?? '#6B7280';
+    const color = MODULE_COLOR[s.module] ?? '#64748B';
     return (
       <div
         className="group rounded-lg border p-2.5 text-left text-xs shadow-sm hover:shadow-md transition-shadow cursor-pointer"

@@ -6,22 +6,22 @@
  * (purple-anchored) status palette instead of an IELTS-module palette.
  *
  * 'purple' and 'lavender' are deliberately identical to the existing
- * --apps-accent / --apps-accent-light CSS variables (#684888 / #EAD4FB),
+ * --apps-accent / --apps-accent-light CSS variables (#233B63 / #F2F0FF),
  * so "Interview" — the most exciting status — uses the actual Fly brand color.
  */
 export const FLY_PASTELS = {
-  slate:    { bg: '#ECEDEF', text: '#3D4148', accent: '#6B7280' },
-  mint:     { bg: '#DEEFE3', text: '#2C4A36', accent: '#1D9E75' },
-  lavender: { bg: '#E6E3F6', text: '#3C3489', accent: '#7F77DD' },
-  amber:    { bg: '#FBEDD2', text: '#5C441F', accent: '#BA7517' },
-  pink:     { bg: '#FBE4EC', text: '#72243E', accent: '#D4537E' },
-  rose:     { bg: '#FBE4E4', text: '#791F1F', accent: '#C94F4E' },
-  blue:     { bg: '#E1EBFB', text: '#1E3A6B', accent: '#4A78C9' },
-  sky:      { bg: '#DDF1F6', text: '#1C4F5C', accent: '#3BA0B8' },
-  purple:   { bg: '#EAD4FB', text: '#402C56', accent: '#684888' }, // = --apps-accent
-  green:    { bg: '#DCF3E4', text: '#1D5C36', accent: '#2FA968' },
-  red:      { bg: '#FBE0E0', text: '#7A2020', accent: '#D64545' },
-  gray:     { bg: '#EFEEE9', text: '#444441', accent: '#888780' },
+  slate:    { bg: '#E3EAF0', text: '#182238', accent: '#64748B' },
+  mint:     { bg: '#DDF4F7', text: '#176B73', accent: '#176B73' },
+  lavender: { bg: '#F2F0FF', text: '#233B63', accent: '#7C6CFF' },
+  amber:    { bg: '#FDF8EB', text: '#B8860B', accent: '#B8860B' },
+  pink:     { bg: '#F4ECFF', text: '#233B63', accent: '#C56CFF' },
+  rose:     { bg: '#FBEEEE', text: '#D95757', accent: '#D95757' },
+  blue:     { bg: '#DDF4F7', text: '#233B63', accent: '#233B63' },
+  sky:      { bg: '#DDF4F7', text: '#233B63', accent: '#233B63' },
+  purple:   { bg: '#F2F0FF', text: '#233B63', accent: '#233B63' }, // = --apps-accent
+  green:    { bg: '#DDF4F7', text: '#176B73', accent: '#176B73' },
+  red:      { bg: '#FBEEEE', text: '#D95757', accent: '#D95757' },
+  gray:     { bg: '#E3EAF0', text: '#182238', accent: '#94A3B8' },
 } as const;
 
 export type ScholarshipStatusKey =

@@ -80,9 +80,9 @@ function CountdownBadge({
   label, days, color,
 }: { label: string; days: number; color: 'indigo' | 'teal' | 'amber' }) {
   const palettes = {
-    indigo: { bg: '#ffffff', border: '#DAD6FF', text: '#233B63', shadow: '0 2px 10px rgba(124, 108, 255, 0.08)' },
-    teal:   { bg: '#ffffff', border: '#DDF4F7', text: '#176B73', shadow: '0 2px 10px rgba(25, 199, 183, 0.08)' },
-    amber:  { bg: '#ffffff', border: '#F2C75C', text: '#806018', shadow: '0 2px 10px rgba(242, 199, 92, 0.08)' },
+    indigo: { bg: '#FFFFFF', border: '#DAD6FF', text: '#233B63', shadow: '0 2px 10px rgba(124, 108, 255, 0.08)' },
+    teal:   { bg: '#FFFFFF', border: '#DDF4F7', text: '#176B73', shadow: '0 2px 10px rgba(25, 199, 183, 0.08)' },
+    amber:  { bg: '#FFFFFF', border: '#F2C75C', text: '#B8860B', shadow: '0 2px 10px rgba(242, 199, 92, 0.08)' },
   };
   const p = palettes[color];
   const display =
@@ -105,11 +105,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#FAFAF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <style>{`@keyframes wfw-spin{to{transform:rotate(360deg)}}`}</style>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '32px', height: '32px', border: '3px solid #E5E7EB', borderTopColor: '#0D9488', borderRadius: '50%', animation: 'wfw-spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
-          <p style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>Loading…</p>
+          <div style={{ width: '32px', height: '32px', border: '3px solid #E3EAF0', borderTopColor: '#176B73', borderRadius: '50%', animation: 'wfw-spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
+          <p style={{ color: '#94A3B8', fontSize: '0.875rem' }}>Loading…</p>
         </div>
       </div>
     );
@@ -184,7 +184,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   }
   if (docsTotal > 0 && docsDone < docsTotal) {
     nextItems.push({
-      icon: FileText, iconBg: '#FFE8D6', iconColor: '#C2660B',
+      icon: FileText, iconBg: '#FDF8EB', iconColor: '#B8860B',
       label: 'Application documents',
       sub: `${docsTotal - docsDone} item${docsTotal - docsDone === 1 ? '' : 's'} left to complete`,
       onClick: () => setLocation('/fly/applications'),
@@ -212,7 +212,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
     .sort((a, b) => a.days - b.days)[0];
   if (upcomingScholarship && upcomingScholarship.days <= 21) {
     nextItems.push({
-      icon: Trophy, iconBg: '#FFF3C4', iconColor: '#B8860B',
+      icon: Trophy, iconBg: '#FDF8EB', iconColor: '#B8860B',
       label: `${upcomingScholarship.name} deadline`,
       sub: `${fmtDays(upcomingScholarship.days)} left`,
       onClick: () => setLocation(`/fly/scholarships/${upcomingScholarship.id}`),
@@ -248,7 +248,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
           <span className="hidden sm:block text-[13px] font-medium" style={{ color: '#64748B' }}>{user?.name}</span>
           <span className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-bold text-white shrink-0 ring-2 ring-[#DDF4F7]" style={{ background: 'linear-gradient(140deg, #233B63, #176B73)' }}>{initials}</span>
           <ChevronDown className="hidden sm:block h-3.5 w-3.5" style={{ color: '#64748B' }} />
-          <button onClick={logout} className="text-[12px] sm:text-[13px] font-semibold px-3.5 sm:px-4 py-2 rounded-full transition-opacity hover:opacity-85" style={{ background: '#EEF3F6', color: '#233B63' }}>Sign out</button>
+          <button onClick={logout} className="text-[12px] sm:text-[13px] font-semibold px-3.5 sm:px-4 py-2 rounded-full transition-opacity hover:opacity-85" style={{ background: '#DDF4F7', color: '#233B63' }}>Sign out</button>
         </div>
       </nav>
 
@@ -287,7 +287,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                 </button>
               </div>
             </div>
-            <div className="land-enter-delay relative min-h-[250px] sm:min-h-[340px] lg:min-h-[420px] overflow-hidden rounded-[22px] sm:rounded-[26px]" style={{ boxShadow: '0 24px 60px rgba(5,16,35,.3)', border: '1px solid rgba(255,255,255,.22)' }}>
+            <div className="land-enter-delay relative min-h-[250px] sm:min-h-[340px] lg:min-h-[420px] overflow-hidden rounded-[22px] sm:rounded-[26px]" style={{ boxShadow: '0 24px 60px rgba(23, 36, 61, .3)', border: '1px solid rgba(255,255,255,.22)' }}>
               <img src="/images/hero-nordic-no-flags.jpg" alt="A quiet study desk looking across a Nordic fjord town at dusk" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(23,36,61,0) 32%, rgba(23,36,61,.68) 100%)' }} />
               <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-semibold tracking-wide text-white backdrop-blur-sm" style={{ background: 'rgba(23,36,61,.42)', border: '1px solid rgba(255,255,255,.25)' }}>
@@ -312,19 +312,19 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             <div className="hidden lg:block h-10 w-px bg-[#E3EAF0] mx-1" />
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 flex-1">
               <button onClick={() => setLocation('/fly/applications')} className="land-link flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left hover:border-[#E3EAF0] hover:bg-[#F8FAFC]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FCEEEE] text-[#D95757]"><FileText className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Applications</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBEEEE] text-[#D95757]"><FileText className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Applications</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
               </button>
               <button onClick={() => setLocation('/study/study')} className="land-link flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left hover:border-[#E3EAF0] hover:bg-[#F8FAFC]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#DDF4F7] text-[#176B73]"><BookOpen className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Log study</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
               </button>
               <button onClick={() => setLocation('/study/practice')} className="land-link flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left hover:border-[#E3EAF0] hover:bg-[#F8FAFC]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FCEEEE] text-[#D95757]"><Target className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Practice</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBEEEE] text-[#D95757]"><Target className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Practice</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
               </button>
               <button onClick={() => setLocation('/study/vocab')} className="land-link flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left hover:border-[#E3EAF0] hover:bg-[#F8FAFC]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EEF0FF] text-[#6758D8]"><BookMarked className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Vocabulary</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F2F0FF] text-[#7C6CFF]"><BookMarked className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Vocabulary</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
               </button>
               <button onClick={() => setLocation('/study/planning')} className="land-link flex items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left hover:border-[#E3EAF0] hover:bg-[#F8FAFC]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF7E3] text-[#9D781E]"><CalendarClock className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Planning</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FDF8EB] text-[#B8860B]"><CalendarClock className="h-4 w-4" /></span><span className="text-[12px] font-semibold text-[#233B63]">Planning</span><ChevronRight className="ml-auto h-3.5 w-3.5 text-[#94A3B8]" />
               </button>
             </div>
           </div>
@@ -339,7 +339,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             <button onClick={onFly} className="land-card land-link group relative overflow-hidden rounded-[22px] bg-white p-5 sm:p-6 text-left">
               <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#D95757,#F2C75C)' }} />
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FCEEEE] text-[#D95757]"><Plane className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Higher study</p><h3 className="mt-0.5 text-[17px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Make room for what’s next</h3></div></div>
+                <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FBEEEE] text-[#D95757]"><Plane className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Higher study</p><h3 className="mt-0.5 text-[17px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Make room for what’s next</h3></div></div>
                 <ArrowUpRight className="mt-1 h-4 w-4 text-[#D95757] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
               <p className="mt-4 mb-5 max-w-lg text-[12px] leading-5 text-[#64748B]">Keep applications, scholarships, deadlines and documents moving in one clear view.</p>
@@ -390,12 +390,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         </section>
 
         <section className="max-w-[1360px] mx-auto pb-10 sm:pb-12">
-          <div className="rounded-[22px] px-5 sm:px-8 py-6 sm:py-7" style={{ background: '#EDF6F7', border: '1px solid #DCEBED' }}>
+          <div className="rounded-[22px] px-5 sm:px-8 py-6 sm:py-7" style={{ background: '#DDF4F7', border: '1px solid #A9DCE8' }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7">
               <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#176B73]"><GraduationCap className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Structured preparation</p><p className="text-[10px] mt-0.5 text-[#64748B]">Step by step, at your pace</p></div></div>
-              <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#9D781E]"><Target className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Stay organized</p><p className="text-[10px] mt-0.5 text-[#64748B]">Keep the details in view</p></div></div>
+              <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#B8860B]"><Target className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Stay organized</p><p className="text-[10px] mt-0.5 text-[#64748B]">Keep the details in view</p></div></div>
               <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#176B73]"><TrendingUp className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Track progress</p><p className="text-[10px] mt-0.5 text-[#64748B]">Notice every little gain</p></div></div>
-              <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#6758D8]"><Rocket className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Move toward your goal</p><p className="text-[10px] mt-0.5 text-[#64748B]">Your next chapter is taking shape</p></div></div>
+              <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#7C6CFF]"><Rocket className="h-4 w-4" /></span><div><p className="text-[12px] font-bold text-[#233B63]">Move toward your goal</p><p className="text-[10px] mt-0.5 text-[#64748B]">Your next chapter is taking shape</p></div></div>
             </div>
           </div>
         </section>
@@ -511,15 +511,15 @@ function AppSidebar<T extends string>({
               onClick={() => onTab(tab.id)}
               aria-current={isActive ? 'page' : undefined}
               className={`w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-200 ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'} ${
-                isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                isActive ? 'gradient-aurora text-white font-semibold shadow-sm' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
               {!collapsed && <span className="flex-1 text-left truncate">{tab.label}</span>}
               {!collapsed && (tab.badge ?? 0) > 0 && (
                 tab.badge === 1
-                  ? <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-                  : <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold text-white bg-red-500 shrink-0">{tab.badge}</span>
+                  ? <span className="w-1.5 h-1.5 rounded-full bg-[#D95757] shrink-0" />
+                  : <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold text-white bg-[#D95757] shrink-0">{tab.badge}</span>
               )}
             </button>
           );
@@ -592,12 +592,12 @@ function MobileNavDrawer<T extends string>({
                 key={tab.id}
                 onClick={() => { onTab(tab.id); onOpenChange(false); }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 ${isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm' : 'text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent'}`}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 ${isActive ? 'gradient-aurora text-white font-semibold shadow-sm' : 'text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent'}`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-left">{tab.label}</span>
                 {(tab.badge ?? 0) > 0 && (
-                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold text-white bg-red-500">{tab.badge}</span>
+                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold text-white bg-[#D95757]">{tab.badge}</span>
                 )}
               </button>
             );

@@ -211,7 +211,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                   <Label>Notes / Mistakes</Label>
                   <Textarea placeholder="What did you learn?" value={notes} onChange={e => setNotes(e.target.value)} className="resize-none h-20 rounded-xl" />
                 </div>
-                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#1D9E75' }} disabled={addScore.isPending}>
+                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#176B73' }} disabled={addScore.isPending}>
                   {addScore.isPending ? "Adding..." : "Add score"}
                 </Button>
               </form>
@@ -221,7 +221,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
           <Card className="rounded-[20px] border-none shadow-none bg-white dark:bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="w-5 h-5" style={{ color: '#BA7517' }} /> Personal bests
+                <Award className="w-5 h-5" style={{ color: '#B8860B' }} /> Personal bests
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
@@ -251,7 +251,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E3EAF0" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
                       <YAxis domain={[0, 9]} ticks={[0, 4, 5, 6, 7, 8, 9]} tick={{ fontSize: 12 }} />
                       <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.08)' }} />
@@ -303,7 +303,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     <Input value={editingScore.notes} onChange={e => setEditingScore(p => p && ({ ...p, notes: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
-                    <Button type="submit" size="sm" disabled={updateScoreReq.isPending} className="rounded-xl text-white hover:opacity-90" style={{ backgroundColor: '#1D9E75' }}>
+                    <Button type="submit" size="sm" disabled={updateScoreReq.isPending} className="rounded-xl text-white hover:opacity-90" style={{ backgroundColor: '#176B73' }}>
                       <Check className="w-4 h-4 mr-1" /> Save Changes
                     </Button>
                     <Button type="button" size="sm" variant="ghost" className="rounded-xl" onClick={() => setEditingScore(null)}>Cancel</Button>
@@ -334,7 +334,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                     const gap = sitting.overallBand !== null ? sitting.overallBand - overallTarget : null;
 
                     return (
-                      <div key={sitting.date} className="rounded-[18px] overflow-hidden" style={{ backgroundColor: '#F3F2ED' }}>
+                      <div key={sitting.date} className="rounded-[18px] overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
                         <button
                           onClick={() => setExpandedDate(isExpanded ? null : sitting.date)}
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] transition-colors text-left"
@@ -352,12 +352,12 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                                 {sitting.isFullMock ? 'Full Mock Test' : 'Practice Sitting'}
                               </span>
                               {isBest && (
-                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#FBEDD2', color: '#5C441F' }}>
+                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#FDF8EB', color: '#B8860B' }}>
                                   <Star className="w-3 h-3 fill-current" /> Best
                                 </Badge>
                               )}
                               {isLatest && (
-                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#DEEFE3', color: '#2C4A36' }}>
+                                <Badge variant="secondary" className="border-none gap-1" style={{ backgroundColor: '#DDF4F7', color: '#176B73' }}>
                                   <Clock className="w-3 h-3" /> Latest
                                 </Badge>
                               )}
@@ -374,7 +374,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                                   key={mod}
                                   title={mod}
                                   className="inline-flex flex-col items-center justify-center w-10 h-10 rounded-xl text-xs font-medium"
-                                  style={has ? { backgroundColor: s.bg, color: s.text } : { backgroundColor: '#FFFFFF80', color: '#B4B2A9' }}
+                                  style={has ? { backgroundColor: s.bg, color: s.text } : { backgroundColor: '#FFFFFF80', color: '#94A3B8' }}
                                 >
                                   {has ? sitting.moduleMap[mod].band.toFixed(1) : '-'}
                                 </span>
@@ -384,7 +384,7 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
 
                           {gap !== null && (
                             <div className="hidden md:flex flex-col items-end w-20 shrink-0">
-                              <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: gap >= 0 ? '#1D9E75' : '#BA7517' }}>
+                              <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: gap >= 0 ? '#176B73' : '#B8860B' }}>
                                 <Target className="w-3 h-3" /> {gap >= 0 ? '+' : ''}{gap.toFixed(1)}
                               </span>
                               <span className="text-[10px] text-muted-foreground">vs target</span>
@@ -411,10 +411,10 @@ export function ScoreTracker({ triggerConfetti }: { triggerConfetti: () => void 
                                   {s.notes && <p className="mt-1.5 text-xs text-muted-foreground">{s.notes}</p>}
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
-                                  <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-7 w-7 text-muted-foreground hover:text-[#1D9E75] hover:bg-[#DEEFE3]">
+                                  <Button variant="ghost" size="icon" onClick={() => startEditScore(s)} className="h-7 w-7 text-muted-foreground hover:text-[#176B73] hover:bg-[#DDF4F7]">
                                     <Edit2 className="w-3.5 h-3.5" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                  <Button variant="ghost" size="icon" disabled={deleteScoreReq.isPending} onClick={() => deleteScore(s.id)} className="h-7 w-7 text-muted-foreground hover:text-[#D95757] hover:bg-[#FBEEEE] dark:hover:bg-[#D95757]/20">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>

@@ -173,7 +173,7 @@ export function SpellingPractice() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className={`flex items-center gap-2 rounded-lg p-3 text-sm font-semibold ${feedback === 'correct' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                <div className={`flex items-center gap-2 rounded-lg p-3 text-sm font-semibold ${feedback === 'correct' ? 'bg-[#DDF4F7] text-[#176B73]' : 'bg-[#FBEEEE] text-[#D95757]'}`}>
                   {feedback === 'correct' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
                   {feedback === 'correct' ? 'Correct!' : (
                     <span>Not quite — the correct spelling is <strong>{current.word}</strong></span>

@@ -109,8 +109,8 @@ export function StudyLog() {
       .reduce((sum: number, s: any) => sum + s.minutes, 0);
     const color =
       dayTotal === 0   ? 'bg-muted' :
-      dayTotal <= 45   ? 'bg-[#9FD4B3] dark:bg-[#1D9E75]/70' :
-                         'bg-[#E88FA0] dark:bg-[#D4537E]/80';
+      dayTotal <= 45   ? 'bg-[#A9DCE8] dark:bg-[#176B73]/70' :
+                         'bg-[#D95757] dark:bg-[#C56CFF]/80';
     mapDays.push({ date: dateStr, total: dayTotal, color });
   }
 
@@ -162,44 +162,44 @@ export function StudyLog() {
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#DEEFE3' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#DDF4F7' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-              <Flame className="w-4 h-4" style={{ color: '#1D9E75' }} />
+              <Flame className="w-4 h-4" style={{ color: '#176B73' }} />
             </div>
-            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#5F8C71' }} />
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#19C7B7' }} />
           </div>
-          <p className="text-xs mb-1" style={{ color: '#5F8C71' }}>Current streak</p>
-          <p className="text-2xl font-medium" style={{ color: '#2C4A36' }}>{currentStreak} days</p>
+          <p className="text-xs mb-1" style={{ color: '#19C7B7' }}>Current streak</p>
+          <p className="text-2xl font-medium" style={{ color: '#176B73' }}>{currentStreak} days</p>
         </div>
 
-        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#FBEDD2' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#FDF8EB' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-              <Clock className="w-4 h-4" style={{ color: '#BA7517' }} />
+              <Clock className="w-4 h-4" style={{ color: '#B8860B' }} />
             </div>
-            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#9C7C48' }} />
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#B8860B' }} />
           </div>
-          <p className="text-xs mb-1" style={{ color: '#9C7C48' }}>Total studied</p>
-          <p className="text-2xl font-medium" style={{ color: '#5C441F' }}>{totalHours} hours</p>
+          <p className="text-xs mb-1" style={{ color: '#B8860B' }}>Total studied</p>
+          <p className="text-2xl font-medium" style={{ color: '#B8860B' }}>{totalHours} hours</p>
         </div>
 
-        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#E6E3F6' }}>
+        <div className="rounded-[20px] p-4" style={{ backgroundColor: '#F2F0FF' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-              <Target className="w-4 h-4" style={{ color: '#7F77DD' }} />
+              <Target className="w-4 h-4" style={{ color: '#7C6CFF' }} />
             </div>
-            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#7A73A8' }} />
+            <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#7C6CFF' }} />
           </div>
-          <p className="text-xs mb-1" style={{ color: '#7A73A8' }}>Weekly target</p>
-          <p className="text-2xl font-medium mb-2" style={{ color: '#3C3489' }}>{toHours(weekTotal)} / {toHours(targetWeekly)} hrs</p>
+          <p className="text-xs mb-1" style={{ color: '#7C6CFF' }}>Weekly target</p>
+          <p className="text-2xl font-medium mb-2" style={{ color: '#233B63' }}>{toHours(weekTotal)} / {toHours(targetWeekly)} hrs</p>
           <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/50">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${Math.min(100, (weekTotal / targetWeekly) * 100)}%`, backgroundColor: '#7F77DD' }}
+              style={{ width: `${Math.min(100, (weekTotal / targetWeekly) * 100)}%`, backgroundColor: '#7C6CFF' }}
             />
           </div>
-          <p className="text-[11px] mt-1.5" style={{ color: '#7A73A8' }}>
+          <p className="text-[11px] mt-1.5" style={{ color: '#7C6CFF' }}>
             {weekTotal >= targetWeekly ? 'Target met!' : `${targetWeekly - weekTotal}m to go`}
             {carriedOver > 0 && ` · includes ${carriedOver}m from missed days`}
           </p>
@@ -262,16 +262,16 @@ export function StudyLog() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label style={{ color: '#1D9E75' }}>What went well?</Label>
-                  <Textarea placeholder="Reflect on your wins" value={well} onChange={e => setWell(e.target.value)} className="resize-none h-16 rounded-xl border-[#BEE3CB] dark:border-green-900 focus-visible:ring-[#1D9E75]" />
+                  <Label style={{ color: '#176B73' }}>What went well?</Label>
+                  <Textarea placeholder="Reflect on your wins" value={well} onChange={e => setWell(e.target.value)} className="resize-none h-16 rounded-xl border-[#A9DCE8] dark:border-[#42E6B8] focus-visible:ring-[#176B73]" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label style={{ color: '#C94F4E' }}>What to improve?</Label>
-                  <Textarea placeholder="Note your mistakes" value={improve} onChange={e => setImprove(e.target.value)} className="resize-none h-16 rounded-xl border-[#F4C4C4] dark:border-red-900 focus-visible:ring-[#C94F4E]" />
+                  <Label style={{ color: '#D95757' }}>What to improve?</Label>
+                  <Textarea placeholder="Note your mistakes" value={improve} onChange={e => setImprove(e.target.value)} className="resize-none h-16 rounded-xl border-[#FBEEEE] dark:border-[#D95757] focus-visible:ring-[#D95757]" />
                 </div>
 
-                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#1D9E75' }} disabled={addSession.isPending}>
+                <Button type="submit" className="w-full text-white rounded-xl hover:opacity-90" style={{ backgroundColor: '#176B73' }} disabled={addSession.isPending}>
                   {addSession.isPending ? "Saving..." : "Save session"}
                 </Button>
               </form>
@@ -299,8 +299,8 @@ export function StudyLog() {
                 <span>Less</span>
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-muted"></div>
-                  <div className="w-3 h-3 rounded-sm bg-[#9FD4B3]"></div>
-                  <div className="w-3 h-3 rounded-sm bg-[#E88FA0]"></div>
+                  <div className="w-3 h-3 rounded-sm bg-[#A9DCE8]"></div>
+                  <div className="w-3 h-3 rounded-sm bg-[#D95757]"></div>
                 </div>
                 <span>More</span>
               </div>
@@ -315,7 +315,7 @@ export function StudyLog() {
                <div className="h-[280px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }} barCategoryGap="30%">
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3EAF0" />
                       <XAxis dataKey="day" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                       <YAxis tick={{fontSize: 12}} tickLine={false} axisLine={false} />
                       <RechartsTooltip
@@ -324,7 +324,7 @@ export function StudyLog() {
                         formatter={(value: number, name: string) => [`${value} min`, name]}
                       />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#c9c7c0" strokeDasharray="3 3" />
+                      <ReferenceLine y={settings?.dailyGoalMinutes || 60} stroke="#94A3B8" strokeDasharray="3 3" />
                       {MODULES.map((mod, i) => (
                         <Bar
                           key={mod}
@@ -403,12 +403,12 @@ export function StudyLog() {
                            {(s.wentWell || s.improve) && (
                              <div className="mt-2 space-y-1">
                                {s.wentWell && (
-                                 <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded px-2 py-1">
+                                 <p className="text-xs text-[#176B73] dark:text-[#42E6B8] bg-[#DDF4F7] dark:bg-[#42E6B8]/20 rounded px-2 py-1">
                                    <span className="font-semibold">✓ Well:</span> {s.wentWell}
                                  </p>
                                )}
                                {s.improve && (
-                                 <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded px-2 py-1">
+                                 <p className="text-xs text-[#D95757] dark:text-[#D95757] bg-[#FBEEEE] dark:bg-[#D95757]/20 rounded px-2 py-1">
                                    <span className="font-semibold">↑ Improve:</span> {s.improve}
                                  </p>
                                )}
@@ -416,7 +416,7 @@ export function StudyLog() {
                            )}
                            </div>
                          </div>
-                         <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-red-500 shrink-0">
+                         <Button variant="ghost" size="icon" onClick={() => deleteSession(s.id)} disabled={deleteSessionReq.isPending} className="text-muted-foreground hover:text-[#D95757] shrink-0">
                            <Trash2 className="h-4 w-4" />
                          </Button>
                        </div>

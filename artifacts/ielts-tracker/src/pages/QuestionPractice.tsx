@@ -173,10 +173,10 @@ export function QuestionPractice() {
                 {practiceLogs.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                      <PolarGrid stroke="#e5e7eb" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 10 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                      <Radar name="Accuracy %" dataKey="accuracy" stroke="#1D9E75" fill="#1D9E75" fillOpacity={0.35} />
+                      <PolarGrid stroke="#E3EAF0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94A3B8', fontSize: 10 }} />
+                      <Radar name="Accuracy %" dataKey="accuracy" stroke="#176B73" fill="#176B73" fillOpacity={0.35} />
                       <RechartsTooltip />
                     </RadarChart>
                   </ResponsiveContainer>

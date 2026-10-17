@@ -101,9 +101,9 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
 
   const cellColor = (mins: number) => {
     if (mins === 0) return '#E8EEF2';
-    if (mins < 20) return '#BCECE5';
-    if (mins < 45) return '#73D7C9';
-    if (mins < 90) return '#249F99';
+    if (mins < 20) return '#A9DCE8';
+    if (mins < 45) return '#19C7B7';
+    if (mins < 90) return '#176B73';
     return '#176B73';
   };
 
@@ -147,7 +147,7 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
       {/* Legend */}
       <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
         <span>Less</span>
-        {['#E8EEF2', '#BCECE5', '#73D7C9', '#249F99', '#176B73'].map(c => (
+        {['#E8EEF2', '#A9DCE8', '#19C7B7', '#176B73', '#176B73'].map(c => (
           <div key={c} className="h-3 w-3 rounded-sm" style={{ backgroundColor: c }} />
         ))}
         <span>More</span>
@@ -174,8 +174,8 @@ function SemiCircleGauge({ value, target, scoredModules }: { value: number; targ
       <svg viewBox="0 0 240 140" className="w-full overflow-visible" role="img">
         <defs>
           <linearGradient id="overall-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1B6B5B" />
-            <stop offset="100%" stopColor="#F4A972" />
+            <stop offset="0%" stopColor="#176B73" />
+            <stop offset="100%" stopColor="#F2C75C" />
           </linearGradient>
         </defs>
         <path
@@ -317,11 +317,11 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
 
   return (
     <Card className="h-full overflow-hidden border border-[#E3EAF0] shadow-[0_8px_30px_rgba(23,36,61,.045)]">
-      <CardHeader className="border-b border-[#E3EAF0] bg-[#FFF9E9] pb-4">
+      <CardHeader className="border-b border-[#E3EAF0] bg-[#FDF8EB] pb-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F8E8B3] text-[#806018]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F2C75C] text-[#B8860B]">
                 <Flame className="h-4 w-4 fill-current" />
               </span>
               Study streak
@@ -329,18 +329,18 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
             <p className="mt-1 text-xs text-muted-foreground">Build a rhythm, one focused session at a time.</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-heading font-bold leading-none text-[#806018]">{currentStreak}</p>
+            <p className="text-3xl font-heading font-bold leading-none text-[#B8860B]">{currentStreak}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">days</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-4 sm:p-5">
-        <div className="flex items-center justify-between rounded-2xl border border-[#F1E3B8] bg-[#FFFBF1] px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-2xl border border-[#F2C75C] bg-[#FFFBF1] px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-[#B08A27]" />
+            <Trophy className="h-4 w-4 text-[#B8860B]" />
             <span className="text-xs font-medium text-foreground">Your record</span>
           </div>
-          <span className="text-sm font-bold text-[#806018]">{record} days</span>
+          <span className="text-sm font-bold text-[#B8860B]">{record} days</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
@@ -350,7 +350,7 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
                 title={`${day.key}: ${day.minutes > 0 ? `${day.minutes} minutes` : 'No study'}`}
                 className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
                   day.active
-                    ? 'bg-[#FFF0C2] text-[#806018]'
+                    ? 'bg-[#FDF8EB] text-[#B8860B]'
                     : 'bg-[#F1F5F7] text-[#AAB6C2]'
                 }`}
               >
@@ -403,11 +403,11 @@ function BandRadar({ scores, targets }: { scores: any[]; targets: Record<string,
   return (
     <ResponsiveContainer width="100%" height={220}>
       <RadarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
-        <PolarGrid stroke="#e5e7eb" />
-        <PolarAngleAxis dataKey="module" tick={{ fontSize: 12, fill: '#6b7280' }} />
+        <PolarGrid stroke="#E3EAF0" />
+        <PolarAngleAxis dataKey="module" tick={{ fontSize: 12, fill: '#64748B' }} />
         <PolarRadiusAxis angle={90} domain={[0, 9]} tick={false} axisLine={false} />
-        <Radar name="Current" dataKey="Current" stroke="#9C2B55" fill="#FBDCE6" fillOpacity={0.45} strokeWidth={2} dot />
-        <Radar name="Target" dataKey="Target" stroke="#1B6B5B" fill="#CFEEE0" fillOpacity={0.25} strokeWidth={2} strokeDasharray="4 2" />
+        <Radar name="Current" dataKey="Current" stroke="#C56CFF" fill="#F4ECFF" fillOpacity={0.45} strokeWidth={2} dot />
+        <Radar name="Target" dataKey="Target" stroke="#176B73" fill="#A9DCE8" fillOpacity={0.25} strokeWidth={2} strokeDasharray="4 2" />
         <Legend iconType="plainline" wrapperStyle={{ fontSize: 12 }} />
         <Tooltip
           formatter={(v: any, name: string) => [`Band ${Number(v).toFixed(1)}`, name]}
@@ -472,8 +472,8 @@ function WeeklyProgress({
   const Arrow = ({ cur, prev }: { cur: number; prev: number }) => {
     const pct = delta(cur, prev);
     if (pct === null) return <span className="text-xs text-muted-foreground">—</span>;
-    if (pct > 0) return <span className="flex items-center gap-0.5 text-xs text-green-600 font-semibold"><TrendingUp className="w-3 h-3" />+{pct}%</span>;
-    if (pct < 0) return <span className="flex items-center gap-0.5 text-xs text-red-500 font-semibold"><TrendingDown className="w-3 h-3" />{pct}%</span>;
+    if (pct > 0) return <span className="flex items-center gap-0.5 text-xs text-[#176B73] font-semibold"><TrendingUp className="w-3 h-3" />+{pct}%</span>;
+    if (pct < 0) return <span className="flex items-center gap-0.5 text-xs text-[#D95757] font-semibold"><TrendingDown className="w-3 h-3" />{pct}%</span>;
     return <span className="flex items-center gap-0.5 text-xs text-muted-foreground"><Minus className="w-3 h-3" />Same</span>;
   };
 
@@ -572,10 +572,10 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
             {monthLabel}
           </span>
           <span className="flex items-center gap-1.5">
-            <button type="button" onClick={goPrevMonth} aria-label="Previous month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F4F5F6] hover:bg-muted transition-colors">
+            <button type="button" onClick={goPrevMonth} aria-label="Previous month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F8FAFC] hover:bg-muted transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button type="button" onClick={goNextMonth} aria-label="Next month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F4F5F6] hover:bg-muted transition-colors">
+            <button type="button" onClick={goNextMonth} aria-label="Next month" className="h-7 w-7 rounded-full flex items-center justify-center bg-[#F8FAFC] hover:bg-muted transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
           </span>
@@ -602,10 +602,10 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
                 aria-label={`${cell.dateStr}${isExam ? ', exam day' : ''}${hasSessions ? ', scheduled study' : ''}`}
                 className={`text-xs rounded-xl h-9 w-9 flex items-center justify-center mx-auto font-medium transition-colors ${
                   isSelected ? 'bg-[#233B63] text-white font-bold shadow-sm' :
-                  isExam ? 'bg-[#FFF0C2] text-[#806018] font-bold ring-1 ring-[#F2C75C]' :
+                  isExam ? 'bg-[#FDF8EB] text-[#B8860B] font-bold ring-1 ring-[#F2C75C]' :
                   hasSessions ? 'bg-[#DDF4F7] text-[#176B73] font-semibold' :
                   isToday ? 'border border-dashed border-[#176B73] text-[#176B73]' :
-                  'text-[#334155] hover:bg-[#F1F7F8]'
+                  'text-[#182238] hover:bg-[#DDF4F7]'
                 }`}
               >
                 {cell.label}
@@ -629,7 +629,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
           </div>
 
           {showAddForm && (
-            <div className="mb-3 p-3 rounded-xl bg-[#F3FBFA] border border-[#CDEDE8] space-y-2">
+            <div className="mb-3 p-3 rounded-xl bg-[#DDF4F7] border border-[#A9DCE8] space-y-2">
               <input
                 type="text"
                 placeholder="Task title, e.g. Writing Task 2 practice"
@@ -660,7 +660,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
           ) : (
             <div className="space-y-2">
               {selectedSessions.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-3 rounded-xl border border-[#DDF4F7] bg-[#F4FBFC] px-3 py-2.5 text-xs">
+                <div key={s.id} className="flex items-center gap-3 rounded-xl border border-[#DDF4F7] bg-[#DDF4F7] px-3 py-2.5 text-xs">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shrink-0">
                     <CalendarIcon className="w-3.5 h-3.5 text-[#176B73]" />
                   </span>
@@ -668,7 +668,7 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
                     <p className="font-semibold text-foreground truncate">{s.title}</p>
                     <p className="text-[#64748B]">{s.startTime} · {s.durationMinutes}m · {s.module}</p>
                   </div>
-                  <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-[#1B6B5B]/60 hover:text-red-500 shrink-0">
+                  <button type="button" onClick={() => deleteMutation.mutate(s.id)} aria-label="Delete task" className="text-[#176B73]/60 hover:text-[#D95757] shrink-0">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -699,7 +699,7 @@ function ExamCountdownTimer({ examDate, examTime }: { examDate: string | null; e
   if (!examDate) {
     return (
       <Card className="col-span-1 shadow-sm border border-[#E3EAF0]">
-        <CardContent className="p-6 h-full flex flex-col justify-center bg-[#F2F8F9] rounded-xl">
+        <CardContent className="p-6 h-full flex flex-col justify-center bg-[#DDF4F7] rounded-xl">
           <div className="flex items-center gap-2 mb-4">
             <CalendarIcon className="w-5 h-5 text-[#176B73]" />
             <h3 className="font-semibold text-lg text-[#17243D]">Exam Countdown</h3>
@@ -775,7 +775,7 @@ function VocabularyProgressCard({ words }: { words: any[] }) {
     <Card className="shadow-[0_8px_30px_rgba(23,36,61,.045)] border border-[#E3EAF0]">
       <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 bg-white rounded-xl">
         <div className="flex items-center gap-2 shrink-0">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0EEFF]"><BookOpen className="w-4 h-4 text-[#6A5CE0]" /></span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F2F0FF]"><BookOpen className="w-4 h-4 text-[#6A5CE0]" /></span>
           <h3 className="font-semibold text-base text-foreground">Vocabulary Progress</h3>
         </div>
         <div className="flex gap-8 flex-1 justify-around sm:justify-start">
@@ -788,7 +788,7 @@ function VocabularyProgressCard({ words }: { words: any[] }) {
             <p className="text-xl font-heading font-bold text-foreground">{learned}</p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10px] text-[#806018] font-bold uppercase tracking-wider mb-0.5">Remaining</p>
+            <p className="text-[10px] text-[#B8860B] font-bold uppercase tracking-wider mb-0.5">Remaining</p>
             <p className="text-xl font-heading font-bold text-foreground">{remaining}</p>
           </div>
         </div>
@@ -797,7 +797,7 @@ function VocabularyProgressCard({ words }: { words: any[] }) {
             <span>Mastery</span>
             <span className="text-[#6A5CE0] font-semibold">{Math.round(percent)}%</span>
           </div>
-          <Progress value={percent} className="h-2 [&>div]:bg-[#7C6CFF] bg-[#EEEAFE]" />
+          <Progress value={percent} className="h-2 [&>div]:bg-[#7C6CFF] bg-[#F2F0FF]" />
         </div>
       </CardContent>
     </Card>
@@ -857,23 +857,23 @@ export function Dashboard() {
   const overallTarget = Object.values(targets).reduce((a: any, b: any) => a + b, 0) / 4;
 
   const getDaysColor = (days: number) => {
-    if (days > 30) return 'text-[#1B6B5B] bg-[#CFEEE0]';
-    if (days > 15) return 'text-[#8A5A0A] bg-[#FCE7B8]';
-    return 'text-[#9C2B55] bg-[#FBDCE6]';
+    if (days > 30) return 'text-[#176B73] bg-[#A9DCE8]';
+    if (days > 15) return 'text-[#B8860B] bg-[#F2C75C]';
+    return 'text-[#C56CFF] bg-[#F4ECFF]';
   };
 
   const getProgressColor = (days: number) => {
-    if (days > 30) return '[&>div]:bg-[#1B6B5B]';
-    if (days > 15) return '[&>div]:bg-[#8A5A0A]';
-    return '[&>div]:bg-[#9C2B55]';
+    if (days > 30) return '[&>div]:bg-[#176B73]';
+    if (days > 15) return '[&>div]:bg-[#B8860B]';
+    return '[&>div]:bg-[#C56CFF]';
   };
 
   const getModuleConfig = (mod: string) => {
     switch (mod) {
       case 'Reading': return { color: 'text-coral', bg: 'bg-coral/10', border: 'border-coral', bar: '[&>div]:bg-coral', icon: BookOpen };
-      case 'Writing': return { color: 'text-green-600', bg: 'bg-green-100', border: 'border-green-500', bar: '[&>div]:bg-green-500', icon: Edit2 };
-      case 'Speaking': return { color: 'text-purple-600', bg: 'bg-purple-100', border: 'border-purple-500', bar: '[&>div]:bg-purple-500', icon: MessageCircle };
-      case 'Listening': return { color: 'text-yellow-600', bg: 'bg-yellow-100', border: 'border-yellow-500', bar: '[&>div]:bg-yellow-500', icon: Headphones };
+      case 'Writing': return { color: 'text-[#176B73]', bg: 'bg-[#DDF4F7]', border: 'border-[#42E6B8]', bar: '[&>div]:bg-[#42E6B8]', icon: Edit2 };
+      case 'Speaking': return { color: 'text-[#6A5CE0]', bg: 'bg-[#F2F0FF]', border: 'border-[#7C6CFF]', bar: '[&>div]:bg-[#7C6CFF]', icon: MessageCircle };
+      case 'Listening': return { color: 'text-[#B8860B]', bg: 'bg-[#FDF8EB]', border: 'border-[#F2C75C]', bar: '[&>div]:bg-[#F2C75C]', icon: Headphones };
       default: return { color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-500', bar: '[&>div]:bg-gray-500', icon: Target };
     }
   };
@@ -922,10 +922,10 @@ export function Dashboard() {
 
       <section className="dashboard-entrance grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Study overview">
         {[
-          { label: 'Study streak', value: `${calcCurrentStreak(sessions as any[])} ${calcCurrentStreak(sessions as any[]) === 1 ? 'day' : 'days'}`, detail: 'Keep your rhythm', Icon: Flame, tone: '#B88620', bg: '#FFF8E7', action: '/study/study' },
-          { label: 'IELTS exam', value: !hasExamDate ? 'Not set' : daysRemaining < 0 ? 'Passed' : `${daysRemaining} days`, detail: hasExamDate ? 'Time to prepare' : 'Add an exam date', Icon: CalendarIcon, tone: '#176B73', bg: '#EAF8F8', action: '/study/scores' },
+          { label: 'Study streak', value: `${calcCurrentStreak(sessions as any[])} ${calcCurrentStreak(sessions as any[]) === 1 ? 'day' : 'days'}`, detail: 'Keep your rhythm', Icon: Flame, tone: '#B8860B', bg: '#FDF8EB', action: '/study/study' },
+          { label: 'IELTS exam', value: !hasExamDate ? 'Not set' : daysRemaining < 0 ? 'Passed' : `${daysRemaining} days`, detail: hasExamDate ? 'Time to prepare' : 'Add an exam date', Icon: CalendarIcon, tone: '#176B73', bg: '#DDF4F7', action: '/study/scores' },
           { label: 'Modules scored', value: `${totalScores.length} / 4`, detail: 'Latest score coverage', Icon: BookOpen, tone: '#6A5CE0', bg: '#F2F0FF', action: '/study/scores' },
-          { label: 'Target band', value: overallTarget.toFixed(1), detail: 'Your overall goal', Icon: Target, tone: '#233B63', bg: '#EEF3F8', action: '/study/scores' },
+          { label: 'Target band', value: overallTarget.toFixed(1), detail: 'Your overall goal', Icon: Target, tone: '#233B63', bg: '#DDF4F7', action: '/study/scores' },
         ].map(({ label, value, detail, Icon, tone, bg, action }) => (
           <button key={label} onClick={() => setLocation(action)} className="dashboard-card group rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5 hover:shadow-md sm:p-5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: bg, color: tone }}><Icon className="h-4 w-4" /></span>
@@ -947,7 +947,7 @@ export function Dashboard() {
               <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Overall band</h2>
               <p className="mt-1 text-xs text-[#64748B]">Latest results compared with your goal</p>
             </div>
-            <span className="rounded-xl bg-[#F2F8F9] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">IELTS</span>
+            <span className="rounded-xl bg-[#DDF4F7] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">IELTS</span>
           </div>
           <SemiCircleGauge value={overallBand} target={overallTarget} scoredModules={totalScores.length} />
         </div>
@@ -996,7 +996,7 @@ export function Dashboard() {
             const current = latestScores[mod] || 0;
             const config = getModuleConfig(mod);
             const Icon = config.icon;
-            const color = mod === 'Reading' ? '#D95757' : mod === 'Listening' ? '#B08A27' : mod === 'Writing' ? '#176B73' : '#7C6CFF';
+            const color = mod === 'Reading' ? '#D95757' : mod === 'Listening' ? '#B8860B' : mod === 'Writing' ? '#176B73' : '#7C6CFF';
             return <ModuleProgressRing key={mod} module={mod} current={current} target={target} color={color} icon={Icon} />;
           })}
         </div>

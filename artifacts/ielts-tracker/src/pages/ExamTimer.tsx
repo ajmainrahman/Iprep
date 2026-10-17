@@ -81,14 +81,14 @@ export function ExamTimer() {
   const ss = String(secondsLeft % 60).padStart(2, '0');
 
   const urgency = secondsLeft <= 120 && !finished;
-  const timeColorStyle = { color: finished ? '#1D9E75' : urgency ? '#C94F4E' : secondsLeft <= 300 ? '#BA7517' : WRITING.bar };
+  const timeColorStyle = { color: finished ? '#176B73' : urgency ? '#D95757' : secondsLeft <= 300 ? '#B8860B' : WRITING.bar };
 
   const ringColor = finished
-    ? '#1D9E75'
+    ? '#176B73'
     : urgency
-    ? '#C94F4E'
+    ? '#D95757'
     : secondsLeft <= 300
-    ? '#BA7517'
+    ? '#B8860B'
     : WRITING.bar;
 
   const circumference = 2 * Math.PI * 110;
@@ -96,7 +96,7 @@ export function ExamTimer() {
 
   return (
     <div
-      className={`space-y-8 animate-in fade-in duration-500 transition-colors ${flash ? 'bg-red-100 dark:bg-red-900/30 rounded-2xl' : ''}`}
+      className={`space-y-8 animate-in fade-in duration-500 transition-colors ${flash ? 'bg-[#FBEEEE] dark:bg-[#D95757]/30 rounded-2xl' : ''}`}
     >
       {/* Header */}
       <StudyPageHeader
@@ -137,7 +137,7 @@ export function ExamTimer() {
       <div className="flex flex-col items-center gap-8">
         <div className="relative" style={{ width: 280, height: 280 }}>
           <svg width="280" height="280" className="-rotate-90">
-            <circle cx="140" cy="140" r="110" fill="none" stroke="#e5e7eb" strokeWidth="14" className="dark:stroke-gray-800" />
+            <circle cx="140" cy="140" r="110" fill="none" stroke="#E3EAF0" strokeWidth="14" className="dark:stroke-gray-800" />
             <circle
               cx="140" cy="140" r="110"
               fill="none"
@@ -153,7 +153,7 @@ export function ExamTimer() {
             {finished ? (
               <div className="text-center">
                 <div className="text-5xl mb-1">⏰</div>
-                <p className="text-lg font-medium" style={{ color: '#1D9E75' }}>Time's up!</p>
+                <p className="text-lg font-medium" style={{ color: '#176B73' }}>Time's up!</p>
               </div>
             ) : (
               <>
@@ -189,7 +189,7 @@ export function ExamTimer() {
             disabled={finished}
             size="lg"
             className="px-10 py-6 text-base font-bold rounded-xl text-white hover:opacity-90"
-            style={{ backgroundColor: running ? '#BA7517' : WRITING.bar }}
+            style={{ backgroundColor: running ? '#B8860B' : WRITING.bar }}
           >
             {running ? <><Pause className="w-5 h-5 mr-2" />Pause</> : <><Play className="w-5 h-5 mr-2" />{finished ? 'Done' : secondsLeft === total ? 'Start' : 'Resume'}</>}
           </Button>

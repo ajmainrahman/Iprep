@@ -9,7 +9,7 @@ export function Confetti({ active }: { active: boolean }) {
       return;
     }
 
-    const colors = ['#2EC4B6', '#FF6B6B', '#FFD166', '#7B5EA7', '#06D6A0'];
+    const colors = ['#19C7B7', '#D95757', '#F2C75C', '#7C6CFF', '#176B73'];
     const newParticles = Array.from({ length: 100 }).map((_, i) => ({
       id: i,
       x: window.innerWidth / 2,

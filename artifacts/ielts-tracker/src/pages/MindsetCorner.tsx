@@ -21,11 +21,11 @@ const AFFIRMATIONS = [
 ];
 
 const TIPS = [
-  { icon: Coffee, title: "Feeling bored?", text: "Switch the topic! If reading about history is dull, read about technology. Change the input.", color: "bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
+  { icon: Coffee, title: "Feeling bored?", text: "Switch the topic! If reading about history is dull, read about technology. Change the input.", color: "bg-[#DDF4F7] text-[#233B63] border-[#A9DCE8] dark:bg-[#233B63]/30 dark:text-[#233B63]" },
   { icon: Heart, title: "Feeling nervous?", text: "Remember: You can get 8–10 questions wrong in Reading and still reach a 6.5. Perfection is not required.", color: "bg-coral/20 text-coral border-coral/30" },
-  { icon: Target, title: "Low practice score?", text: "Celebrate it! Every wrong answer in practice is one you won't repeat on exam day.", color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400" },
-  { icon: Clock, title: "Running out of time?", text: "Practise with a strict timer for every single session until the pressure feels completely normal.", color: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-500" },
-  { icon: Zap, title: "Can't find the answer?", text: "Move on after 90 seconds. You will waste points if you let one hard question steal time from easy ones.", color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400" }
+  { icon: Target, title: "Low practice score?", text: "Celebrate it! Every wrong answer in practice is one you won't repeat on exam day.", color: "bg-[#DDF4F7] text-[#176B73] border-[#A9DCE8] dark:bg-[#42E6B8]/30 dark:text-[#42E6B8]" },
+  { icon: Clock, title: "Running out of time?", text: "Practise with a strict timer for every single session until the pressure feels completely normal.", color: "bg-[#FDF8EB] text-[#B8860B] border-[#F2C75C] dark:bg-[#F2C75C]/30 dark:text-[#F2C75C]" },
+  { icon: Zap, title: "Can't find the answer?", text: "Move on after 90 seconds. You will waste points if you let one hard question steal time from easy ones.", color: "bg-[#F2F0FF] text-[#6A5CE0] border-[#DAD6FF] dark:bg-[#7C6CFF]/30 dark:text-[#7C6CFF]" }
 ];
 
 const QUICK_TIPS = [
@@ -84,27 +84,27 @@ export function MindsetCorner() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-2 border-l-4 border-yellow-500 pl-3">
-        <Brain className="w-8 h-8 text-yellow-500" />
+      <div className="flex items-center gap-3 mb-2 border-l-4 border-[#F2C75C] pl-3">
+        <Brain className="w-8 h-8 text-[#F2C75C]" />
         <h1 className="text-3xl font-heading font-bold text-foreground">Mindset Corner</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Affirmation Card */}
-        <Card className="border-none bg-gradient-to-br from-[#FFD166] to-[#FCA311] dark:from-[#D97706] dark:to-[#9A3412] shadow-md overflow-hidden relative group rounded-2xl">
+        <Card className="border-none bg-gradient-to-br from-[#F2C75C] to-[#B8860B] dark:from-[#B8860B] dark:to-[#D95757] shadow-md overflow-hidden relative group rounded-2xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
           <CardContent className="p-8 sm:p-12 relative z-10 flex flex-col h-full justify-center min-h-[300px]">
-            <p className="text-yellow-900/60 dark:text-orange-200/60 font-bold uppercase tracking-widest text-sm mb-6">Daily Affirmation</p>
-            <h2 className="text-3xl sm:text-4xl font-heading font-bold text-yellow-950 dark:text-orange-50 leading-tight mb-8">
+            <p className="text-[#F2C75C]/60 dark:text-[#F2C75C]/60 font-bold uppercase tracking-widest text-sm mb-6">Daily Affirmation</p>
+            <h2 className="text-3xl sm:text-4xl font-heading font-bold text-[#F2C75C] dark:text-[#FDF8EB] leading-tight mb-8">
               "{dailyAffirmation}"
             </h2>
             <Button 
               onClick={toggleFavourite}
               disabled={addAffirmation.isPending || removeAffirmation.isPending}
-              className={`w-max rounded-full transition-all ${isFav ? 'bg-yellow-900 text-yellow-100 hover:bg-yellow-800' : 'bg-white/40 text-yellow-950 hover:bg-white/60 border border-white/50 backdrop-blur-sm dark:bg-black/20 dark:text-white dark:border-white/20'}`}
+              className={`w-max rounded-full transition-all ${isFav ? 'bg-[#F2C75C] text-[#FDF8EB] hover:bg-[#B8860B]' : 'bg-white/40 text-[#F2C75C] hover:bg-white/60 border border-white/50 backdrop-blur-sm dark:bg-black/20 dark:text-white dark:border-white/20'}`}
             >
-              <Heart className={`w-4 h-4 mr-2 ${isFav ? 'fill-current text-yellow-100' : ''}`} /> 
+              <Heart className={`w-4 h-4 mr-2 ${isFav ? 'fill-current text-[#FDF8EB]' : ''}`} /> 
               {isFav ? 'Saved' : 'I needed this today'}
             </Button>
           </CardContent>
@@ -160,7 +160,7 @@ export function MindsetCorner() {
             {affirmations.map((a: any) => (
               <span key={a.id} className="bg-card border border-border px-4 py-2 rounded-full text-sm font-medium text-foreground shadow-sm flex items-center gap-2 group">
                 <Heart className="w-3 h-3 text-coral fill-coral" /> {a.text}
-                <button onClick={() => removeAffirmation.mutate(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-muted-foreground hover:text-red-500">×</button>
+                <button onClick={() => removeAffirmation.mutate(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-muted-foreground hover:text-[#D95757]">×</button>
               </span>
             ))}
           </div>

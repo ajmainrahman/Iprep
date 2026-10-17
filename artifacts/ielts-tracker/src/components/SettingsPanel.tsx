@@ -108,7 +108,7 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md max-h-[92vh] overflow-y-auto p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-teal/5 to-indigo-500/5">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-teal/5 to-[#7C6CFF]/5">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <SettingsIcon className="w-5 h-5 text-teal" />
             Settings
@@ -122,8 +122,8 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-2">
               {(settings as any).darkMode === 'true'
-                ? <Moon className="w-4 h-4 text-indigo-400" />
-                : <Sun className="w-4 h-4 text-yellow-500" />}
+                ? <Moon className="w-4 h-4 text-[#7C6CFF]" />
+                : <Sun className="w-4 h-4 text-[#F2C75C]" />}
               <span className="text-sm font-medium">Dark Mode</span>
             </div>
             <Switch
@@ -156,9 +156,9 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
                 IELTS Exam Date
                 {examDays !== null && (
                   <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    examDays > 30 ? 'bg-green-100 text-green-700' :
-                    examDays > 7  ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-red-100 text-red-600'
+                    examDays > 30 ? 'bg-[#DDF4F7] text-[#176B73]' :
+                    examDays > 7  ? 'bg-[#FDF8EB] text-[#B8860B]' :
+                                    'bg-[#FBEEEE] text-[#D95757]'
                   }`}>
                     {examDays > 0 ? `${examDays} days left` : examDays === 0 ? 'Today!' : `${Math.abs(examDays)}d ago`}
                   </span>
@@ -189,7 +189,7 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="dailyGoalMinutes" className="text-sm font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                <Clock className="w-3.5 h-3.5 text-[#7C6CFF]" />
                 Daily Study Goal (minutes)
               </Label>
               <Input
@@ -218,10 +218,10 @@ export function SettingsPanel({ dark = false }: { dark?: boolean }) {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { key: 'targetListening', label: 'Listening', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
-                { key: 'targetReading',   label: 'Reading',   color: 'text-red-500',    bg: 'bg-red-50',    border: 'border-red-200' },
-                { key: 'targetWriting',   label: 'Writing',   color: 'text-green-600',  bg: 'bg-green-50',  border: 'border-green-200' },
-                { key: 'targetSpeaking',  label: 'Speaking',  color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
+                { key: 'targetListening', label: 'Listening', color: 'text-[#B8860B]', bg: 'bg-[#FDF8EB]', border: 'border-[#F2C75C]' },
+                { key: 'targetReading',   label: 'Reading',   color: 'text-[#D95757]',    bg: 'bg-[#FBEEEE]',    border: 'border-[#FBEEEE]' },
+                { key: 'targetWriting',   label: 'Writing',   color: 'text-[#176B73]',  bg: 'bg-[#DDF4F7]',  border: 'border-[#A9DCE8]' },
+                { key: 'targetSpeaking',  label: 'Speaking',  color: 'text-[#6A5CE0]', bg: 'bg-[#F2F0FF]', border: 'border-[#DAD6FF]' },
               ].map(({ key, label, color, bg, border }) => (
                 <div key={key} className={`rounded-xl p-3 border ${bg} ${border}`}>
                   <Label htmlFor={key} className={`text-xs font-semibold ${color} mb-2 block`}>{label}</Label>
