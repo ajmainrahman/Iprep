@@ -56,29 +56,31 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  /* Nordic brand colors */
+  /* Brand colours — Nordic/Aurora palette (replaces the old green identity) */
+  --color-navy:    #17243D; /* Midnight Nordic */
+  --color-teal:    #176B73; /* Nordic Sea */
+  --color-glacier: #42E6B8; /* Aurora Green */
+  --color-sandstone: #F2C75C; /* Sweden Gold */
+  --color-indigo:  #7C6CFF; /* Aurora Violet */
+  --color-coral:   #D95757; /* Denmark/Norway Red */
+  --color-yellow:  #F2C75C; /* Sweden Gold */
+  --color-purple:  #7C6CFF; /* Aurora Violet */
+  --color-green:   #19C7B7; /* Aurora Teal */
+  --color-orange:  #F2C75C; /* Sweden Gold */
+
+  /* New Nordic-specific tokens, additive — existing --color-* names above
+     are kept for backward compatibility with pages still referencing them */
   --color-nordic-midnight: #17243D;
-  --color-nordic-blue: #233B63;
+  --color-nordic-deep-blue: #233B63;
   --color-nordic-sea: #176B73;
   --color-aurora-teal: #19C7B7;
   --color-aurora-green: #42E6B8;
   --color-aurora-violet: #7C6CFF;
   --color-polar-glow: #C56CFF;
-  --color-country-gold: #F2C75C;
-  --color-country-red: #D95757;
+  --color-sweden-gold: #F2C75C;
+  --color-denmark-red: #D95757;
   --color-ice-blue: #A9DCE8;
   --color-frost: #DDF4F7;
-  /* Existing semantic aliases retained for page-level utilities. */
-  --color-navy: #17243D;
-  --color-teal: #176B73;
-  --color-glacier: #A9DCE8;
-  --color-sandstone: #F2C75C;
-  --color-indigo: #7C6CFF;
-  --color-coral: #D95757;
-  --color-yellow: #F2C75C;
-  --color-purple: #7C6CFF;
-  --color-green: #176B73;
-  --color-orange: #F2C75C;
 
   --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
@@ -89,40 +91,45 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── LIGHT MODE ────────────────────────────────────────────────────────── */
+/* ── LIGHT MODE — Nordic/Aurora identity ──────────────────────────────────
+   Midnight Nordic #17243D · Deep Nordic Blue #233B63 · Nordic Sea #176B73
+   Aurora Teal #19C7B7 · Aurora Green #42E6B8 · Aurora Violet #7C6CFF · Polar Glow #C56CFF
+   Sweden Gold #F2C75C · Denmark/Norway Red #D95757 · Ice Blue #A9DCE8
+   Snow #F8FAFC · Pure Snow #FFFFFF · Frost #DDF4F7
+   Target mix: ~65% snow/neutral, ~20% midnight/deep-blue, ~10% aurora, ~5% gold/red */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 221 40% 16%;
+  --background: 210 40% 98%;  /* Snow Background #F8FAFC */
+  --foreground: 221 40% 16%;  /* Primary Text #182238 */
 
-  /* Applications tracker palette */
-  --apps-bg-page: #F8FAFC;
-  --apps-bg-card: #FFFFFF;
-  --apps-border: #E3EAF0;
-  --apps-text-primary: #182238;
-  --apps-text-secondary: #64748B;
-  --apps-text-muted: #8290A1;
-  --apps-accent: #176B73;
-  --apps-accent-light: #19C7B7;
-  --apps-accent-pale: #DDF4F7;
+  /* Applications/Fly tracker palette — Nordic, anchored on Aurora Violet as the Fly accent */
+  --apps-bg-page: #F8FAFC;        /* Snow Background */
+  --apps-bg-card: #FFFFFF;        /* Pure Snow */
+  --apps-border: #E3EAF0;         /* Border */
+  --apps-text-primary: #182238;   /* Primary Text */
+  --apps-text-secondary: #64748B; /* Secondary Text */
+  --apps-text-muted: #94A3B8;
+  --apps-accent: #7C6CFF;         /* Aurora Violet — academic/brand elements */
+  --apps-accent-light: #A9DCE8;   /* Ice Blue */
+  --apps-accent-pale: #F2F0FF;    /* soft lavender tint of Aurora Violet */
   --apps-progress-track: #E3EAF0;
-  --apps-priority-high-bg: #FCE8E8;
-  --apps-priority-high: #D95757;
-  --apps-priority-medium-bg: #FFF4D6;
-  --apps-priority-medium: #8A681D;
+  --apps-priority-high-bg: #FBEEEE;
+  --apps-priority-high: #D95757;      /* Denmark/Norway Red */
+  --apps-priority-medium-bg: #FDF8EB;
+  --apps-priority-medium: #F2C75C;    /* Sweden Gold */
   --apps-priority-low-bg: #F1F5F9;
   --apps-priority-low: #64748B;
-  --apps-deadline-urgent-bg: #FCE8E8;
-  --apps-deadline-urgent-text: #B33F3F;
-  --apps-deadline-soon-bg: #FFF4D6;
-  --apps-deadline-soon-text: #806018;
+  --apps-deadline-urgent-bg: #FBEEEE;
+  --apps-deadline-urgent-text: #D95757;
+  --apps-deadline-soon-bg: #FDF8EB;
+  --apps-deadline-soon-text: #B8860B;
   --apps-deadline-normal-bg: #F1F5F9;
   --apps-deadline-normal-text: #64748B;
 
-  --border: 208 30% 92%;
+  --border: 208 30% 92%;  /* Border #E3EAF0 */
   --input: 208 30% 92%;
-  --ring: 174 78% 44%;
+  --ring: 174 78% 44%;    /* Aurora Teal */
 
-  --card: 0 0% 100%;
+  --card: 0 0% 100%;            /* Pure Snow */
   --card-foreground: 221 40% 16%;
   --card-border: 208 30% 92%;
 
@@ -130,148 +137,114 @@
   --popover-foreground: 221 40% 16%;
   --popover-border: 208 30% 92%;
 
-  --primary: 218 48% 26%;
+  --primary: 174 78% 44%;        /* Aurora Teal — primary CTA base (gradient applied via .gradient-aurora) */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 187 62% 92%;
+  --secondary: 187 62% 92%;      /* Frost */
   --secondary-foreground: 221 40% 16%;
 
-  --muted: 210 30% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 210 30% 95%;
+  --muted-foreground: 215 16% 47%;  /* Secondary Text */
 
-  --accent: 174 78% 44%;
-  --accent-foreground: 221 40% 16%;
+  --accent: 247 100% 71%;        /* Aurora Violet */
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 63% 60%;
+  --destructive: 0 63% 60%;      /* Denmark/Norway Red */
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 185 67% 27%;
-  --chart-2: 174 78% 44%;
-  --chart-3: 247 100% 71%;
-  --chart-4: 43 85% 65%;
-  --chart-5: 0 63% 60%;
+  --chart-1: 174 78% 44%;   /* Aurora Teal */
+  --chart-2: 247 100% 71%;  /* Aurora Violet */
+  --chart-3: 43 85% 65%;    /* Sweden Gold */
+  --chart-4: 0 63% 60%;     /* Denmark Red */
+  --chart-5: 191 58% 79%;   /* Ice Blue */
 
-  --sidebar: 219 45% 16%;
+  --sidebar: 219 45% 16%;              /* Midnight Nordic #17243D */
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 218 48% 26%;
-  --sidebar-primary: 174 78% 44%;
-  --sidebar-primary-foreground: 220 46% 9%;
-  --sidebar-accent: 218 48% 26%;
+  --sidebar-border: 218 48% 26%;       /* Deep Nordic Blue #233B63 */
+  --sidebar-primary: 174 78% 44%;      /* Aurora Teal (active item base; gradient layered via .gradient-aurora) */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 218 48% 26%;       /* Deep Nordic Blue */
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 174 78% 44%;
 
   --radius: 1rem;
 }
 
-/* ── DARK MODE ─────────────────────────────────────────────────────────── */
+/* ── DARK MODE — Nordic/Aurora identity ───────────────────────────────── */
 .dark {
-  --background: 219 45% 10%;
-  --foreground: 210 40% 98%;
+  --background: 221 45% 10%;
+  --foreground: 210 40% 95%;
 
-  --border: 218 35% 24%;
-  --input: 218 35% 24%;
-  --ring: 174 78% 44%;
+  --border: 218 30% 22%;
+  --input: 218 30% 22%;
+  --ring: 174 78% 50%;
 
-  --card: 219 38% 13%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 218 35% 24%;
+  --card: 219 40% 13%;
+  --card-foreground: 210 40% 95%;
+  --card-border: 218 30% 22%;
 
-  --popover: 219 38% 13%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 218 35% 24%;
+  --popover: 219 40% 13%;
+  --popover-foreground: 210 40% 95%;
+  --popover-border: 218 30% 22%;
 
-  --primary: 174 78% 44%;
-  --primary-foreground: 220 46% 9%;
+  --primary: 174 70% 50%;
+  --primary-foreground: 219 45% 12%;
 
-  --secondary: 218 34% 22%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 218 35% 18%;
+  --secondary-foreground: 210 40% 95%;
 
-  --muted: 219 30% 18%;
-  --muted-foreground: 215 20% 72%;
+  --muted: 219 35% 16%;
+  --muted-foreground: 215 20% 65%;
 
-  --accent: 247 100% 71%;
-  --accent-foreground: 220 46% 9%;
+  --accent: 247 100% 75%;
+  --accent-foreground: 219 45% 12%;
 
-  --destructive: 0 63% 60%;
+  --destructive: 0 63% 65%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 219 45% 10%;
-  --sidebar-foreground: 240 17% 94%;
-  --sidebar-border: 218 35% 24%;
-  --sidebar-primary: 174 78% 44%;
-  --sidebar-primary-foreground: 220 46% 9%;
-  --sidebar-accent: 218 34% 22%;
+  --sidebar: 219 50% 10%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 218 40% 20%;
+  --sidebar-primary: 174 70% 50%;
+  --sidebar-primary-foreground: 219 45% 12%;
+  --sidebar-accent: 218 40% 20%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 174 78% 44%;
+  --sidebar-ring: 174 70% 50%;
 }
 
-/* ── FLY MODE (shared midnight Nordic navigation for study and applications) ── */
+/* ── FLY MODE (Aurora Violet-leaning navigation for application tools) ── */
 .fly-mode {
   --sidebar: 219 45% 16%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-border: 218 48% 26%;
-  --sidebar-primary: 174 78% 44%;
-  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-primary: 247 100% 71%;   /* Aurora Violet — Fly's brand accent */
+  --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 218 48% 26%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 174 78% 44%;
+  --sidebar-ring: 247 100% 71%;
 }
 .fly-mode.dark {
-  --sidebar: 219 45% 10%;
-  --sidebar-border: 218 35% 24%;
-  --sidebar-accent: 218 34% 22%;
+  --sidebar: 219 50% 10%;
+  --sidebar-border: 218 40% 20%;
+  --sidebar-accent: 218 40% 20%;
 }
 
-/* ── STUDY MODE (same palette; content, not navigation color, distinguishes it) */
+/* ── STUDY MODE (Aurora Teal-leaning navigation; content, not nav color,
+   mainly distinguishes it, but the active-item hue nods to the Study accent) */
 .study-mode {
   --sidebar: 219 45% 16%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-border: 218 48% 26%;
-  --sidebar-primary: 174 78% 44%;
-  --sidebar-primary-foreground: 220 46% 9%;
+  --sidebar-primary: 174 78% 44%;    /* Aurora Teal — Study's brand accent */
+  --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 218 48% 26%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 174 78% 44%;
 }
 .study-mode.dark {
-  --sidebar: 219 45% 10%;
-  --sidebar-border: 218 35% 24%;
-  --sidebar-accent: 218 34% 22%;
-}
-
-.fly-mode [aria-current='page'],
-.study-mode [aria-current='page'] {
-  color: hsl(var(--sidebar-primary-foreground)) !important;
-  background-color: #19C7B7 !important;
-  background-image: linear-gradient(90deg, #19C7B7, #7C6CFF) !important;
-  box-shadow: 0 6px 18px rgba(25, 199, 183, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
-.fly-mode button.bg-primary,
-.study-mode button.bg-primary,
-.landing-page button.bg-primary {
-  background-color: #19C7B7;
-  background-image: linear-gradient(90deg, #19C7B7, #7C6CFF);
-  color: #101827;
-  box-shadow: 0 6px 18px rgba(25, 199, 183, 0.18);
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
-}
-
-.fly-mode button.bg-primary:hover,
-.study-mode button.bg-primary:hover,
-.landing-page button.bg-primary:hover {
-  filter: saturate(1.08) brightness(1.02);
-  box-shadow: 0 9px 22px rgba(25, 199, 183, 0.22);
-}
-
-.fly-mode nav button:not([aria-current='page']),
-.study-mode nav button:not([aria-current='page']) {
-  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
-}
-
-.fly-mode nav button:not([aria-current='page']):hover,
-.study-mode nav button:not([aria-current='page']):hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  --sidebar: 219 50% 10%;
+  --sidebar-border: 218 40% 20%;
+  --sidebar-accent: 218 40% 20%;
 }
 
 /* ── SHARED DESIGN TOKENS (section 2) — spacing, shadow, transition scales.
@@ -321,4 +294,16 @@
 
 .section-label {
   @apply text-[11px] font-semibold uppercase tracking-widest text-muted-foreground;
+}
+
+/* ── Nordic/Aurora gradients — use sparingly (primary CTAs, hero banners,
+   active sidebar item), not as a general-purpose background ── */
+.gradient-aurora {
+  background: linear-gradient(90deg, #19C7B7, #7C6CFF);
+}
+.gradient-aurora-glow {
+  background: linear-gradient(90deg, #42E6B8, #7C6CFF, #C56CFF);
+}
+.gradient-hero-nordic {
+  background: linear-gradient(120deg, #17243D, #233B63, #176B73);
 }
