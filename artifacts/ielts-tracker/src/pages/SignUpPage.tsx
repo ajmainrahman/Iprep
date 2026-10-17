@@ -48,6 +48,7 @@ export default function SignUpPage() {
       <div style={{ background: '#FFFFFF', borderRadius: '1rem', maxWidth: '420px', width: '100%', overflow: 'hidden', border: '1px solid #E3EAF0', boxShadow: '0 8px 30px rgba(23,36,61,0.08)' }}>
         <div style={{ background: 'linear-gradient(120deg, #17243D, #233B63, #176B73)', padding: '2rem 2rem 1.75rem', textAlign: 'center', position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(60% 90% at 85% 0%, rgba(25,199,183,0.28), transparent 70%), radial-gradient(50% 80% at 10% 100%, rgba(124,108,255,0.22), transparent 70%)', pointerEvents: 'none' }} />
+          <img src="/images/logo-mark.png" alt="" width="56" height="56" style={{ position: 'relative', display: 'block', margin: '0 auto 0.75rem' }} />
           <h1 style={{ position: 'relative', color: '#FFFFFF', fontFamily: "'Manrope', sans-serif", fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Within a Few Weeks</h1>
           <p style={{ position: 'relative', color: '#A9DCE8', fontSize: '0.875rem', marginTop: '0.25rem' }}>Master IELTS. Track your future.</p>
         </div>

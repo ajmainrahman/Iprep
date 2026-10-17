@@ -140,7 +140,7 @@ const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string;
   awarded:       { label: 'Awarded',       color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
   rejected:      { label: 'Rejected',      color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
   expired:       { label: 'Expired',       color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
-  not_eligible:  { label: 'Not Eligible',  color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
+  not_eligible:  { label: 'Not Applied',   color: 'text-slate-500 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800' },
 };
 
 // Legacy → Phase 2 status mapping. Old rows keep their raw DB value until the user
@@ -152,6 +152,11 @@ function normalizeScholarshipStatus(raw: unknown): ScholarshipStatus {
   if (value === 'ready_to_apply') return 'applying';
   return 'researching';
 }
+
+/* "Not Applied" = parked. These sink to the bottom of every list, look dimmed,
+   and their documents are left out of every total. */
+const isAppNotApplied = (status: unknown) => String(status || '') === 'withdrawn';
+const isSchNotApplied = (status: unknown) => normalizeScholarshipStatus(status) === 'not_eligible';
 
 const FUNDING_TYPES = ['Fully Funded', 'Partially Funded', 'Tuition Waiver', 'External Funding', 'Self Funded', 'Other'] as const;
 function normalizeFundingType(raw: unknown): string {
@@ -597,6 +602,15 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
       }),
   ];
 
+  const isDisabledRecord = (record: UnifiedRecord) => {
+    const appOff = record.app ? isAppNotApplied(record.app.status) : true;
+    const schOff = record.scholarship ? isSchNotApplied(record.scholarship.status) : true;
+    return appOff && schOff;
+  };
+  const activeRequirementsFor = (record: UnifiedRecord) => [
+    ...(record.app && !isAppNotApplied(record.app.status) ? safeParseReqs(record.app.requirementsJson as string) : []),
+    ...(record.scholarship && !isSchNotApplied(record.scholarship.status) ? parseReqs(record.scholarship.requirementsJson) : []),
+  ];
   const requirementsFor = (record: UnifiedRecord) => {
     const appReqs = record.app ? safeParseReqs(record.app.requirementsJson as string) : [];
     const scholarshipReqs = record.scholarship ? parseReqs(record.scholarship.requirementsJson) : [];
@@ -623,6 +637,9 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
       return true;
     })
     .sort((a, b) => {
+      const offA = isDisabledRecord(a) ? 1 : 0;
+      const offB = isDisabledRecord(b) ? 1 : 0;
+      if (offA !== offB) return offA - offB;
       if (!a.deadline && !b.deadline) return 0;
       if (!a.deadline) return 1;
       if (!b.deadline) return -1;
@@ -636,8 +653,8 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
   }, {});
   const sortedCountries = Object.keys(groups).sort();
 
-  const totalRequirementItems = unifiedRecords.reduce((total, record) => total + requirementsFor(record).length, 0);
-  const completedRequirementItems = unifiedRecords.reduce((total, record) => total + requirementsFor(record).filter(item => item.done).length, 0);
+  const totalRequirementItems = unifiedRecords.reduce((total, record) => total + activeRequirementsFor(record).length, 0);
+  const completedRequirementItems = unifiedRecords.reduce((total, record) => total + activeRequirementsFor(record).filter(item => item.done).length, 0);
   const requirementsPercent = totalRequirementItems ? Math.round((completedRequirementItems / totalRequirementItems) * 100) : 0;
   const upcomingDeadlines = unifiedRecords
     .filter(record => {
@@ -720,7 +737,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     const application = record.app;
     const scholarship = record.scholarship;
     return (
-      <article data-testid={`unified-record-${record.key}`} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${timeline ? 'bg-white/90' : 'bg-white'}`} style={{ borderColor: record.type === 'both' ? '#DAD6FF' : 'var(--apps-border)', boxShadow: '0 1px 2px rgba(35, 59, 99, 0.04)' }}>
+      <article data-testid={`unified-record-${record.key}`} className={`group rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg ${timeline ? 'bg-white/90' : 'bg-white'}${isDisabledRecord(record) ? ' opacity-60' : ''}`} style={{ borderColor: record.type === 'both' ? '#DAD6FF' : 'var(--apps-border)', boxShadow: '0 1px 2px rgba(35, 59, 99, 0.04)' }}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -769,7 +786,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground"><ClipboardList className="h-3.5 w-3.5" />Documents / requirements</p>
-            <span className="text-xs font-bold text-foreground">{doneCount}/{reqs.length} done</span>
+            <span className={`text-xs font-bold ${isDisabledRecord(record) ? 'text-muted-foreground/50 line-through' : 'text-foreground'}`} title={isDisabledRecord(record) ? 'Not counted while Not Applied' : undefined}>{doneCount}/{reqs.length} done</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-[#EDF0F4]"><div className="h-full rounded-full bg-[#176B73] transition-all" style={{ width: `${progress}%` }} /></div>
         </div>
@@ -809,6 +826,11 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     </section>
   );
 
+  const activeApplicationCount = applicationRows.filter(app => !isAppNotApplied(app.status)).length;
+  const activeScholarshipCount = scholarshipRows.filter(item => !isSchNotApplied(item.status)).length;
+  const totalTargetCount = activeApplicationCount + activeScholarshipCount;
+  const notAppliedCount = (applicationRows.length - activeApplicationCount) + (scholarshipRows.length - activeScholarshipCount);
+
   return (
     <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
       <div className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-[0_16px_40px_rgba(35, 59, 99, 0.16)] sm:p-8" style={{ background: 'linear-gradient(115deg, #17243D 0%, #233B63 52%, #176B73 100%)' }}>
@@ -827,7 +849,18 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div data-testid="unified-stat-total-targets" className="col-span-2 rounded-2xl p-4 text-white lg:col-span-1" style={{ background: 'linear-gradient(120deg, #17243D, #233B63, #176B73)' }}>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p data-testid="text-total-targets" className="font-heading text-3xl font-bold">{totalTargetCount}</p>
+              <p className="mt-1 text-[11px] font-semibold text-[#A9DCE8]">Applications + Scholarships</p>
+              <p className="mt-1 text-[10px] text-white/70">{activeApplicationCount} application{activeApplicationCount === 1 ? '' : 's'} · {activeScholarshipCount} scholarship{activeScholarshipCount === 1 ? '' : 's'}</p>
+            </div>
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-[#A9DCE8]"><Target className="h-4 w-4" /></span>
+          </div>
+          {notAppliedCount > 0 && <p className="mt-2 text-[10px] text-white/50">{notAppliedCount} Not Applied not counted</p>}
+        </div>
         {[
           { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#DDF4F7', ink: '#176B73', testId: 'total-applications' },
           { label: 'Scholarships', value: scholarshipRows.length, icon: Trophy, tone: '#FDF8EB', ink: '#B8860B', testId: 'total-scholarships' },
@@ -1420,8 +1453,10 @@ function ApplicationsTab() {
 
     applicationRows.forEach(app => {
       const requirements = safeParseReqs(app.requirementsJson as string);
-      docsCompleted += requirements.filter(item => item.done).length;
-      docsTotal += requirements.length;
+      if (!isAppNotApplied(app.status)) {
+        docsCompleted += requirements.filter(item => item.done).length;
+        docsTotal += requirements.length;
+      }
 
       const priority = String(app.priority || 'medium') as Priority;
       priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
@@ -1457,6 +1492,9 @@ function ApplicationsTab() {
         return true;
       })
       .sort((a, b) => {
+        const offA = isAppNotApplied(a.status) ? 1 : 0;
+        const offB = isAppNotApplied(b.status) ? 1 : 0;
+        if (offA !== offB) return offA - offB;
         const da = String(a.deadline || '');
         const db = String(b.deadline || '');
         if (!da && !db) return 0;
@@ -1989,7 +2027,7 @@ function ApplicationsTab() {
                           <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{String(app.program || 'Programme')} · {countryFlag(String(app.country || ''))} {String(app.country || 'Country')}</p>
                           <div className="mt-2 flex items-center justify-between gap-2 text-[10px]">
                             <span className={days !== null && days >= 0 && days <= 7 ? 'font-bold text-[#D95757]' : 'text-muted-foreground'}>{app.deadline ? (days !== null && days >= 0 ? `${days}d left` : fmtDate(String(app.deadline))) : 'No deadline'}</span>
-                            <span className="text-muted-foreground">{reqs.length ? `${done}/${reqs.length} docs` : 'No docs'}</span>
+                            <span className={isAppNotApplied(app.status) ? 'text-muted-foreground/50 line-through' : 'text-muted-foreground'}>{reqs.length ? `${done}/${reqs.length} docs` : 'No docs'}</span>
                           </div>
                           <div className="mt-2">
                             <ReadinessBar value={computeReadiness(app)} compact />
@@ -2028,6 +2066,9 @@ function ApplicationsTab() {
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
             <div className="space-y-4 pl-12">
               {[...filteredApplications].sort((a, b) => {
+                const offA = isAppNotApplied(a.status) ? 1 : 0;
+                const offB = isAppNotApplied(b.status) ? 1 : 0;
+                if (offA !== offB) return offA - offB;
                 const da = a.deadline as string | null;
                 const db = b.deadline as string | null;
                 if (!da && !db) return 0;
@@ -2100,10 +2141,11 @@ function ApplicationsTab() {
       ) : (
         <div className="space-y-3">
           {(() => {
-             const sortedApps = filteredApplications;
+             const sortedApps = filteredApplications.filter(app => !isAppNotApplied(app.status));
+             const notAppliedApps = filteredApplications.filter(app => isAppNotApplied(app.status));
 
             if (countryFilter) {
-              return sortedApps.map(app => renderAppCard(app));
+              return [...sortedApps, ...notAppliedApps].map(app => renderAppCard(app));
             }
 
             const grouped: Record<string, (Record<string, unknown> & { id: number })[]> = {};
@@ -2114,7 +2156,7 @@ function ApplicationsTab() {
             });
             const sortedCountries = Object.keys(grouped).sort();
 
-            return sortedCountries.map(country => (
+            return (<>{sortedCountries.map(country => (
               <div key={country}>
                 <div className="flex items-center gap-2 mb-2 mt-1">
                   <Globe className="w-3.5 h-3.5 text-muted-foreground" />
@@ -2126,7 +2168,19 @@ function ApplicationsTab() {
                   {grouped[country].map(app => renderAppCard(app))}
                 </div>
               </div>
-            ));
+            ))}
+            {notAppliedApps.length > 0 && (
+              <div data-testid="section-not-applied-applications">
+                <div className="flex items-center gap-2 mb-2 mt-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Not Applied</h3>
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">{notAppliedApps.length}</span>
+                </div>
+                <div className="space-y-3">
+                  {notAppliedApps.map(app => renderAppCard(app))}
+                </div>
+              </div>
+            )}</>);
           })()}
         </div>
       )}
@@ -2153,7 +2207,7 @@ function ApplicationsTab() {
             const readiness = computeReadiness(app);
 
             return (
-              <Card key={app.id} data-testid={`card-application-${app.id}`} className="overflow-hidden transition-shadow hover:shadow-md">
+              <Card key={app.id} data-testid={`card-application-${app.id}`} className={`overflow-hidden transition-shadow hover:shadow-md${isAppNotApplied(app.status) ? ' opacity-60' : ''}`}>
                 <div className="p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -2184,7 +2238,7 @@ function ApplicationsTab() {
                           </span>
                         )}
                         {reqs.length > 0 && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <span className={`flex items-center gap-1 ${isAppNotApplied(app.status) ? 'text-muted-foreground/50 line-through' : 'text-muted-foreground'}`} title={isAppNotApplied(app.status) ? 'Not counted while Not Applied' : undefined}>
                             <FileText className="w-3 h-3" />
                             {doneCount}/{reqs.length} docs
                           </span>
@@ -3005,8 +3059,10 @@ function ScholarshipsTab() {
 
     scholarshipRows.forEach(s => {
       const requirements = parseReqs(s.requirementsJson);
-      docsCompleted += requirements.filter(item => item.done).length;
-      docsTotal += requirements.length;
+      if (!isSchNotApplied(s.status)) {
+        docsCompleted += requirements.filter(item => item.done).length;
+        docsTotal += requirements.length;
+      }
 
       const priority = String(s.priority || 'medium') as Priority;
       priorityCounts[priority in priorityCounts ? priority : 'medium'] += 1;
@@ -3048,31 +3104,33 @@ function ScholarshipsTab() {
       }
       return true;
     });
-    if (sortMode === 'recent') return rows; // API already orders by createdAt desc — preserve that order
+    const pushNotAppliedDown = (list: typeof rows) => [...list.filter(item => !isSchNotApplied(item.status)), ...list.filter(item => isSchNotApplied(item.status))];
+    if (sortMode === 'recent') return pushNotAppliedDown(rows); // API already orders by createdAt desc — preserve that order
     if (sortMode === 'status') {
-      return [...rows].sort((a, b) => (
+      return pushNotAppliedDown([...rows].sort((a, b) => (
         SCH_STATUS_ORDER.indexOf(normalizeScholarshipStatus(a.status)) - SCH_STATUS_ORDER.indexOf(normalizeScholarshipStatus(b.status))
-      ));
+      )));
     }
-    return [...rows].sort((a, b) => {
+    return pushNotAppliedDown([...rows].sort((a, b) => {
       const da = String(a.deadline || '');
       const db = String(b.deadline || '');
       if (!da && !db) return 0;
       if (!da) return 1;
       if (!db) return -1;
       return da > db ? 1 : -1;
-    });
+    }));
   }, [scholarships, countryFilter, degreeFilter, fundingFilter, priorityFilter, statusFilter, deadlineFilter, searchQuery, sortMode]);
 
   const groupedScholarships = React.useMemo(() => {
     const grouped: Record<string, typeof scholarshipRows> = {};
-    filteredScholarships.forEach(s => {
+    filteredScholarships.filter(s => !isSchNotApplied(s.status)).forEach(s => {
       const country = String(s.country || 'Other');
       if (!grouped[country]) grouped[country] = [];
       grouped[country].push(s);
     });
     return grouped;
   }, [filteredScholarships]);
+  const notAppliedScholarships = React.useMemo(() => filteredScholarships.filter(s => isSchNotApplied(s.status)), [filteredScholarships]);
   const sortedCountries = Object.keys(groupedScholarships).sort();
 
   return (
@@ -3587,6 +3645,18 @@ function ScholarshipsTab() {
               )}
             </section>
           ))}
+          {notAppliedScholarships.length > 0 && (
+            <section data-testid="section-not-applied-scholarships">
+              <div className="flex items-center gap-2 mb-2 mt-1">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Not Applied</h3>
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">{notAppliedScholarships.length}</span>
+              </div>
+              <div className="space-y-3">
+                {notAppliedScholarships.map(s => renderSchCard(s))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>
@@ -3618,7 +3688,7 @@ function ScholarshipsTab() {
     const profileMatch = s.profileMatch !== null && s.profileMatch !== undefined && s.profileMatch !== '' ? Math.round(Number(s.profileMatch)) : null;
 
     return (
-      <Card key={s.id} data-testid={`card-scholarship-${s.id}`} className="group overflow-hidden rounded-[20px] border-none shadow-none bg-white dark:bg-card hover:shadow-md transition-all">
+      <Card key={s.id} data-testid={`card-scholarship-${s.id}`} className={`group overflow-hidden rounded-[20px] border-none shadow-none bg-white dark:bg-card hover:shadow-md transition-all${isSchNotApplied(s.status) ? ' opacity-60' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <button
@@ -3754,7 +3824,7 @@ function ScholarshipsTab() {
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                   <ClipboardList className="w-3 h-3" /> Requirements Checklist
-                  {reqs.length > 0 && <span className="ml-auto font-normal normal-case tracking-normal text-muted-foreground">{doneCount}/{reqs.length} done</span>}
+                  {reqs.length > 0 && <span className={`ml-auto font-normal normal-case tracking-normal ${isSchNotApplied(s.status) ? 'text-muted-foreground/50 line-through' : 'text-muted-foreground'}`} title={isSchNotApplied(s.status) ? 'Not counted while Not Applied' : undefined}>{doneCount}/{reqs.length} done</span>}
                 </p>
                 {reqs.length > 0 && (
                   <div className="space-y-1.5 mb-2">

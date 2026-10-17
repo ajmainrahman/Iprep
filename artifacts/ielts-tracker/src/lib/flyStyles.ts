@@ -41,5 +41,5 @@ export const SCH_STATUS_STYLES: Record<ScholarshipStatusKey, { label: string; bg
   awarded:      { label: 'Awarded',      ...FLY_PASTELS.green },
   rejected:     { label: 'Rejected',     ...FLY_PASTELS.red },
   expired:      { label: 'Expired',      ...FLY_PASTELS.gray },
-  not_eligible: { label: 'Not Eligible', ...FLY_PASTELS.rose },
+  not_eligible: { label: 'Not Applied', ...FLY_PASTELS.slate },
 };

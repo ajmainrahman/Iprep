@@ -119,6 +119,48 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/* ─── RESOURCES DROPDOWN (Home nav) ─────────────────────────────────────── */
+// Add or edit links here. An entry with an empty href stays hidden until you paste a link.
+const RESOURCE_LINKS: { label: string; href: string }[] = [
+  { label: 'Updates about Fly', href: 'https://youtube.com/playlist?list=PLb9m3FmRpwa8&si=drHFHb2oD0EQ9IKL' },
+  { label: 'Iprep 2027', href: 'https://youtube.com/playlist?list=PLT9y-1EiZd74&si=fDxh75q-X5ha7jGF' },
+  { label: 'YouTube playlist', href: '' },
+];
+
+function ResourcesMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  const links = RESOURCE_LINKS.filter(l => l.href);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open} data-testid="button-resources-menu"
+        className="inline-flex items-center gap-1 text-[13px] font-medium pb-1 border-b-2 border-transparent transition-colors hover:text-[#176B73]" style={{ color: open ? '#176B73' : '#64748B' }}>
+        Resources <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div role="menu" className="absolute left-0 top-full z-30 mt-2 w-64 rounded-2xl border bg-white p-1.5" style={{ borderColor: '#E3EAF0', boxShadow: '0 12px 32px rgba(23,36,61,.12)' }}>
+          {links.map(l => (
+            <a key={l.label} role="menuitem" href={l.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-[#233B63] transition-colors hover:bg-[#F8FAFC]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBEEEE] text-[#D95757]"><Youtube className="h-4 w-4" /></span>
+              <span className="flex-1">{l.label}</span>
+              <ArrowUpRight className="h-3.5 w-3.5 text-[#94A3B8]" />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── LANDING PAGE ──────────────────────────────────────────────────────── */
 function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => void }) {
   const [, setLocation] = useLocation();
@@ -140,11 +182,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   // ── Fly metrics — all derived directly from the SAME applications/scholarships
   // queries Fly → Applications and Fly → Scholarships themselves render from. ──
   const appRows = (applications as any[]).map(a => ({ ...a, days: daysUntil(a.deadline) }));
-  const upcomingApplications = appRows.filter(a => a.days !== null && a.days >= 0).sort((a, b) => a.days - b.days);
+  const upcomingApplications = appRows.filter(a => a.status !== 'withdrawn' && a.days !== null && a.days >= 0).sort((a, b) => a.days - b.days);
   const nextDeadline = upcomingApplications[0] ?? null;
   const upcomingDeadlineCount = upcomingApplications.filter(a => a.days <= 30).length;
   let docsDone = 0, docsTotal = 0;
   appRows.forEach(a => {
+    if (a.status === 'withdrawn') return; // Not Applied: documents not counted
     const reqs: { done?: boolean }[] = (() => { try { return JSON.parse(a.requirementsJson || '[]'); } catch { return []; } })();
     docsTotal += reqs.length;
     docsDone += reqs.filter(r => r.done).length;
@@ -208,7 +251,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   }
   const upcomingScholarship = (scholarships as any[])
     .map((s: any) => ({ ...s, days: daysUntil(s.deadline) }))
-    .filter(s => s.days !== null && s.days >= 0)
+    .filter(s => s.status !== 'not_eligible' && s.days !== null && s.days >= 0)
     .sort((a, b) => a.days - b.days)[0];
   if (upcomingScholarship && upcomingScholarship.days <= 21) {
     nextItems.push({
@@ -241,7 +284,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         <div className="hidden md:flex items-center gap-8">
           <span className="text-[13px] font-semibold pb-1 border-b-2" style={{ color: '#176B73', borderColor: '#19C7B7' }}>Home</span>
           <button onClick={onStudy} className="text-[13px] font-medium pb-1 border-b-2 border-transparent transition-colors hover:text-[#176B73]" style={{ color: '#64748B' }}>My Study</button>
-          <span title="Coming soon" className="text-[13px] font-medium text-slate-400/70 cursor-not-allowed pb-1 border-b-2 border-transparent">Resources</span>
+          <ResourcesMenu />
           <span title="Coming soon" className="text-[13px] font-medium text-slate-400/70 cursor-not-allowed pb-1 border-b-2 border-transparent">Community</span>
         </div>
         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -252,20 +295,20 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         </div>
       </nav>
 
-      <header className="px-4 sm:px-7 lg:px-10 pt-5 sm:pt-7">
+      <header className="px-4 sm:px-7 lg:px-10 pt-4 sm:pt-5">
         <div className="land-enter relative max-w-[1400px] mx-auto overflow-hidden rounded-[26px] sm:rounded-[32px]" style={{ background: 'linear-gradient(116deg, #17243D 0%, #233B63 58%, #176B73 100%)' }}>
           <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full border border-white/10" />
           <div className="absolute right-10 top-8 h-64 w-64 rounded-full border border-white/[0.07]" />
-          <div className="relative grid lg:grid-cols-[.95fr_1.05fr] gap-8 lg:gap-12 items-center p-6 sm:p-9 lg:p-12">
+          <div className="relative grid lg:grid-cols-[.95fr_1.05fr] gap-6 lg:gap-8 items-center p-5 sm:p-7 lg:p-8">
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2.5 rounded-full px-3.5 py-2 mb-6 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[.16em] text-[#DDF4F7]" style={{ backgroundColor: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.15)' }}>
+              <div className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5 mb-4 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[.16em] text-[#DDF4F7]" style={{ backgroundColor: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.15)' }}>
                 <span className="h-1.5 w-1.5 rounded-full bg-[#42E6B8]" />
                 Your next chapter, in motion
               </div>
-              <h1 className="max-w-[590px] text-white font-bold leading-[1.04] tracking-[-.045em] mb-5" style={{ fontFamily: 'Manrope, sans-serif', fontSize: 'clamp(2.6rem, 5.1vw, 4.5rem)' }}>
+              <h1 className="max-w-[590px] text-white font-bold leading-[1.04] tracking-[-.045em] mb-3" style={{ fontFamily: 'Manrope, sans-serif', fontSize: 'clamp(2rem, 3.6vw, 3.1rem)' }}>
                 Within a Few<br /><span style={{ color: '#A9DCE8' }}>Weeks.</span>
               </h1>
-              <p className="max-w-[480px] text-[14px] sm:text-[15px] leading-7 text-white/75 mb-7">
+              <p className="max-w-[480px] text-[13px] sm:text-[14px] leading-6 text-white/75 mb-5">
                 Make the distance between today and your Nordic study goal feel a little smaller. Prepare for IELTS, keep applications moving, and see your progress take shape.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -276,18 +319,18 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                   <BookOpen className="h-4 w-4 text-[#A9DCE8]" /> Open study space
                 </button>
               </div>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.13)' }}>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.13)' }}>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F2C75C]/15"><Zap className="h-4 w-4 text-[#F2C75C]" /></span>
                   <div><p className="text-[9px] font-semibold uppercase tracking-[.15em] text-white/55">Study streak</p><p className="mt-0.5 text-[15px] font-bold text-white">{streak > 0 ? `${streak} ${streak === 1 ? 'day' : 'days'}` : 'Start today'}</p></div>
                 </div>
-                <button onClick={() => setLocation('/study/scores')} className="flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-white/[.14]" style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.13)' }}>
+                <button onClick={() => setLocation('/study/scores')} className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition-colors hover:bg-white/[.14]" style={{ background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.13)' }}>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#A9DCE8]/15"><Target className="h-4 w-4 text-[#A9DCE8]" /></span>
                   <div><p className="text-[9px] font-semibold uppercase tracking-[.15em] text-white/55">IELTS exam</p><p className="mt-0.5 text-[15px] font-bold text-white">{examDays === null ? 'Not set' : examDays < 0 ? 'Passed' : fmtDays(examDays)}</p></div>
                 </button>
               </div>
             </div>
-            <div className="land-enter-delay relative min-h-[250px] sm:min-h-[340px] lg:min-h-[420px] overflow-hidden rounded-[22px] sm:rounded-[26px]" style={{ boxShadow: '0 24px 60px rgba(23, 36, 61, .3)', border: '1px solid rgba(255,255,255,.22)' }}>
+            <div className="land-enter-delay relative min-h-[170px] sm:min-h-[230px] lg:min-h-[290px] overflow-hidden rounded-[22px] sm:rounded-[26px]" style={{ boxShadow: '0 24px 60px rgba(23, 36, 61, .3)', border: '1px solid rgba(255,255,255,.22)' }}>
               <img src="/images/hero-nordic-no-flags.jpg" alt="A quiet study desk looking across a Nordic fjord town at dusk" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(23,36,61,0) 32%, rgba(23,36,61,.68) 100%)' }} />
               <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-semibold tracking-wide text-white backdrop-blur-sm" style={{ background: 'rgba(23,36,61,.42)', border: '1px solid rgba(255,255,255,.25)' }}>
