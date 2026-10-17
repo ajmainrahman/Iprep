@@ -821,10 +821,13 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     </section>
   );
 
-  const activeApplicationCount = applicationRows.filter(app => !isAppNotApplied(app.status)).length;
-  const activeScholarshipCount = scholarshipRows.filter(item => !isSchNotApplied(item.status)).length;
-  const totalTargetCount = activeApplicationCount + activeScholarshipCount;
-  const notAppliedCount = (applicationRows.length - activeApplicationCount) + (scholarshipRows.length - activeScholarshipCount);
+  // "Applied" = actually submitted: Applied and every stage after it.
+  const APPLIED_APP_STAGES = ['applied', 'interview', 'offer', 'waitlisted', 'rejected'];
+  const APPLIED_SCHOLARSHIP_STAGES = ['applied', 'interview', 'awarded', 'waitlisted', 'rejected'];
+  const appliedApplicationCount = applicationRows.filter(app => APPLIED_APP_STAGES.includes(normalizeAppStatus(app.status))).length;
+  const appliedScholarshipCount = scholarshipRows.filter(item => APPLIED_SCHOLARSHIP_STAGES.includes(normalizeScholarshipStatus(item.status))).length;
+  const totalAppliedCount = appliedApplicationCount + appliedScholarshipCount;
+  const notYetAppliedCount = (applicationRows.length - appliedApplicationCount) + (scholarshipRows.length - appliedScholarshipCount);
 
   return (
     <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
@@ -848,13 +851,13 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         <div data-testid="unified-stat-total-targets" className="col-span-2 rounded-2xl p-4 text-white lg:col-span-1" style={{ background: 'linear-gradient(120deg, #17243D, #233B63, #176B73)' }}>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p data-testid="text-total-targets" className="font-heading text-3xl font-bold">{totalTargetCount}</p>
-              <p className="mt-1 text-[11px] font-semibold text-[#A9DCE8]">Applications + Scholarships</p>
-              <p className="mt-1 text-[10px] text-white/70">{activeApplicationCount} application{activeApplicationCount === 1 ? '' : 's'} · {activeScholarshipCount} scholarship{activeScholarshipCount === 1 ? '' : 's'}</p>
+              <p data-testid="text-total-targets" className="font-heading text-3xl font-bold">{totalAppliedCount}</p>
+              <p className="mt-1 text-[11px] font-semibold text-[#A9DCE8]">Total Applied</p>
+              <p className="mt-1 text-[10px] text-white/70">{appliedApplicationCount} application{appliedApplicationCount === 1 ? '' : 's'} · {appliedScholarshipCount} scholarship{appliedScholarshipCount === 1 ? '' : 's'}</p>
             </div>
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-[#A9DCE8]"><Target className="h-4 w-4" /></span>
           </div>
-          {notAppliedCount > 0 && <p className="mt-2 text-[10px] text-white/50">{notAppliedCount} Not Applied not counted</p>}
+          {notYetAppliedCount > 0 && <p className="mt-2 text-[10px] text-white/50">{notYetAppliedCount} not applied yet</p>}
         </div>
         {[
           { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#DDF4F7', ink: '#176B73', testId: 'total-applications' },
