@@ -182,12 +182,12 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   // ── Fly metrics — all derived directly from the SAME applications/scholarships
   // queries Fly → Applications and Fly → Scholarships themselves render from. ──
   const appRows = (applications as any[]).map(a => ({ ...a, days: daysUntil(a.deadline) }));
-  const upcomingApplications = appRows.filter(a => a.status !== 'withdrawn' && a.days !== null && a.days >= 0).sort((a, b) => a.days - b.days);
+  const upcomingApplications = appRows.filter(a => a.status !== 'withdrawn' && a.status !== 'missed_deadline' && a.days !== null && a.days >= 0).sort((a, b) => a.days - b.days);
   const nextDeadline = upcomingApplications[0] ?? null;
   const upcomingDeadlineCount = upcomingApplications.filter(a => a.days <= 30).length;
   let docsDone = 0, docsTotal = 0;
   appRows.forEach(a => {
-    if (a.status === 'withdrawn') return; // Not Applied: documents not counted
+    if (a.status === 'withdrawn' || a.status === 'missed_deadline') return; // Not Applied: documents not counted
     const reqs: { done?: boolean }[] = (() => { try { return JSON.parse(a.requirementsJson || '[]'); } catch { return []; } })();
     docsTotal += reqs.length;
     docsDone += reqs.filter(r => r.done).length;
@@ -251,7 +251,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   }
   const upcomingScholarship = (scholarships as any[])
     .map((s: any) => ({ ...s, days: daysUntil(s.deadline) }))
-    .filter(s => s.status !== 'not_eligible' && s.days !== null && s.days >= 0)
+    .filter(s => s.status !== 'not_eligible' && s.status !== 'expired' && s.days !== null && s.days >= 0)
     .sort((a, b) => a.days - b.days)[0];
   if (upcomingScholarship && upcomingScholarship.days <= 21) {
     nextItems.push({

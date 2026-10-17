@@ -27,19 +27,20 @@ export const FLY_PASTELS = {
 export type ScholarshipStatusKey =
   | 'researching' | 'eligible' | 'shortlisted' | 'preparing' | 'applying'
   | 'applied' | 'under_review' | 'interview' | 'awarded' | 'rejected'
-  | 'expired' | 'not_eligible';
+  | 'expired' | 'not_eligible' | 'waitlisted';
 
 export const SCH_STATUS_STYLES: Record<ScholarshipStatusKey, { label: string; bg: string; text: string; accent: string }> = {
   researching:  { label: 'Researching',  ...FLY_PASTELS.slate },
   eligible:     { label: 'Eligible',     ...FLY_PASTELS.mint },
   shortlisted:  { label: 'Shortlisted',  ...FLY_PASTELS.lavender },
-  preparing:    { label: 'Preparing',    ...FLY_PASTELS.amber },
+  preparing:    { label: 'Ready to Apply', ...FLY_PASTELS.amber },
   applying:     { label: 'Applying',     ...FLY_PASTELS.pink },
   applied:      { label: 'Applied',      ...FLY_PASTELS.blue },
   under_review: { label: 'Under Review', ...FLY_PASTELS.sky },
   interview:    { label: 'Interview',    ...FLY_PASTELS.purple },
-  awarded:      { label: 'Awarded',      ...FLY_PASTELS.green },
+  awarded:      { label: 'Offer Letter', ...FLY_PASTELS.green },
   rejected:     { label: 'Rejected',     ...FLY_PASTELS.red },
   expired:      { label: 'Expired',      ...FLY_PASTELS.gray },
   not_eligible: { label: 'Not Applied', ...FLY_PASTELS.slate },
+  waitlisted:   { label: 'Waitlist',     ...FLY_PASTELS.amber },
 };

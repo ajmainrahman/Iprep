@@ -28,17 +28,16 @@ import { FLY_PASTELS } from '@/lib/flyStyles';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 type AppStatus =
-  | 'researching' | 'shortlisted' | 'supervisor_contact' | 'preparing'
-  | 'ready_to_apply' | 'applied' | 'under_review' | 'interview'
-  | 'offer' | 'accepted' | 'rejected' | 'waitlisted' | 'deferred'
-  | 'withdrawn' | 'missed_deadline';
+  | 'researching' | 'ready_to_apply' | 'applied' | 'interview'
+  | 'offer' | 'waitlisted' | 'rejected' | 'withdrawn'; // withdrawn = "Not Applied"
 // Phase 2 status set. Legacy values ('planning', 'ready_to_apply') that already exist
 // in the database are safely mapped forward — see normalizeScholarshipStatus() — so
 // no migration or data rewrite is required.
+// Stored keys are kept as they were: preparing = "Ready to Apply", awarded = "Offer Letter",
+// not_eligible = "Not Applied". Older values are mapped in normalizeScholarshipStatus().
 type ScholarshipStatus =
-  | 'researching' | 'eligible' | 'shortlisted' | 'preparing' | 'applying'
-  | 'applied' | 'under_review' | 'interview' | 'awarded'
-  | 'rejected' | 'expired' | 'not_eligible';
+  | 'researching' | 'preparing' | 'applied' | 'interview'
+  | 'awarded' | 'waitlisted' | 'rejected' | 'not_eligible';
 type Priority = 'high' | 'medium' | 'low';
 type ReqCategory = 'requirement' | 'document' | 'application';
 type DocStatus = 'missing' | 'draft' | 'ready' | 'uploaded' | 'verified';
@@ -58,7 +57,7 @@ const DOC_STATUS_ORDER: DocStatus[] = ['missing', 'draft', 'ready', 'uploaded', 
 // Ongoing = the portal is open right now: start date reached (or none set),
 // deadline still ahead, and the status is not a finished/closed one.
 const APP_CLOSED_STATUSES = ['accepted', 'offer', 'rejected', 'waitlisted', 'deferred', 'withdrawn', 'missed_deadline'];
-const SCH_CLOSED_STATUSES = ['awarded', 'rejected', 'expired', 'not_eligible'];
+const SCH_CLOSED_STATUSES = ['awarded', 'waitlisted', 'rejected', 'expired', 'not_eligible'];
 
 function daysOrNull(value: unknown): number | null {
   const raw = String(value || '');
@@ -103,21 +102,28 @@ function reqIsDone(status: DocStatus): boolean {
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
   researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  shortlisted:    { label: 'Shortlisted',    color: 'text-[#233B63]',    bg: 'bg-[#DDF4F7] dark:bg-[#A9DCE8]/30' },
-  supervisor_contact: { label: 'Supervisor Contact', color: 'text-[#6A5CE0]', bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
-  preparing:      { label: 'Preparing',      color: 'text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
-  ready_to_apply: { label: 'Ready to Apply', color: 'text-[#176B73]', bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
-  applied:        { label: 'Submitted',      color: 'text-[#233B63]',    bg: 'bg-[#DDF4F7] dark:bg-[#233B63]/30' },
-  under_review:   { label: 'Under Review',   color: 'text-[#233B63]',     bg: 'bg-[#DDF4F7] dark:bg-[#A9DCE8]/30' },
-  interview:      { label: 'Interview',      color: 'text-[#6A5CE0]',  bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
-  offer:          { label: 'Offer',          color: 'text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
-  accepted:       { label: 'Accepted',       color: 'text-[#176B73]',    bg: 'bg-[#DDF4F7] dark:bg-[#19C7B7]/30' },
-  rejected:       { label: 'Rejected',       color: 'text-[#D95757]',     bg: 'bg-[#FBEEEE] dark:bg-[#D95757]/30' },
-  waitlisted:     { label: 'Waitlisted',     color: 'text-[#B8860B]',  bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
-  deferred:       { label: 'Deferred',       color: 'text-[#B8860B]',  bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
+  ready_to_apply: { label: 'Ready to Apply', color: 'text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
+  applied:        { label: 'Applied',        color: 'text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#233B63]/30' },
+  interview:      { label: 'Interview',      color: 'text-[#6A5CE0]',   bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
+  offer:          { label: 'Offer Letter',   color: 'text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
+  waitlisted:     { label: 'Waitlist',       color: 'text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#F2C75C]/30' },
+  rejected:       { label: 'Rejected',       color: 'text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#D95757]/30' },
   withdrawn:      { label: 'Not Applied',    color: 'text-slate-500',   bg: 'bg-slate-100 dark:bg-slate-800' },
-  missed_deadline:{ label: 'Missed Deadline',color: 'text-[#D95757]',     bg: 'bg-[#FBEEEE] dark:bg-[#D95757]/30' },
 };
+
+// Statuses saved before this list was simplified are shown as the closest current one.
+const LEGACY_APP_STATUS: Record<string, AppStatus> = {
+  shortlisted: 'researching', supervisor_contact: 'researching', preparing: 'ready_to_apply',
+  under_review: 'applied', accepted: 'offer', deferred: 'waitlisted', missed_deadline: 'withdrawn',
+};
+function normalizeAppStatus(raw: unknown): AppStatus {
+  const value = String(raw || 'researching');
+  if (Object.prototype.hasOwnProperty.call(APP_STATUS_META, value)) return value as AppStatus;
+  return LEGACY_APP_STATUS[value] ?? 'researching';
+}
+// Applied to every query result so the whole page only ever sees the current statuses.
+const normalizeAppRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: normalizeAppStatus(row?.status) }));
+const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: normalizeScholarshipStatus(row?.status) }));
 
 /* Scholarship status colors now use pastel hex (matching @/lib/flyStyles'
    FLY_PASTELS, kept in sync manually) instead of Tailwind's built-in shade
@@ -129,28 +135,26 @@ const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: str
    code (e.g. UnifiedRecordCard, which renders this polymorphically alongside
    APP_STATUS_META) keeps working with no changes. */
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string; bg: string }> = {
-  researching:   { label: 'Researching',   color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
-  eligible:      { label: 'Eligible',      color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
-  shortlisted:   { label: 'Shortlisted',   color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
-  preparing:     { label: 'Preparing',     color: 'text-[#B8860B] dark:text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#FDF8EB]/20' },
-  applying:      { label: 'Applying',      color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F4ECFF] dark:bg-[#F4ECFF]/20' },
-  applied:       { label: 'Applied',       color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
-  under_review:  { label: 'Under Review',  color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
-  interview:     { label: 'Interview',     color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
-  awarded:       { label: 'Awarded',       color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
-  rejected:      { label: 'Rejected',      color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
-  expired:       { label: 'Expired',       color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
-  not_eligible:  { label: 'Not Applied',   color: 'text-slate-500 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  researching:   { label: 'Researching',    color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
+  preparing:     { label: 'Ready to Apply', color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  applied:       { label: 'Applied',        color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  interview:     { label: 'Interview',      color: 'text-[#6A5CE0] dark:text-[#6A5CE0]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
+  awarded:       { label: 'Offer Letter',   color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
+  waitlisted:    { label: 'Waitlist',       color: 'text-[#B8860B] dark:text-[#B8860B]',   bg: 'bg-[#FDF8EB] dark:bg-[#FDF8EB]/20' },
+  rejected:      { label: 'Rejected',       color: 'text-[#D95757] dark:text-[#D95757]',   bg: 'bg-[#FBEEEE] dark:bg-[#FBEEEE]/20' },
+  not_eligible:  { label: 'Not Applied',    color: 'text-slate-500 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800' },
 };
 
 // Legacy → Phase 2 status mapping. Old rows keep their raw DB value until the user
 // changes status again — we never rewrite stored data on read, only on display/filter.
 function normalizeScholarshipStatus(raw: unknown): ScholarshipStatus {
   const value = String(raw || 'researching');
-  if (value in SCH_STATUS_META) return value as ScholarshipStatus;
-  if (value === 'planning') return 'eligible';
-  if (value === 'ready_to_apply') return 'applying';
-  return 'researching';
+  if (Object.prototype.hasOwnProperty.call(SCH_STATUS_META, value)) return value as ScholarshipStatus;
+  const legacy: Record<string, ScholarshipStatus> = {
+    planning: 'researching', eligible: 'researching', shortlisted: 'researching',
+    ready_to_apply: 'preparing', applying: 'preparing', under_review: 'applied', expired: 'not_eligible',
+  };
+  return legacy[value] ?? 'researching';
 }
 
 /* "Not Applied" = parked. These sink to the bottom of every list, look dimmed,
@@ -298,16 +302,11 @@ function nextApplicationAction(app: TrackedRow): string {
   const days = daysUntil(String(app.deadline || ''));
   if (days !== null && days >= 0 && days <= 7) return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
   if (app.status === 'researching') return 'Review programme fit';
-  if (app.status === 'shortlisted') return 'Confirm programme requirements';
-  if (app.status === 'supervisor_contact') return 'Find potential supervisors';
-  if (app.status === 'preparing') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Review application';
   if (app.status === 'ready_to_apply') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Submit application';
-  if (app.status === 'applied' || app.status === 'under_review') return 'Watch for updates';
+  if (app.status === 'applied') return 'Watch for updates';
   if (app.status === 'interview') return 'Prepare for interview';
-  if (app.status === 'offer') return 'Review offer details';
-  if (app.status === 'accepted') return 'Plan your next steps';
+  if (app.status === 'offer') return 'Review your offer letter';
   if (app.status === 'waitlisted') return 'Check for updates';
-  if (app.status === 'missed_deadline') return 'Review alternate deadlines';
   if (app.status === 'withdrawn') return 'Revisit when ready';
   return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Keep notes current';
 }
@@ -317,18 +316,15 @@ function nextScholarshipAction(scholarship: TrackedRow): string {
   const openReqs = reqs.filter(item => !item.done).length;
   const days = daysUntil(String(scholarship.deadline || ''));
   const status = normalizeScholarshipStatus(scholarship.status);
-  if (days !== null && days >= 0 && days <= 7 && !['awarded', 'rejected', 'expired', 'not_eligible'].includes(status)) {
+  if (days !== null && days >= 0 && days <= 7 && !['awarded', 'waitlisted', 'rejected', 'not_eligible'].includes(status)) {
     return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
   }
   if (status === 'researching') return 'Research eligibility criteria';
-  if (status === 'eligible') return 'Shortlist or start preparing';
-  if (status === 'shortlisted') return 'Confirm eligibility & start prep';
-  if (status === 'preparing') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Move to applying';
-  if (status === 'applying') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Submit application';
-  if (status === 'applied' || status === 'under_review') return 'Watch for updates';
+  if (status === 'preparing') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Submit application';
+  if (status === 'applied') return 'Watch for updates';
   if (status === 'interview') return 'Prepare for interview';
-  if (status === 'awarded') return 'Confirm award details';
-  if (status === 'expired') return 'Archive or revisit next cycle';
+  if (status === 'awarded') return 'Review your offer letter';
+  if (status === 'waitlisted') return 'Check for updates';
   if (status === 'not_eligible') return 'Archive this opportunity';
   return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Archive or revisit';
 }
@@ -366,14 +362,13 @@ function DeadlineCue({ deadline }: { deadline: unknown }) {
    based on (a) how far it has progressed through the lifecycle and
    (b) how many required documents are done. ──────────────────────────────── */
 const READINESS_STAGES: AppStatus[] = [
-  'researching', 'shortlisted', 'supervisor_contact', 'preparing',
-  'ready_to_apply', 'applied', 'under_review', 'interview', 'offer', 'accepted',
+  'researching', 'ready_to_apply', 'applied', 'interview', 'offer',
 ];
 
 function computeReadiness(app: TrackedRow): number {
   const reqs = safeParseReqs(app.requirementsJson as string);
   const docsPct = reqs.length ? (reqs.filter(r => r.done).length / reqs.length) * 100 : 0;
-  const status = String(app.status || 'researching') as AppStatus;
+  const status = normalizeAppStatus(app.status);
   const stageIdx = READINESS_STAGES.indexOf(status);
   // Rejected / withdrawn / waitlisted / deferred / missed_deadline: freeze at whatever the docs say.
   const stagePct = stageIdx >= 0 ? (stageIdx / (READINESS_STAGES.length - 1)) * 100 : docsPct;
@@ -538,8 +533,8 @@ function NoticeBoardCard({
    OVERVIEW TAB
 ═══════════════════════════════════════════════════════════════════════════ */
 function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
-  const { data: apps = [], isLoading: appsLoading } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
-  const { data: schols = [], isLoading: scholarshipsLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: apps = [], isLoading: appsLoading } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications, select: normalizeAppRows });
+  const { data: schols = [], isLoading: scholarshipsLoading } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships, select: normalizeSchRows });
   const { data: tests = [] } = useQuery({ queryKey: ['other-tests'], queryFn: api.getOtherTestScores });
 
   const [recordType, setRecordType] = useState<'all' | 'application' | 'scholarship'>('all');
@@ -1005,9 +1000,9 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
 }
 
 function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
-  const { data: apps = [] }   = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: apps = [] }   = useQuery({ queryKey: ['applications'], queryFn: api.getApplications, select: normalizeAppRows });
   const { data: tests = [] }  = useQuery({ queryKey: ['other-tests'],  queryFn: api.getOtherTestScores });
-  const { data: schols = [] } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
+  const { data: schols = [] } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships, select: normalizeSchRows });
   const { data: noticeBoards = [] } = useQuery({ queryKey: ['notice-boards'], queryFn: api.getNoticeBoards });
 
   const byStatus = (apps as { status: string }[]).reduce<Record<string, number>>((acc, a) => {
@@ -1279,7 +1274,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (t: string) => void }) {
 function ApplicationsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { data: apps = [], isLoading, isError, refetch } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: apps = [], isLoading, isError, refetch } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications, select: normalizeAppRows });
   const { data: customTemplates = [] }  = useQuery({ queryKey: ['templates'],    queryFn: api.getTemplates });
 
   const [showForm,    setShowForm]    = useState(false);
@@ -1588,9 +1583,8 @@ function ApplicationsTab() {
           </div>
           <span className="hidden text-[10px] font-bold uppercase tracking-[0.12em] sm:block" style={{ color: 'var(--apps-text-muted)' }}>Live status</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
-            .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
             .map(([status, meta]) => {
             const count = applicationSummary.statusCounts[status] || 0;
             const active = statusFilter === status;
@@ -2002,9 +1996,8 @@ function ApplicationsTab() {
         </div>
       ) : viewMode === 'kanban' ? (
         <div data-testid="applications-kanban" className="overflow-x-auto pb-2">
-          <div className="grid min-w-[1120px] grid-cols-7 gap-3">
+          <div className="grid min-w-[1280px] grid-cols-8 gap-3">
             {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
-            .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
             .map(([status, meta]) => {
               const columnApps = filteredApplications.filter(app => String(app.status || 'researching') === status);
               return (
@@ -2035,7 +2028,7 @@ function ApplicationsTab() {
                           <Select value={status} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
                             <SelectTrigger data-testid={`select-application-status-${app.id}`} className="mt-2 h-7 w-full text-[10px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status)).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                              {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <div className="mt-2 flex items-center justify-between gap-2">
@@ -2086,7 +2079,6 @@ function ApplicationsTab() {
                   interview:      'bg-[#7C6CFF]',
                   rejected:       'bg-[#D95757]',
                   waitlisted:     'bg-[#F2C75C]',
-                  deferred:       'bg-[#F2C75C]',
                 };
                 return (
                   <div key={app.id} className="relative">
@@ -2309,7 +2301,7 @@ function ApplicationsTab() {
                     <Select value={String(app.status || 'researching')} onValueChange={value => changeApplicationStatus(app, value as AppStatus)}>
                       <SelectTrigger data-testid={`select-list-application-status-${app.id}`} className="h-7 w-[148px] text-[11px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status)).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
+                        {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][]).map(([key, value]) => <SelectItem key={key} value={key}>{value.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2503,7 +2495,6 @@ function ApplicationDetailDrawer({
               <SelectTrigger data-testid="select-drawer-application-status" className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.entries(APP_STATUS_META) as [AppStatus, typeof APP_STATUS_META[AppStatus]][])
-                  .filter(([status]) => !(['shortlisted', 'preparing', 'under_review', 'accepted', 'deferred'] as AppStatus[]).includes(status))
                   .map(([key, value]) => (
                   <SelectItem key={key} value={key}>{value.label}</SelectItem>
                 ))}
@@ -2876,7 +2867,7 @@ function parseReqs(json: unknown): ReqItem[] {
 }
 
 const PIPELINE_STATUSES: ScholarshipStatus[] = [
-  'researching', 'eligible', 'preparing', 'applying', 'applied', 'under_review', 'awarded',
+  'researching', 'preparing', 'applied', 'interview', 'awarded',
 ];
 const SCH_STATUS_ORDER: ScholarshipStatus[] = Object.keys(SCH_STATUS_META) as ScholarshipStatus[];
 const REQ_CATEGORY_META: Record<ReqCategory, { label: string; short: string }> = {
@@ -2888,8 +2879,8 @@ const REQ_CATEGORY_META: Record<ReqCategory, { label: string; short: string }> =
 function ScholarshipsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { data: scholarships = [], isLoading, isError, refetch } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships });
-  const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications });
+  const { data: scholarships = [], isLoading, isError, refetch } = useQuery({ queryKey: ['scholarships'], queryFn: api.getScholarships, select: normalizeSchRows });
+  const { data: applications = [] } = useQuery({ queryKey: ['applications'], queryFn: api.getApplications, select: normalizeAppRows });
   const { data: customTemplates = [] } = useQuery({ queryKey: ['templates'], queryFn: api.getTemplates });
 
   const [showForm, setShowForm] = useState(false);
@@ -3213,7 +3204,6 @@ function ScholarshipsTab() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {(Object.entries(SCH_STATUS_META) as [ScholarshipStatus, typeof SCH_STATUS_META[ScholarshipStatus]][])
-            .filter(([status]) => !(['expired', 'applying', 'shortlisted', 'eligible'] as ScholarshipStatus[]).includes(status))
             .map(([status, meta]) => {
             const count = scholarshipSummary.statusCounts[status] || 0;
             const active = statusFilter === status;
