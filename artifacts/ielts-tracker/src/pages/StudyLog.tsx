@@ -142,7 +142,15 @@ export function StudyLog() {
     .sort((a, b) => b.minutes - a.minutes);
 
   const totalHours = Math.floor((studySessions as any[]).reduce((sum: number, s: any) => sum + s.minutes, 0) / 60);
-  const targetWeekly = (settings?.dailyGoalMinutes || 60) * 7;
+  // Weekly target = daily goal x 7, PLUS any minutes owed from past days in the
+  // window that fell short of the daily goal. Today is excluded (the last entry
+  // in weeklyData) because the day isn't over yet, so it can't count as missed.
+  const dailyGoal = settings?.dailyGoalMinutes || 60;
+  const carriedOver = weeklyData
+    .slice(0, -1)
+    .reduce((sum, d) => sum + Math.max(0, dailyGoal - (d.minutes as number)), 0);
+  const targetWeekly = dailyGoal * 7 + carriedOver;
+  const toHours = (m: number) => Math.round((m / 60) * 10) / 10;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -184,7 +192,7 @@ export function StudyLog() {
             <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#7A73A8' }} />
           </div>
           <p className="text-xs mb-1" style={{ color: '#7A73A8' }}>Weekly target</p>
-          <p className="text-2xl font-medium mb-2" style={{ color: '#3C3489' }}>{Math.round(weekTotal / 60 * 10) / 10} / {Math.round(targetWeekly / 60)} hrs</p>
+          <p className="text-2xl font-medium mb-2" style={{ color: '#3C3489' }}>{toHours(weekTotal)} / {toHours(targetWeekly)} hrs</p>
           <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/50">
             <div
               className="h-full rounded-full transition-all"
@@ -193,6 +201,7 @@ export function StudyLog() {
           </div>
           <p className="text-[11px] mt-1.5" style={{ color: '#7A73A8' }}>
             {weekTotal >= targetWeekly ? 'Target met!' : `${targetWeekly - weekTotal}m to go`}
+            {carriedOver > 0 && ` · includes ${carriedOver}m from missed days`}
           </p>
         </div>
       </div>
