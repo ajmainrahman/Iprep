@@ -121,9 +121,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 /* ─── RESOURCES DROPDOWN (Home nav) ─────────────────────────────────────── */
 // Add or edit links here. An entry with an empty href stays hidden until you paste a link.
-const RESOURCE_LINKS: { label: string; href: string }[] = [
+const RESOURCE_LINKS: { label: string; href: string; kind?: 'video' | 'doc' }[] = [
   { label: 'Updates about Fly', href: 'https://youtube.com/playlist?list=PLb9m3FmRpwa8&si=drHFHb2oD0EQ9IKL' },
   { label: 'Iprep 2027', href: 'https://youtube.com/playlist?list=PLT9y-1EiZd74&si=fDxh75q-X5ha7jGF' },
+  { label: 'LOR - 2027', href: 'https://docs.google.com/document/d/18YQTDLG0vxSzGDUJs5ePc8PKHOZKPyPad4LP4xCCqLs/edit?usp=sharing', kind: 'doc' },
+  { label: 'SOP/LOM - 2027', href: 'https://docs.google.com/document/d/1G2nQMoe6bMsuWlOUqPwvt4WWODUyLg_WezcRmOSWPek/edit?usp=sharing', kind: 'doc' },
   { label: 'YouTube playlist', href: '' },
 ];
 
@@ -150,7 +152,9 @@ function ResourcesMenu() {
           {links.map(l => (
             <a key={l.label} role="menuitem" href={l.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-[#233B63] transition-colors hover:bg-[#F8FAFC]">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBEEEE] text-[#D95757]"><Youtube className="h-4 w-4" /></span>
+              {l.kind === 'doc'
+                ? <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#DDF4F7] text-[#176B73]"><FileText className="h-4 w-4" /></span>
+                : <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBEEEE] text-[#D95757]"><Youtube className="h-4 w-4" /></span>}
               <span className="flex-1">{l.label}</span>
               <ArrowUpRight className="h-3.5 w-3.5 text-[#94A3B8]" />
             </a>
