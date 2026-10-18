@@ -65,15 +65,21 @@ const MOTIVATIONAL_QUOTES = [
   "Wake up with determination. Go to bed with satisfaction."
 ];
 
-/* ─── 52-week heatmap ─────────────────────────────────────────────────────── */
+/* ─── Activity heatmap (fits its card; shows as many recent weeks as fit) ───── */
 function StudyHeatmap({ sessions }: { sessions: any[] }) {
   const [tooltip, setTooltip] = useState<{ date: string; mins: number; x: number; y: number } | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [boxWidth, setBoxWidth] = useState(0);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
+    const el = boxRef.current;
+    if (!el) return;
+    const update = () => setBoxWidth(el.clientWidth);
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const dayMap = useMemo(() => {
@@ -84,8 +90,15 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
     return m;
   }, [sessions]);
 
+  const LABEL_COL = 28;
+  const MIN_PITCH = 17;
+  const weekCount = boxWidth > 0
+    ? Math.max(10, Math.min(52, Math.floor((boxWidth - LABEL_COL) / MIN_PITCH)))
+    : 26;
+
   const today = new Date();
-  const start = addDays(startOfWeek(today), -51 * 7);
+  const todayStr = localDateStr(today);
+  const start = addDays(startOfWeek(today), -(weekCount - 1) * 7);
 
   const weeks: { date: Date; dateStr: string; mins: number }[][] = [];
   let cur = new Date(start);
@@ -103,52 +116,68 @@ function StudyHeatmap({ sessions }: { sessions: any[] }) {
     if (mins === 0) return '#E8EEF2';
     if (mins < 20) return '#A9DCE8';
     if (mins < 45) return '#19C7B7';
-    if (mins < 90) return '#176B73';
     return '#176B73';
   };
 
-  const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const DAY_LABELS: Record<number, string> = { 1: 'Mon', 3: 'Wed', 5: 'Fri' };
 
   return (
-    <div className="w-full overflow-x-auto" ref={scrollRef}>
-      <div className="flex gap-1 min-w-max">
-        <div className="flex flex-col gap-1 mr-1 pt-5">
-          {DAYS.map((d, i) => (
-            <div key={i} className="h-3 w-3 text-[9px] text-muted-foreground flex items-center">{i % 2 === 1 ? d : ''}</div>
-          ))}
-        </div>
-        {weeks.map((week, wi) => {
-          const showLabel = wi === 0 || week[0].date.getMonth() !== weeks[wi - 1][0].date.getMonth();
-          return (
-          <div key={wi} className="flex flex-col gap-1">
-            {showLabel ? (
-              <div className="text-[9px] text-muted-foreground h-4 leading-4">
-                {week[0].date.toLocaleDateString(undefined, { month: 'short' })}
-              </div>
-            ) : (
-              <div className="h-4" />
-            )}
-            {week.map((day, di) => (
-              <div
-                key={di}
-                className="h-3 w-3 rounded-sm cursor-pointer transition-opacity hover:opacity-80 relative"
-                style={{ backgroundColor: cellColor(day.mins) }}
-                onMouseEnter={(e) => {
-                  const rect = (e.target as HTMLElement).getBoundingClientRect();
-                  setTooltip({ date: day.dateStr, mins: day.mins, x: rect.left, y: rect.top });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              />
-            ))}
+    <div className="w-full" ref={boxRef}>
+      <div
+        className="grid gap-[3px]"
+        style={{
+          gridTemplateColumns: `${LABEL_COL - 3}px repeat(${weeks.length}, minmax(0, 1fr))`,
+          gridTemplateRows: '16px repeat(7, auto)',
+        }}
+      >
+        {[0, 1, 2, 3, 4, 5, 6].map(di => (
+          <div
+            key={`dl${di}`}
+            className="flex items-center text-[9px] font-medium leading-none text-muted-foreground"
+            style={{ gridColumn: 1, gridRow: di + 2 }}
+          >
+            {DAY_LABELS[di] || ''}
           </div>
+        ))}
+        {weeks.map((week, wi) => {
+          const monthChanged = wi === 0 || week[0].date.getMonth() !== weeks[wi - 1][0].date.getMonth();
+          // skip a label that would collide with the next month's label (needs ~3 columns of room)
+          const nextChanged = wi === 0 && weeks.length > 1 && weeks[1][0].date.getMonth() !== week[0].date.getMonth();
+          const showLabel = monthChanged && !nextChanged;
+          return (
+            <React.Fragment key={wi}>
+              {showLabel && (
+                <div
+                  className="whitespace-nowrap text-[9px] font-medium leading-4 text-muted-foreground"
+                  style={{ gridColumn: wi + 2, gridRow: 1 }}
+                >
+                  {week[0].date.toLocaleDateString(undefined, { month: 'short' })}
+                </div>
+              )}
+              {week.map((day, di) => {
+                if (day.dateStr > todayStr) return <div key={di} style={{ gridColumn: wi + 2, gridRow: di + 2 }} />;
+                return (
+                  <div
+                    key={di}
+                    className="aspect-square w-full cursor-pointer rounded-[4px] transition-opacity hover:opacity-80"
+                    style={{ gridColumn: wi + 2, gridRow: di + 2, backgroundColor: cellColor(day.mins) }}
+                    onMouseEnter={(e) => {
+                      const rect = (e.target as HTMLElement).getBoundingClientRect();
+                      setTooltip({ date: day.dateStr, mins: day.mins, x: rect.left, y: rect.top });
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                  />
+                );
+              })}
+            </React.Fragment>
           );
         })}
       </div>
       {/* Legend */}
-      <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
         <span>Less</span>
-        {['#E8EEF2', '#A9DCE8', '#19C7B7', '#176B73', '#176B73'].map(c => (
-          <div key={c} className="h-3 w-3 rounded-sm" style={{ backgroundColor: c }} />
+        {['#E8EEF2', '#A9DCE8', '#19C7B7', '#176B73'].map(c => (
+          <div key={c} className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: c }} />
         ))}
         <span>More</span>
       </div>
@@ -316,7 +345,7 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
   }, [sessions]);
 
   return (
-    <Card className="h-full overflow-hidden border border-[#E3EAF0] shadow-[0_8px_30px_rgba(23,36,61,.045)]">
+    <Card className="flex flex-1 flex-col overflow-hidden border border-[#E3EAF0] shadow-[0_8px_30px_rgba(23,36,61,.045)]">
       <CardHeader className="border-b border-[#E3EAF0] bg-[#FDF8EB] pb-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -330,17 +359,17 @@ function StreakTracker({ sessions }: { sessions: any[] }) {
           </div>
           <div className="text-right">
             <p className="text-3xl font-heading font-bold leading-none text-[#B8860B]">{currentStreak}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">days</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{currentStreak === 1 ? 'day' : 'days'}</p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5 p-4 sm:p-5">
+      <CardContent className="flex flex-1 flex-col gap-5 p-4 sm:p-5">
         <div className="flex items-center justify-between rounded-2xl border border-[#F2C75C] bg-[#FFFBF1] px-3 py-2.5">
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-[#B8860B]" />
             <span className="text-xs font-medium text-foreground">Your record</span>
           </div>
-          <span className="text-sm font-bold text-[#B8860B]">{record} days</span>
+          <span className="text-sm font-bold text-[#B8860B]">{record} {record === 1 ? 'day' : 'days'}</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
@@ -564,11 +593,11 @@ function ScheduleCalendarWidget({ examDate }: { examDate: string | null }) {
   };
 
   return (
-    <Card className="shadow-[0_8px_30px_rgba(23,36,61,.045)] border border-[#E3EAF0] h-full">
+    <Card className="shadow-[0_8px_30px_rgba(23,36,61,.045)] border border-[#E3EAF0] flex-1">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center justify-between gap-2 text-[#17243D]">
-          <span className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#DDF4F7]"><CalendarIcon className="w-4 h-4 text-[#176B73]" /></span>
+          <span className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#DDF4F7]"><CalendarIcon className="w-4 h-4 text-[#176B73]" /></span>
             {monthLabel}
           </span>
           <span className="flex items-center gap-1.5">
@@ -966,14 +995,14 @@ export function Dashboard() {
       </section>
 
       <section className="dashboard-entrance grid grid-cols-1 gap-4 xl:grid-cols-[1.06fr_.94fr]">
-        <div>
+        <div className="flex min-w-0 flex-col">
           <div className="mb-3">
             <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Make time for practice</p>
             <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Study schedule</h2>
           </div>
           <ScheduleCalendarWidget examDate={hasExamDate ? (settings?.examDate as string) : null} />
         </div>
-        <div>
+        <div className="flex min-w-0 flex-col">
           <div className="mb-3">
             <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Consistency over intensity</p>
             <h2 className="mt-1 font-heading text-lg font-bold text-[#17243D]">Your study rhythm</h2>
