@@ -20,6 +20,7 @@ import {
   Link2, Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DocumentTrackingTab } from '@/pages/DocumentTracking';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -424,6 +425,7 @@ export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange
       {tab === 'applications' && <ApplicationsTab />}
       {tab === 'tests'        && <TestScoresTab />}
       {tab === 'scholarships' && <ScholarshipsTab />}
+      {tab === 'documents'    && <DocumentTrackingTab />}
       {tab === 'templates'    && <ChecklistTemplates />}
     </>
   );
