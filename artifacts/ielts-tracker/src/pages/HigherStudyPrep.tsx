@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { GoodHabitsTab } from '@/pages/GoodHabits';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -426,6 +427,7 @@ export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange
       {tab === 'tests'        && <TestScoresTab />}
       {tab === 'scholarships' && <ScholarshipsTab />}
       {tab === 'documents'    && <DocumentTrackingTab />}
+      {tab === 'habits'       && <GoodHabitsTab />}
       {tab === 'templates'    && <ChecklistTemplates />}
     </>
   );

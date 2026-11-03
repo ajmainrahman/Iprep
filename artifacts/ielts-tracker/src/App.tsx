@@ -41,7 +41,7 @@ const queryClient = new QueryClient({
 });
 
 type AppMode  = 'home' | 'fly' | 'study';
-type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad';
+type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits';
 type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
@@ -476,6 +476,7 @@ const FLY_TABS: NavItem<FlyTab>[] = [
   { id: 'scholarships', label: 'Scholarships',  icon: Trophy },
   { id: 'documents',    label: 'Document Tracking', icon: ClipboardCheck },
   { id: 'templates',    label: 'Doc Templates', icon: FileText },
+  { id: 'habits',       label: 'Good Habits',   icon: Leaf },
   { id: 'notepad',      label: 'Notepad',       icon: NotebookPen },
 ];
 
