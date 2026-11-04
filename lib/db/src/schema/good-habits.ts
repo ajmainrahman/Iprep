@@ -6,7 +6,9 @@ export const goodHabitsTable = pgTable("good_habits", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   name: text("name").notNull(),
-  emoji: text("emoji"),
+  emoji: text("emoji"), // icon key ("book", "heart", ...) or, for older rows, an emoji
+  goal: text("goal"), // e.g. "At least 20 pages"
+  minutes: integer("minutes").notNull().default(0), // time one completion takes; adds to Total Time
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

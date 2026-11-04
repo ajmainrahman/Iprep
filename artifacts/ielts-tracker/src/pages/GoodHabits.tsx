@@ -3,16 +3,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Check, X, Flame, Trophy, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Sparkles, MessageSquareText, CalendarDays, Leaf,
+  Check, X, Flame, Trophy, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Sparkles, MessageSquareText,
+  CalendarDays, Leaf, BookOpen, HeartHandshake, Footprints, Dumbbell, Flower2, Droplets, Sun, PenLine, Star,
+  Moon, Smile, Lightbulb, Send, Clock, BarChart3, TrendingUp, Heart, ArrowRight,
 } from 'lucide-react';
 
 /* ─── Types & constants ─────────────────────────────────────────────────── */
 type Status = 'done' | 'missed';
 interface HabitLog { id: number; date: string; habitKey: string; status: Status; note: string | null }
-interface Habit { id: number; name: string; emoji: string | null }
+interface Habit { id: number; name: string; emoji: string | null; goal: string | null; minutes: number | null }
 type SetLogVars = { date: string; habitKey: string; status: Status | 'none'; note?: string | null };
+
+/** One line in "Today's Habits": the built-in Prayers (5 a day) or one habit of your own (1 a day). */
+type Item = { key: string; name: string; goal: string; target: number; minutes: number; icon: string };
 
 const PRAYERS = [
   { key: 'fajr',    label: 'Fajr',    hint: 'Dawn' },
@@ -22,16 +29,36 @@ const PRAYERS = [
   { key: 'isha',    label: 'Isha',    hint: 'Night' },
 ];
 const PRAYER_KEYS = PRAYERS.map(p => p.key);
+const NOTE_KEY = '_note'; // the free-text note for a whole day (not a habit)
+const PRAYER_ITEM: Item = { key: 'prayers', name: 'Prayers', goal: 'Fajr, Dhuhr, Asr, Maghrib, Isha', target: 5, minutes: 0, icon: 'mosque' };
 const REASON_CHIPS = ['Overslept', 'At work / class', 'Travelling', 'Sick', 'Forgot', 'No suitable place'];
-const HABIT_SUGGESTIONS = [
-  { name: 'Reading books', emoji: '📖' },
-  { name: 'Helping others', emoji: '🤝' },
-  { name: 'Exercise', emoji: '🏃' },
-  { name: 'Gratitude', emoji: '🙏' },
-  { name: 'Charity', emoji: '💝' },
-];
 const LOGS_KEY = ['habit-logs'];
 const HABITS_KEY = ['good-habits'];
+
+const ICONS: Record<string, { Icon: React.ComponentType<{ className?: string }> | null; label: string; ink: string; bg: string }> = {
+  mosque: { Icon: null,          label: 'Prayer',     ink: '#176B73', bg: '#DDF4F7' },
+  book:   { Icon: BookOpen,      label: 'Reading',    ink: '#176B73', bg: '#DDF4F7' },
+  heart:  { Icon: HeartHandshake, label: 'Kindness',  ink: '#D95757', bg: '#FBEEEE' },
+  walk:   { Icon: Footprints,    label: 'Walk',       ink: '#233B63', bg: '#E8EEF6' },
+  gym:    { Icon: Dumbbell,      label: 'Exercise',   ink: '#233B63', bg: '#E8EEF6' },
+  lotus:  { Icon: Flower2,       label: 'Mindful',    ink: '#7C6CFF', bg: '#F2F0FF' },
+  water:  { Icon: Droplets,      label: 'Water',      ink: '#2B8FA8', bg: '#E3F4F8' },
+  sun:    { Icon: Sun,           label: 'Morning',    ink: '#B8860B', bg: '#FDF8EB' },
+  pen:    { Icon: PenLine,       label: 'Writing',    ink: '#176B73', bg: '#DDF4F7' },
+  star:   { Icon: Star,          label: 'Star',       ink: '#B8860B', bg: '#FDF8EB' },
+  moon:   { Icon: Moon,          label: 'Night',      ink: '#7C6CFF', bg: '#F2F0FF' },
+  smile:  { Icon: Smile,         label: 'Gratitude',  ink: '#B8860B', bg: '#FDF8EB' },
+  leaf:   { Icon: Leaf,          label: 'Growth',     ink: '#176B73', bg: '#DDF4F7' },
+};
+const PICKABLE_ICONS = Object.keys(ICONS).filter(k => k !== 'mosque');
+
+const HABIT_SUGGESTIONS = [
+  { name: 'Reading Books',   icon: 'book',  goal: 'At least 20 pages', minutes: 0 },
+  { name: 'Helping Others',  icon: 'heart', goal: 'A kind deed today', minutes: 0 },
+  { name: 'Walk / Exercise', icon: 'walk',  goal: 'At least 30 min',   minutes: 30 },
+  { name: 'Meditation',      icon: 'lotus', goal: 'At least 10 min',   minutes: 10 },
+  { name: 'Gratitude',       icon: 'smile', goal: 'Write 3 good things', minutes: 0 },
+];
 
 /* ─── Date helpers ──────────────────────────────────────────────────────── */
 function localDateStr(d: Date) {
@@ -46,17 +73,22 @@ function addDays(d: Date, n: number) {
   r.setDate(r.getDate() + n);
   return r;
 }
-function startOfWeek(d: Date) {
-  const r = new Date(d);
-  r.setDate(r.getDate() - r.getDay());
-  return r;
+function longDate(s: string) {
+  return parseDate(s).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
-function prettyDate(s: string) {
-  return parseDate(s).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+function fmtMinutes(m: number) {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  if (h === 0) return `${mm}m`;
+  return mm === 0 ? `${h}h` : `${h}h ${mm}m`;
 }
 
-/* ─── Streak / heatmap maths (pure) ─────────────────────────────────────── */
+/* ─── Maths (pure) ──────────────────────────────────────────────────────── */
 type DayStat = { done: number; missed: number };
+
+function keysOf(item: Item): string[] {
+  return item.key === 'prayers' ? PRAYER_KEYS : [item.key];
+}
 
 function computeDayStats(logs: HabitLog[], keys: string[]): Map<string, DayStat> {
   const inScope = new Set(keys);
@@ -89,6 +121,7 @@ function bestRun(dates: string[]): number {
   });
   return best;
 }
+/** A day is "active" when at least one habit is done; "perfect" when every one is. */
 function computeStreaks(stats: Map<string, DayStat>, total: number, today: Date) {
   const active = (d: string) => (stats.get(d)?.done ?? 0) >= 1;
   const full = (d: string) => total > 0 && (stats.get(d)?.done ?? 0) >= total;
@@ -102,8 +135,86 @@ function computeStreaks(stats: Map<string, DayStat>, total: number, today: Date)
     currentFull: currentRun(full, today),
   };
 }
+/** Days in a row where one habit reached its daily target (all 5 for Prayers). */
+function itemStreak(logs: HabitLog[], item: Item, today: Date) {
+  const stats = computeDayStats(logs, keysOf(item));
+  const ok = (d: string) => (stats.get(d)?.done ?? 0) >= item.target;
+  return { current: currentRun(ok, today), best: bestRun(Array.from(stats.keys()).filter(ok)) };
+}
+
+/** Success rate, top habit, activity and time totals. Success looks at the last 30 days
+ *  (or since your first log, if that is more recent). */
+function computeInsights(logs: HabitLog[], items: Item[], today: Date, windowDays = 30) {
+  const keySet = new Set(items.flatMap(keysOf));
+  const real = logs.filter(l => keySet.has(l.habitKey));
+  const doneLogs = real.filter(l => l.status === 'done');
+  const minutesByKey = new Map<string, number>();
+  items.forEach(i => { if (i.key !== 'prayers') minutesByKey.set(i.key, i.minutes); });
+  const totalMinutes = doneLogs.reduce((sum, l) => sum + (minutesByKey.get(l.habitKey) ?? 0), 0);
+
+  let success: number | null = null;
+  let top: { name: string; pct: number } | null = null;
+  if (real.length > 0) {
+    const first = real.map(l => l.date).sort()[0];
+    const windowStart = localDateStr(addDays(today, -(windowDays - 1)));
+    const startStr = first > windowStart ? first : windowStart;
+    const days = Math.max(1, Math.round((parseDate(localDateStr(today)).getTime() - parseDate(startStr).getTime()) / 86_400_000) + 1);
+    let doneSum = 0, targetSum = 0;
+    items.forEach(it => {
+      const keys = new Set(keysOf(it));
+      const done = doneLogs.filter(l => keys.has(l.habitKey) && l.date >= startStr).length;
+      const target = it.target * days;
+      doneSum += Math.min(done, target);
+      targetSum += target;
+      const pct = target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
+      if (done > 0 && (!top || pct > top.pct)) top = { name: it.name, pct };
+    });
+    success = targetSum > 0 ? Math.round((doneSum / targetSum) * 100) : null;
+  }
+  return { success, top: top as { name: string; pct: number } | null, activities: doneLogs.length, minutes: totalMinutes };
+}
+
+function cellColor(done: number, missed: number, target: number) {
+  if (done === 0) return missed > 0 ? '#F3CFCF' : '#E8EEF2';
+  const r = done / target;
+  if (r >= 1) return '#176B73';
+  if (r > 0.5) return '#19C7B7';
+  return '#A9DCE8';
+}
 
 /* ─── Small pieces ──────────────────────────────────────────────────────── */
+function MosqueIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 90" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M60 12c-1 4-4 7-7 10-6 6-11 11-11 19v6h36v-6c0-8-5-13-11-19-3-3-6-6-7-10z" />
+      <rect x="38" y="47" width="44" height="32" />
+      <rect x="14" y="34" width="9" height="45" />
+      <path d="M18.5 16l5.5 18H13z" />
+      <rect x="97" y="34" width="9" height="45" />
+      <path d="M101.5 16l5.5 18H96z" />
+      <rect x="2" y="79" width="116" height="7" rx="2" />
+    </svg>
+  );
+}
+
+function iconTone(key: string) {
+  return ICONS[key] ?? { Icon: null, label: '', ink: '#176B73', bg: '#DDF4F7' };
+}
+function HabitIcon({ iconKey, className = 'h-5 w-5' }: { iconKey: string; className?: string }) {
+  if (iconKey === 'mosque') return <MosqueIcon className={className} />;
+  const meta = ICONS[iconKey];
+  if (meta && meta.Icon) { const I = meta.Icon; return <I className={className} />; }
+  return <span className="text-lg leading-none">{iconKey || '✨'}</span>; // older habits stored a plain emoji
+}
+function IconTile({ iconKey, size = 'h-11 w-11' }: { iconKey: string; size?: string }) {
+  const t = iconTone(iconKey);
+  return (
+    <span className={`flex ${size} shrink-0 items-center justify-center rounded-2xl`} style={{ backgroundColor: t.bg, color: t.ink }}>
+      <HabitIcon iconKey={iconKey} className="h-5 w-5" />
+    </span>
+  );
+}
+
 function NoteField({ value, placeholder, label, onSave }: { value: string; placeholder: string; label: string; onSave: (v: string) => void }) {
   const [text, setText] = useState(value);
   useEffect(() => { setText(value); }, [value]);
@@ -121,181 +232,148 @@ function NoteField({ value, placeholder, label, onSave }: { value: string; place
   );
 }
 
-function HabitRow({
-  emoji, label, hint, log, doneLabel, missedLabel, showNoteWhenDone, donePlaceholder, missedPlaceholder, chips, onSet, trailing,
-}: {
-  emoji: string; label: string; hint?: string; log: HabitLog | undefined;
-  doneLabel: string; missedLabel: string; showNoteWhenDone: boolean;
-  donePlaceholder: string; missedPlaceholder: string; chips?: string[];
+function ReasonChips({ current, onPick }: { current: string; onPick: (v: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {REASON_CHIPS.map(c => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onPick(c)}
+          className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+            current === c ? 'border-[#D95757] bg-[#FBEEEE] text-[#D95757]' : 'border-[#E3EAF0] bg-white text-muted-foreground hover:border-[#D95757]/40'
+          }`}
+        >
+          {c}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One prayer inside the Prayers Log card: tick = prayed, cross = missed (then say why). */
+function PrayerRow({ label, hint, log, onSet }: {
+  label: string; hint: string; log: HabitLog | undefined;
   onSet: (status: Status | 'none', note: string | null) => void;
-  trailing?: React.ReactNode;
 }) {
   const status = log?.status ?? null;
   const note = log?.note ?? '';
-  const showNote = status === 'missed' || (status === 'done' && showNoteWhenDone);
   const tone = status === 'done' ? 'border-[#BFE9E4] bg-[#F1FBF9]' : status === 'missed' ? 'border-[#F3CFCF] bg-[#FDF5F5]' : 'border-[#E3EAF0] bg-white';
-
   return (
-    <li className={`rounded-2xl border px-3.5 py-3 transition-colors ${tone}`} data-testid={`habit-row-${label}`}>
-      <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-sm" aria-hidden>{emoji}</span>
+    <li className={`rounded-2xl border px-3 py-2.5 transition-colors ${tone}`} data-testid={`prayer-row-${label}`}>
+      <div className="flex items-center gap-2.5">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-[#17243D]">{label}</p>
-          {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+          <p className="text-sm font-semibold text-[#17243D]">{label}</p>
+          <p className="text-[11px] text-muted-foreground">{hint}</p>
         </div>
-        {trailing}
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            aria-pressed={status === 'done'}
-            onClick={() => onSet(status === 'done' ? 'none' : 'done', status === 'done' || !showNoteWhenDone ? null : note || null)}
-            className={`inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold transition-colors ${
-              status === 'done' ? 'border-[#176B73] bg-[#176B73] text-white' : 'border-[#D9E3E9] bg-white text-[#176B73] hover:bg-[#DDF4F7]'
-            }`}
-          >
-            <Check className="h-3.5 w-3.5" /> {doneLabel}
-          </button>
-          <button
-            type="button"
-            aria-pressed={status === 'missed'}
-            onClick={() => onSet(status === 'missed' ? 'none' : 'missed', status === 'missed' ? null : note || null)}
-            className={`inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold transition-colors ${
-              status === 'missed' ? 'border-[#D95757] bg-[#D95757] text-white' : 'border-[#D9E3E9] bg-white text-[#D95757] hover:bg-[#FBEEEE]'
-            }`}
-          >
-            <X className="h-3.5 w-3.5" /> {missedLabel}
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-label={`${label}: prayed`}
+          aria-pressed={status === 'done'}
+          onClick={() => onSet(status === 'done' ? 'none' : 'done', null)}
+          className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+            status === 'done' ? 'border-[#176B73] bg-[#176B73] text-white' : 'border-[#D9E3E9] bg-white text-[#176B73] hover:bg-[#DDF4F7]'
+          }`}
+        >
+          <Check className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label={`${label}: missed`}
+          aria-pressed={status === 'missed'}
+          onClick={() => onSet(status === 'missed' ? 'none' : 'missed', status === 'missed' ? null : note || null)}
+          className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+            status === 'missed' ? 'border-[#D95757] bg-[#D95757] text-white' : 'border-[#D9E3E9] bg-white text-[#D95757] hover:bg-[#FBEEEE]'
+          }`}
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
-
-      {showNote && (
+      {status === 'missed' && (
         <div className="mt-2.5 space-y-2">
-          <NoteField
-            value={note}
-            label={`${status === 'missed' ? 'Reason' : 'Comment'} for ${label}`}
-            placeholder={status === 'missed' ? missedPlaceholder : donePlaceholder}
-            onSave={v => onSet(status as Status, v || null)}
-          />
-          {status === 'missed' && chips && chips.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {chips.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => onSet('missed', c)}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                    note === c ? 'border-[#D95757] bg-[#FBEEEE] text-[#D95757]' : 'border-[#E3EAF0] bg-white text-muted-foreground hover:border-[#D95757]/40'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
+          <NoteField value={note} label={`Reason for missing ${label}`} placeholder="Why couldn't you pray? e.g. overslept, at work…" onSave={v => onSet('missed', v || null)} />
+          <ReasonChips current={note} onPick={v => onSet('missed', v)} />
         </div>
       )}
     </li>
   );
 }
 
-/* ─── Activity heatmap (fits its card; click a day to open it) ──────────── */
-function HabitHeatmap({ stats, total, selectedDate, onSelect }: {
-  stats: Map<string, DayStat>; total: number; selectedDate: string; onSelect: (d: string) => void;
+/* ─── Activity heatmap: one row per habit, one column per day ───────────── */
+function HabitMatrix({ items, logMap, days, selectedDate, onSelect }: {
+  items: Item[]; logMap: Map<string, HabitLog>; days: number; selectedDate: string; onSelect: (d: string) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [boxWidth, setBoxWidth] = useState(0);
-
   useEffect(() => {
-    const el = boxRef.current;
-    if (!el) return;
-    const update = () => setBoxWidth(el.clientWidth);
-    update();
-    if (typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const LABEL_COL = 28;
-  const MIN_PITCH = 17;
-  const weekCount = boxWidth > 0 ? Math.max(10, Math.min(52, Math.floor((boxWidth - LABEL_COL) / MIN_PITCH))) : 26;
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth; // keep "today" in view
+  }, [days]);
 
   const today = new Date();
   const todayStr = localDateStr(today);
-  const start = addDays(startOfWeek(today), -(weekCount - 1) * 7);
-  const weeks: { date: Date; dateStr: string }[][] = [];
-  let cur = new Date(start);
-  while (cur <= today) {
-    const week: { date: Date; dateStr: string }[] = [];
-    for (let d = 0; d < 7; d++) { week.push({ date: new Date(cur), dateStr: localDateStr(cur) }); cur = addDays(cur, 1); }
-    weeks.push(week);
-  }
+  const dates = Array.from({ length: days }, (_, i) => addDays(today, i - (days - 1)));
+  const LABEL = 128;
+  const MIN = 11;
 
-  const color = (s: DayStat | undefined) => {
-    if (!s || (s.done === 0 && s.missed === 0)) return '#E8EEF2';
-    if (s.done === 0) return '#F3CFCF';
-    const f = total > 0 ? s.done / total : 1;
-    if (f >= 1) return '#0E4A52';
-    if (f >= 0.67) return '#176B73';
-    if (f >= 0.34) return '#19C7B7';
-    return '#A9DCE8';
+  // month labels: first column + every 1st of a month, skipping any that would collide
+  const labelIdx = dates.map((d, i) => (i === 0 || d.getDate() === 1 ? i : -1)).filter(i => i >= 0);
+  const shownLabels = labelIdx.filter((i, n) => !(i === 0 && labelIdx.length > 1 && labelIdx[1] - i < 4));
+
+  const counts = (item: Item, ds: string) => {
+    let done = 0, missed = 0;
+    keysOf(item).forEach(k => {
+      const l = logMap.get(`${ds}|${k}`);
+      if (l) { if (l.status === 'done') done++; else missed++; }
+    });
+    return { done, missed };
   };
-  const DAY_LABELS: Record<number, string> = { 1: 'Mon', 3: 'Wed', 5: 'Fri' };
 
   return (
-    <div className="w-full" ref={boxRef}>
-      <div
-        className="grid gap-[3px]"
-        style={{ gridTemplateColumns: `${LABEL_COL - 3}px repeat(${weeks.length}, minmax(0, 1fr))`, gridTemplateRows: '16px repeat(7, auto)' }}
-      >
-        {[0, 1, 2, 3, 4, 5, 6].map(di => (
-          <div key={`dl${di}`} className="flex items-center text-[9px] font-medium leading-none text-muted-foreground" style={{ gridColumn: 1, gridRow: di + 2 }}>
-            {DAY_LABELS[di] || ''}
-          </div>
-        ))}
-        {weeks.map((week, wi) => {
-          const monthChanged = wi === 0 || week[0].date.getMonth() !== weeks[wi - 1][0].date.getMonth();
-          const nextChanged = wi === 0 && weeks.length > 1 && weeks[1][0].date.getMonth() !== week[0].date.getMonth();
-          const showLabel = monthChanged && !nextChanged;
-          return (
-            <React.Fragment key={wi}>
-              {showLabel && (
-                <div className="whitespace-nowrap text-[9px] font-medium leading-4 text-muted-foreground" style={{ gridColumn: wi + 2, gridRow: 1 }}>
-                  {week[0].date.toLocaleDateString(undefined, { month: 'short' })}
-                </div>
-              )}
-              {week.map((day, di) => {
-                if (day.dateStr > todayStr) return <div key={di} style={{ gridColumn: wi + 2, gridRow: di + 2 }} />;
-                const s = stats.get(day.dateStr);
-                const text = `${day.dateStr}: ${s ? `${s.done}/${total} done${s.missed ? `, ${s.missed} missed` : ''}` : 'nothing logged'}`;
+    <div>
+      <div ref={scrollRef} className="overflow-x-auto pb-1">
+        <div className="grid gap-[3px]" style={{ gridTemplateColumns: `${LABEL}px repeat(${days}, minmax(${MIN}px, 1fr))`, minWidth: LABEL + days * (MIN + 3) }}>
+          {shownLabels.map(i => (
+            <div key={`m${i}`} className="whitespace-nowrap text-[10px] font-medium leading-4 text-muted-foreground" style={{ gridColumn: `${i + 2} / span 4`, gridRow: 1 }}>
+              {dates[i].toLocaleDateString(undefined, { month: 'short', year: i === 0 || dates[i].getMonth() === 0 ? 'numeric' : undefined })}
+            </div>
+          ))}
+          {items.map((it, r) => (
+            <React.Fragment key={it.key}>
+              <div className="flex min-w-0 items-center gap-2 pr-2" style={{ gridColumn: 1, gridRow: r + 2 }}>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: iconTone(it.icon).bg, color: iconTone(it.icon).ink }}>
+                  <HabitIcon iconKey={it.icon} className="h-3.5 w-3.5" />
+                </span>
+                <span className="truncate text-xs font-medium text-[#17243D]">{it.name}</span>
+              </div>
+              {dates.map((d, ci) => {
+                const ds = localDateStr(d);
+                const c = counts(it, ds);
+                const text = `${it.name} · ${ds}: ${c.done}/${it.target} done${c.missed ? `, ${c.missed} missed` : ''}`;
                 return (
                   <button
-                    key={di}
+                    key={ds}
                     type="button"
                     aria-label={text}
-                    onClick={() => onSelect(day.dateStr)}
-                    className={`aspect-square w-full cursor-pointer rounded-[4px] transition-opacity hover:opacity-80 ${day.dateStr === selectedDate ? 'ring-2 ring-[#233B63] ring-offset-1' : ''}`}
-                    style={{ gridColumn: wi + 2, gridRow: di + 2, backgroundColor: color(s) }}
+                    onClick={() => onSelect(ds)}
+                    className={`aspect-square w-full rounded-[4px] transition-opacity hover:opacity-80 ${ds === selectedDate ? 'ring-2 ring-[#233B63] ring-offset-1' : ''}`}
+                    style={{ gridColumn: ci + 2, gridRow: r + 2, backgroundColor: cellColor(c.done, c.missed, it.target), outline: ds === todayStr ? '1px dashed #176B73' : undefined }}
                     onMouseEnter={e => {
-                      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                      setTip({ text, x: r.left, y: r.top });
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setTip({ text, x: rect.left, y: rect.top });
                     }}
                     onMouseLeave={() => setTip(null)}
                   />
                 );
               })}
             </React.Fragment>
-          );
-        })}
+          ))}
+        </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: '#F3CFCF' }} />Missed only</span>
-        <span className="inline-flex items-center gap-1.5">
-          Less
-          {['#E8EEF2', '#A9DCE8', '#19C7B7', '#176B73', '#0E4A52'].map(c => <span key={c} className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: c }} />)}
-          More
-        </span>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground">
+        {[['#E8EEF2', 'None'], ['#A9DCE8', 'Some'], ['#19C7B7', 'Most'], ['#176B73', 'All done'], ['#F3CFCF', 'Missed']].map(([c, l]) => (
+          <span key={l} className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: c }} />{l}</span>
+        ))}
       </div>
       {tip && (
         <div className="pointer-events-none fixed z-50 rounded-lg bg-[#17243D] px-2 py-1.5 text-xs text-white shadow-lg" style={{ top: tip.y - 36, left: tip.x - 20 }}>
@@ -307,14 +385,23 @@ function HabitHeatmap({ stats, total, selectedDate, onSelect }: {
 }
 
 /* ─── Main tab ──────────────────────────────────────────────────────────── */
+type HabitForm = { name: string; icon: string; goal: string; minutes: string };
+const EMPTY_FORM: HabitForm = { name: '', icon: 'book', goal: '', minutes: '' };
+
 export function GoodHabitsTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const todayStr = localDateStr(new Date());
 
   const [selectedDate, setSelectedDate] = useState(todayStr);
-  const [scope, setScope] = useState<string>('all');
-  const [newHabit, setNewHabit] = useState('');
+  const [range, setRange] = useState(30);
+  const [quickNote, setQuickNote] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [habitDialog, setHabitDialog] = useState<null | 'new' | Habit>(null);
+  const [form, setForm] = useState<HabitForm>(EMPTY_FORM);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const { data: habits = [] } = useQuery<Habit[]>({
     queryKey: HABITS_KEY,
@@ -355,12 +442,12 @@ export function GoodHabitsTab() {
   });
 
   const addHabit = useMutation({
-    mutationFn: (b: { name: string; emoji: string }) => check(api.addGoodHabit(b)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: HABITS_KEY }); setNewHabit(''); },
+    mutationFn: (b: Record<string, unknown>) => check(api.addGoodHabit(b)),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: HABITS_KEY }); },
     onError: fail,
   });
-  const renameHabit = useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) => check(api.updateGoodHabit(id, { name })),
+  const updateHabit = useMutation({
+    mutationFn: ({ id, body }: { id: number; body: Record<string, unknown> }) => check(api.updateGoodHabit(id, body)),
     onSuccess: () => qc.invalidateQueries({ queryKey: HABITS_KEY }),
     onError: fail,
   });
@@ -370,7 +457,13 @@ export function GoodHabitsTab() {
     onError: fail,
   });
 
-  const habitKey = (h: Habit) => `h${h.id}`;
+  /* ── derived data ── */
+  const items: Item[] = useMemo(() => [
+    PRAYER_ITEM,
+    ...habits.map(h => ({ key: `h${h.id}`, name: h.name, goal: h.goal || '', target: 1, minutes: h.minutes || 0, icon: h.emoji || 'star' })),
+  ], [habits]);
+  const allKeys = useMemo(() => items.flatMap(keysOf), [items]);
+
   const logMap = useMemo(() => {
     const m = new Map<string, HabitLog>();
     logs.forEach(l => m.set(`${l.date}|${l.habitKey}`, l));
@@ -379,308 +472,446 @@ export function GoodHabitsTab() {
   const logFor = (date: string, key: string) => logMap.get(`${date}|${key}`);
   const set = (key: string, status: Status | 'none', note: string | null) => setLog.mutate({ date: selectedDate, habitKey: key, status, note });
 
-  /* if a habit that was selected for the streak is deleted, fall back to "all" */
-  useEffect(() => {
-    if (scope !== 'all' && scope !== 'prayers' && !habits.some(h => habitKey(h) === scope)) setScope('all');
-  }, [habits, scope]);
-
-  /* ── numbers ── */
-  const allKeys = useMemo(() => [...PRAYER_KEYS, ...habits.map(habitKey)], [habits]);
-  const scopeKeys = scope === 'all' ? allKeys : scope === 'prayers' ? PRAYER_KEYS : [scope];
-  const stats = useMemo(() => computeDayStats(logs, scopeKeys), [logs, scope, habits]);
-  const streaks = useMemo(() => computeStreaks(stats, scopeKeys.length, new Date()), [stats, scopeKeys.length]);
-
-  const dayStats = useMemo(() => computeDayStats(logs, allKeys).get(selectedDate) ?? { done: 0, missed: 0 }, [logs, allKeys, selectedDate]);
-  const dayTotal = allKeys.length;
-  const dayPct = dayTotal ? Math.round((dayStats.done / dayTotal) * 100) : 0;
-  const prayed = PRAYER_KEYS.filter(k => logFor(selectedDate, k)?.status === 'done').length;
-  const prayerMissed = PRAYER_KEYS.filter(k => logFor(selectedDate, k)?.status === 'missed').length;
-
-  const flameDays = useMemo(() => {
-    const t = new Date(); t.setHours(0, 0, 0, 0);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = addDays(t, i - 6);
-      const ds = localDateStr(d);
-      return { key: ds, label: d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2), active: (stats.get(ds)?.done ?? 0) >= 1 };
+  const countsFor = (item: Item, date: string) => {
+    let done = 0, missed = 0;
+    keysOf(item).forEach(k => {
+      const l = logFor(date, k);
+      if (l) { if (l.status === 'done') done++; else missed++; }
     });
-  }, [stats]);
-
-  const nameFor = (key: string) => {
-    const p = PRAYERS.find(x => x.key === key);
-    if (p) return p.label;
-    const h = habits.find(x => habitKey(x) === key);
-    return h ? h.name : 'Habit';
+    return { done, missed };
   };
-  const recentReasons = useMemo(
-    () => logs.filter(l => l.status === 'missed' && l.note).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id).slice(0, 8),
-    [logs],
-  );
-  const missedNoReason = useMemo(() => logs.filter(l => l.status === 'missed' && !l.note).length, [logs]);
 
-  function markAllPrayed() {
-    PRAYER_KEYS.forEach(k => { if (logFor(selectedDate, k)?.status !== 'done') set(k, 'done', logFor(selectedDate, k)?.note ?? null); });
-  }
+  const prayed = PRAYER_KEYS.filter(k => logFor(selectedDate, k)?.status === 'done').length;
+  const dayNote = logFor(selectedDate, NOTE_KEY)?.note ?? '';
+  useEffect(() => { setQuickNote(''); setExpanded(null); }, [selectedDate]);
+
+  const dayStats = useMemo(() => computeDayStats(logs, allKeys), [logs, allKeys]);
+  const streaks = useMemo(() => computeStreaks(dayStats, allKeys.length, new Date()), [dayStats, allKeys.length]);
+  const insights = useMemo(() => computeInsights(logs, items, new Date()), [logs, items]);
+
+  /* ── actions ── */
   function goDay(n: number) {
     const next = localDateStr(addDays(parseDate(selectedDate), n));
     if (next <= todayStr) setSelectedDate(next);
   }
-  function submitHabit(name: string, emoji: string) {
-    const clean = name.trim();
-    if (!clean) return;
-    if (habits.some(h => h.name.trim().toLowerCase() === clean.toLowerCase())) {
-      toast({ title: 'You already track that habit', variant: 'destructive' });
+  function togglePrayers() {
+    if (prayed === 5) {
+      PRAYER_KEYS.forEach(k => { if (logFor(selectedDate, k)?.status === 'done') set(k, 'none', null); });
       return;
     }
-    addHabit.mutate({ name: clean, emoji });
+    const remaining = PRAYER_KEYS.filter(k => !logFor(selectedDate, k));
+    if (remaining.length === 0) {
+      toast({ title: 'Missed prayers keep their reason', description: 'Tap a prayer in the Prayers Log to change it.' });
+      return;
+    }
+    remaining.forEach(k => set(k, 'done', null));
+  }
+  function toggleHabit(it: Item) {
+    const l = logFor(selectedDate, it.key);
+    if (l?.status === 'done') set(it.key, 'none', null);
+    else set(it.key, 'done', l?.note ?? null);
+  }
+  function saveQuickNote() {
+    const text = quickNote.trim();
+    if (!text) return;
+    set(NOTE_KEY, 'done', text);
+    setQuickNote('');
+  }
+  function openNewHabit(prefill?: Partial<HabitForm>) {
+    setForm({ ...EMPTY_FORM, ...prefill });
+    setHabitDialog('new');
+  }
+  function openEditHabit(h: Habit) {
+    setForm({ name: h.name, icon: h.emoji && (ICONS[h.emoji] || h.emoji.length <= 3) ? h.emoji : 'star', goal: h.goal || '', minutes: h.minutes ? String(h.minutes) : '' });
+    setHabitDialog(h);
+  }
+  function duplicateName(name: string, exceptId?: number) {
+    return habits.some(h => h.id !== exceptId && h.name.trim().toLowerCase() === name.trim().toLowerCase());
+  }
+  function saveHabit() {
+    const name = form.name.trim();
+    if (!name) return;
+    const editing = habitDialog !== null && habitDialog !== 'new' ? habitDialog : null;
+    if (duplicateName(name, editing?.id)) { toast({ title: 'You already track that habit', variant: 'destructive' }); return; }
+    const body = { name, emoji: form.icon, goal: form.goal.trim() || null, minutes: Math.max(0, Math.min(1440, Math.round(Number(form.minutes) || 0))) };
+    if (editing) updateHabit.mutate({ id: editing.id, body }, { onSuccess: () => setHabitDialog(null) });
+    else addHabit.mutate(body, { onSuccess: () => { setHabitDialog(null); toast({ title: '✅ Habit added' }); } });
+  }
+  function quickAdd(s: { name: string; icon: string; goal: string; minutes: number }) {
+    if (duplicateName(s.name)) return;
+    addHabit.mutate({ name: s.name, emoji: s.icon, goal: s.goal, minutes: s.minutes });
+  }
+  function openDatePicker() {
+    const el = dateInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === 'function') el.showPicker(); else el.click();
   }
 
-  const scopeOptions = [
-    { id: 'all', label: 'All habits' },
-    { id: 'prayers', label: 'Prayers' },
-    ...habits.map(h => ({ id: habitKey(h), label: `${h.emoji || '✨'} ${h.name}` })),
+  const unusedSuggestions = HABIT_SUGGESTIONS.filter(s => !duplicateName(s.name));
+  const itemStreaks = useMemo(() => items.map(it => ({ it, ...itemStreak(logs, it, new Date()) })), [items, logs]);
+
+  const history = useMemo(() => {
+    const byDate = new Map<string, { date: string; prayed: number; loggedPrayers: number; missed: { name: string; note: string | null }[]; note: string }>();
+    const nameOf = (key: string) => {
+      const p = PRAYERS.find(x => x.key === key);
+      if (p) return p.label;
+      return habits.find(h => `h${h.id}` === key)?.name ?? null;
+    };
+    logs.forEach(l => {
+      const e = byDate.get(l.date) ?? { date: l.date, prayed: 0, loggedPrayers: 0, missed: [], note: '' };
+      if (l.habitKey === NOTE_KEY) e.note = l.note ?? '';
+      else {
+        const nm = nameOf(l.habitKey);
+        if (nm) {
+          if (PRAYER_KEYS.includes(l.habitKey)) { e.loggedPrayers++; if (l.status === 'done') e.prayed++; }
+          if (l.status === 'missed') e.missed.push({ name: nm, note: l.note });
+        }
+      }
+      byDate.set(l.date, e);
+    });
+    return Array.from(byDate.values())
+      .filter(e => e.loggedPrayers > 0 || e.missed.length > 0 || e.note)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 60);
+  }, [logs, habits]);
+
+  const streakNow = streaks.current;
+  const statCards = [
+    { label: 'Day Streak', value: String(streakNow), after: <Flame className="h-4 w-4 fill-[#F2C75C] text-[#F2C75C]" />, icon: CalendarDays, bg: '#DDF4F7', ink: '#176B73', hint: 'Days in a row with at least one habit done' },
+    { label: 'Overall Success', value: insights.success === null ? '—' : `${insights.success}%`, after: null, icon: Check, bg: '#DDF4F7', ink: '#176B73', hint: 'Share of your daily targets completed over the last 30 days' },
+    { label: 'Total Activities', value: String(insights.activities), after: null, icon: Star, bg: '#FDF8EB', ink: '#B8860B', hint: 'Every prayer and habit you have ticked' },
+    { label: 'Total Time', value: fmtMinutes(insights.minutes), after: null, icon: Clock, bg: '#F2F0FF', ink: '#7C6CFF', hint: 'Minutes of habits that have a time set (add it when you edit a habit)' },
   ];
-  const unusedSuggestions = HABIT_SUGGESTIONS.filter(s => !habits.some(h => h.name.trim().toLowerCase() === s.name.toLowerCase()));
+
+  const successText = insights.success === null ? 'Log a habit to see this.' : insights.success >= 80 ? 'Excellent consistency!' : insights.success >= 50 ? 'Keep it up!' : 'Every day is a fresh start.';
+  const streakText = streakNow === 0 ? 'Tick one habit today to start a streak.' : streakNow >= streaks.best && streakNow > 1 ? 'A new personal best!' : `Your best is ${streaks.best} day${streaks.best === 1 ? '' : 's'}.`;
 
   return (
-    <div className="space-y-6" data-testid="good-habits">
-      {/* header */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Fly · Good Habits</p>
-        <h2 className="mt-1 flex items-center gap-2 font-heading text-xl font-bold text-[#17243D]">
-          <Leaf className="h-5 w-5 text-[#176B73]" /> Good Habits
-        </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">Small things, done every day: prayers, reading, helping others. Note the reason when you miss one.</p>
-      </div>
-
-      {/* day picker + summary */}
-      <div className="rounded-3xl p-5 text-white shadow-[0_12px_28px_rgba(23,36,61,.14)] sm:p-6" style={{ background: 'linear-gradient(120deg, #17243D, #233B63, #176B73)' }}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => goDay(-1)} aria-label="Previous day" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"><ChevronLeft className="h-4 w-4" /></button>
-            <button type="button" onClick={() => goDay(1)} disabled={selectedDate >= todayStr} aria-label="Next day" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10"><ChevronRight className="h-4 w-4" /></button>
-            <div className="ml-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#A9DCE8]">{selectedDate === todayStr ? 'Today' : 'Viewing'}</p>
-              <p className="font-heading text-lg font-bold leading-tight">{prettyDate(selectedDate)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {selectedDate !== todayStr && (
-              <button type="button" onClick={() => setSelectedDate(todayStr)} className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold hover:bg-white/25">Back to today</button>
-            )}
-            <label className="relative inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
-              <CalendarDays className="h-3.5 w-3.5" />
-              <input
-                type="date" value={selectedDate} max={todayStr} aria-label="Pick a day"
-                onChange={e => { if (e.target.value && e.target.value <= todayStr) setSelectedDate(e.target.value); }}
-                className="w-[7.5rem] bg-transparent text-xs text-white [color-scheme:dark] focus:outline-none"
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-          <div className="flex items-end gap-2">
-            <span data-testid="text-habits-done" className="font-heading text-5xl font-bold leading-none">{dayStats.done}</span>
-            <span className="pb-1 text-sm text-white/75">of {dayTotal} done</span>
-          </div>
+    <div className="space-y-5" data-testid="good-habits">
+      {/* header + verse */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center">
+        <div className="flex items-center gap-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#DDF4F7] text-[#176B73] sm:h-20 sm:w-20">
+            <Leaf className="h-8 w-8 fill-[#19C7B7]/30 sm:h-10 sm:w-10" />
+          </span>
           <div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuenow={dayPct} aria-valuemin={0} aria-valuemax={100} aria-label="Habits done for this day">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${dayPct}%`, background: 'linear-gradient(90deg, #19C7B7, #42E6B8)' }} />
-            </div>
-            <p className="mt-2 text-xs text-white/75">{prayed}/5 prayers{prayerMissed > 0 ? ` · ${prayerMissed} missed` : ''}{dayStats.missed - prayerMissed > 0 ? ` · ${dayStats.missed - prayerMissed} habit${dayStats.missed - prayerMissed === 1 ? '' : 's'} skipped` : ''}</p>
+            <h2 className="font-heading text-3xl font-bold leading-tight text-[#17243D]">Good Habits</h2>
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-[#475569]">Build better habits, live a more purposeful life. <Leaf className="h-4 w-4 shrink-0 text-[#19C7B7]" /></p>
           </div>
         </div>
+        <figure className="relative overflow-hidden rounded-2xl p-4 pr-24 sm:pr-28" style={{ background: 'linear-gradient(120deg, #DDF4F7, #EAF8F6)' }}>
+          <MosqueIcon className="pointer-events-none absolute -bottom-1 right-2 h-20 w-28 text-[#A9DCE8] opacity-70" />
+          <blockquote className="relative text-sm italic leading-6 text-[#17243D]">“Indeed, Allah loves those who are constantly repentant and loves those who purify themselves.”</blockquote>
+          <figcaption className="relative mt-1 text-xs text-[#475569]">— Quran 2:222</figcaption>
+        </figure>
       </div>
 
-      {/* prayers + habits */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="prayers-card">
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h3 className="font-heading text-base font-bold text-[#17243D]">Prayers</h3>
-              <p className="text-xs text-muted-foreground">Mark each one. If you miss a prayer, write why.</p>
+      {/* stat cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {statCards.map(s => (
+          <div key={s.label} title={s.hint} data-testid={`habit-stat-${s.label}`} className="flex items-center gap-2.5 rounded-2xl border border-[#E3EAF0] bg-white p-3 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:gap-4 sm:p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-14 sm:w-14" style={{ backgroundColor: s.bg, color: s.ink }}><s.icon className="h-4 w-4 sm:h-6 sm:w-6" /></span>
+            <div className="min-w-0">
+              <p className="whitespace-nowrap font-heading text-xl font-bold leading-none text-[#17243D] sm:text-[1.7rem]">{s.value}</p>
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">{s.label} {s.after}</p>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={markAllPrayed} disabled={prayed === 5} className="shrink-0 border-[#176B73]/40 text-[#176B73] hover:bg-[#DDF4F7]">
-              <Check className="mr-1 h-3.5 w-3.5" /> All 5 prayed
-            </Button>
           </div>
-          <ul className="space-y-2.5">
-            {PRAYERS.map(p => (
-              <HabitRow
-                key={p.key}
-                emoji="🕌"
-                label={p.label}
-                hint={p.hint}
-                log={logFor(selectedDate, p.key)}
-                doneLabel="Prayed"
-                missedLabel="Missed"
-                showNoteWhenDone={false}
-                donePlaceholder=""
-                missedPlaceholder="Why couldn't you pray? e.g. overslept, at work…"
-                chips={REASON_CHIPS}
-                onSet={(status, note) => set(p.key, status, note)}
-              />
-            ))}
-          </ul>
+        ))}
+      </div>
+
+      {/* heatmap + streak */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habit-heatmap">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="flex items-center gap-2 font-heading text-base font-bold text-[#17243D]"><BarChart3 className="h-5 w-5 text-[#176B73]" /> Activity Heatmap</h3>
+            <select
+              value={range}
+              onChange={e => setRange(Number(e.target.value))}
+              aria-label="Heatmap range"
+              className="rounded-full border border-[#E3EAF0] bg-white px-3 py-1.5 text-xs font-semibold text-[#17243D] focus:outline-none focus:ring-2 focus:ring-[#176B73]/30"
+            >
+              <option value={30}>Last 30 Days</option>
+              <option value={60}>Last 2 Months</option>
+              <option value={90}>Last 3 Months</option>
+            </select>
+          </div>
+          {isLoading ? <p className="py-8 text-center text-xs text-muted-foreground">Loading…</p> : (
+            <HabitMatrix items={items} logMap={logMap} days={range} selectedDate={selectedDate} onSelect={setSelectedDate} />
+          )}
         </section>
 
+        <section className="relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-[0_12px_28px_rgba(23,36,61,.14)]" style={{ background: 'linear-gradient(135deg, #17243D, #233B63 55%, #176B73)' }} data-testid="habit-streak-card">
+          <Trophy className="pointer-events-none absolute right-3 top-4 h-20 w-20 text-[#F2C75C]/90" />
+          <Sparkles className="pointer-events-none absolute right-[5.5rem] top-4 h-4 w-4 text-[#F2C75C]" />
+          <Sparkles className="pointer-events-none absolute right-4 top-24 h-3 w-3 text-[#A9DCE8]" />
+          <div className="relative pr-16">
+            <p data-testid="text-habit-streak" className="font-heading text-3xl font-bold leading-tight">{streakNow > 0 ? `${streakNow} Day${streakNow === 1 ? '' : 's'} Streak!` : 'Start your streak!'}</p>
+            <p className="mt-2 text-sm text-white/80">{streakNow > 0 ? 'Keep going! Consistency builds a better you.' : 'Tick one habit today and the count begins.'}</p>
+          </div>
+          <button type="button" onClick={() => setShowDetails(true)} className="relative mt-6 inline-flex w-fit items-center gap-1.5 rounded-full bg-[#19C7B7] px-4 py-2 text-sm font-semibold text-[#17243D] transition-colors hover:bg-[#42E6B8]">
+            View Details <ArrowRight className="h-4 w-4" />
+          </button>
+        </section>
+      </div>
+
+      {/* today's habits + prayers log + insights */}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,.8fr)]">
+        {/* Today's Habits */}
         <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habits-card">
-          <div className="mb-3">
-            <h3 className="font-heading text-base font-bold text-[#17243D]">Other good habits</h3>
-            <p className="text-xs text-muted-foreground">Add anything you want to do daily. Add a comment for what you did, or why you skipped.</p>
-          </div>
-
-          {habits.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#D9E3E9] px-4 py-6 text-center">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#DDF4F7] text-xl">🌱</span>
-              <p className="mt-2 text-sm font-semibold text-[#17243D]">No habits yet</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Pick one below to start, or type your own.</p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 font-heading text-base font-bold text-[#17243D]">
+              <Check className="h-5 w-5 rounded-md bg-[#176B73] p-0.5 text-white" /> {selectedDate === todayStr ? "Today's Habits" : 'Habits'}
+            </h3>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => goDay(-1)} aria-label="Previous day" className="rounded-full p-1.5 text-muted-foreground hover:bg-[#F1F5F9]"><ChevronLeft className="h-4 w-4" /></button>
+              <button type="button" onClick={openDatePicker} className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold text-[#17243D] hover:bg-[#F1F5F9]">
+                {longDate(selectedDate)} <CalendarDays className="h-3.5 w-3.5 text-[#176B73]" />
+              </button>
+              <input ref={dateInputRef} type="date" value={selectedDate} max={todayStr} aria-label="Pick a day" tabIndex={-1} className="pointer-events-none absolute h-0 w-0 opacity-0"
+                onChange={e => { if (e.target.value && e.target.value <= todayStr) setSelectedDate(e.target.value); }} />
+              <button type="button" onClick={() => goDay(1)} disabled={selectedDate >= todayStr} aria-label="Next day" className="rounded-full p-1.5 text-muted-foreground hover:bg-[#F1F5F9] disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
             </div>
-          ) : (
-            <ul className="space-y-2.5">
-              {habits.map(h => (
-                <HabitRow
-                  key={h.id}
-                  emoji={h.emoji || '✨'}
-                  label={h.name}
-                  log={logFor(selectedDate, habitKey(h))}
-                  doneLabel="Done"
-                  missedLabel="Skipped"
-                  showNoteWhenDone
-                  donePlaceholder="Comment, e.g. what you read / who you helped"
-                  missedPlaceholder="Why did you skip it?"
-                  chips={REASON_CHIPS}
-                  onSet={(status, note) => set(habitKey(h), status, note)}
-                  trailing={
-                    <span className="flex shrink-0 items-center">
-                      <button type="button" aria-label={`Rename ${h.name}`} className="rounded-lg p-1.5 text-muted-foreground hover:bg-[#F1F5F7] hover:text-[#17243D]"
-                        onClick={() => { const n = window.prompt('Rename habit', h.name); if (n && n.trim() && n.trim() !== h.name) renameHabit.mutate({ id: h.id, name: n.trim() }); }}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button type="button" aria-label={`Delete ${h.name}`} className="rounded-lg p-1.5 text-muted-foreground hover:bg-[#FBEEEE] hover:text-[#D95757]"
-                        onClick={() => { if (window.confirm(`Delete "${h.name}" and all its history?`)) removeHabit.mutate(h.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  }
-                />
-              ))}
-            </ul>
+          </div>
+          {selectedDate !== todayStr && (
+            <button type="button" onClick={() => setSelectedDate(todayStr)} className="mb-1 text-xs font-semibold text-[#176B73] hover:underline">← Back to today</button>
           )}
 
-          <form className="mt-3 flex gap-2" onSubmit={e => { e.preventDefault(); submitHabit(newHabit, '✨'); }}>
-            <Input value={newHabit} onChange={e => setNewHabit(e.target.value)} maxLength={60} placeholder="New habit, e.g. Read 20 pages" aria-label="New habit name" className="h-9 text-sm" />
-            <Button type="submit" size="sm" disabled={!newHabit.trim() || addHabit.isPending} className="shrink-0 bg-[#233B63] text-white hover:bg-[#17243D]"><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>
-          </form>
-          {unusedSuggestions.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {unusedSuggestions.map(s => (
-                <button key={s.name} type="button" onClick={() => submitHabit(s.name, s.emoji)} className="rounded-full border border-[#E3EAF0] bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-medium text-[#475569] hover:border-[#176B73]/40 hover:bg-[#DDF4F7]">
-                  {s.emoji} {s.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+          <ul className="divide-y divide-[#EEF2F6]">
+            {items.map(it => {
+              const isPrayers = it.key === 'prayers';
+              const c = countsFor(it, selectedDate);
+              const complete = c.done >= it.target;
+              const log = isPrayers ? undefined : logFor(selectedDate, it.key);
+              const skipped = !isPrayers && log?.status === 'missed';
+              const habit = isPrayers ? null : habits.find(h => `h${h.id}` === it.key) ?? null;
+              const open = expanded === it.key;
+              return (
+                <li key={it.key} data-testid={`habit-row-${it.name}`}>
+                  <div className="flex items-center gap-3 py-3">
+                    <IconTile iconKey={it.icon} />
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm font-semibold ${skipped ? 'text-muted-foreground' : 'text-[#17243D]'}`}>{isPrayers ? 'Prayers (5 times)' : it.name}{skipped && <span className="ml-2 rounded-md bg-[#FBEEEE] px-1.5 py-0.5 text-[10px] font-bold text-[#D95757]">Skipped</span>}</p>
+                      <p className="truncate text-xs text-muted-foreground">{it.goal || (isPrayers ? '' : 'Tap ⋯ to add a goal')}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${complete ? 'bg-[#DDF4F7] text-[#176B73]' : 'bg-[#F1F5F9] text-[#475569]'}`}>{c.done} / {it.target}</span>
+                    {!isPrayers && (
+                      <button type="button" aria-label={`Details for ${it.name}`} aria-expanded={open} onClick={() => setExpanded(open ? null : it.key)}
+                        className={`shrink-0 rounded-full p-1.5 transition-colors ${open ? 'bg-[#DDF4F7] text-[#176B73]' : 'text-muted-foreground hover:bg-[#F1F5F9]'}`}>
+                        <MessageSquareText className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={isPrayers ? (prayed === 5 ? 'Clear all prayers' : 'Mark remaining prayers as prayed') : complete ? `Mark ${it.name} as not done` : `Mark ${it.name} as done`}
+                      aria-pressed={complete}
+                      onClick={() => (isPrayers ? togglePrayers() : toggleHabit(it))}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${complete ? 'border-[#176B73] bg-[#176B73] text-white' : 'border-[#CBD5E1] text-transparent hover:border-[#176B73]'}`}
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                  </div>
 
-      {/* streak + heatmap */}
-      <section className="overflow-hidden rounded-2xl border border-[#E3EAF0] bg-white shadow-[0_8px_30px_rgba(23,36,61,.045)]" data-testid="habit-streak-card">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E3EAF0] bg-[#FDF8EB] px-4 py-4 sm:px-5">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F2C75C] text-[#B8860B]"><Flame className="h-4 w-4 fill-current" /></span>
-            <div>
-              <h3 className="font-heading text-base font-bold text-[#17243D]">Streak &amp; activity</h3>
-              <p className="text-xs text-muted-foreground">A day counts when you finish at least one habit.</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p data-testid="text-habit-streak" className="font-heading text-3xl font-bold leading-none text-[#B8860B]">{streaks.current}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{streaks.current === 1 ? 'day streak' : 'days streak'}</p>
-          </div>
-        </div>
+                  {open && !isPrayers && (
+                    <div className="mb-3 space-y-2.5 rounded-2xl bg-[#F8FAFC] p-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => (log?.status === 'done' ? set(it.key, 'none', null) : set(it.key, 'done', log?.note ?? null))}
+                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${log?.status === 'done' ? 'border-[#176B73] bg-[#176B73] text-white' : 'border-[#D9E3E9] bg-white text-[#176B73]'}`}><Check className="h-3.5 w-3.5" /> Done</button>
+                        <button type="button" onClick={() => (log?.status === 'missed' ? set(it.key, 'none', null) : set(it.key, 'missed', log?.note ?? null))}
+                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${log?.status === 'missed' ? 'border-[#D95757] bg-[#D95757] text-white' : 'border-[#D9E3E9] bg-white text-[#D95757]'}`}><X className="h-3.5 w-3.5" /> Skipped</button>
+                      </div>
+                      {log ? (
+                        <>
+                          <NoteField value={log.note ?? ''} label={`${log.status === 'missed' ? 'Reason' : 'Comment'} for ${it.name}`}
+                            placeholder={log.status === 'missed' ? 'Why did you skip it?' : 'Comment, e.g. what you read / who you helped'} onSave={v => set(it.key, log.status, v || null)} />
+                          {log.status === 'missed' && <ReasonChips current={log.note ?? ''} onPick={v => set(it.key, 'missed', v)} />}
+                        </>
+                      ) : <p className="text-[11px] text-muted-foreground">Mark it done or skipped to add a comment or reason.</p>}
+                      {habit && (
+                        <div className="flex gap-3 border-t border-[#E3EAF0] pt-2 text-xs font-semibold">
+                          <button type="button" onClick={() => openEditHabit(habit)} className="inline-flex items-center gap-1 text-[#176B73] hover:underline"><Pencil className="h-3.5 w-3.5" /> Edit habit</button>
+                          <button type="button" onClick={() => { if (window.confirm(`Delete "${habit.name}" and all its history?`)) removeHabit.mutate(habit.id); }} className="inline-flex items-center gap-1 text-[#D95757] hover:underline"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-        <div className="space-y-5 p-4 sm:p-5">
-          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Streak for">
-            {scopeOptions.map(o => (
-              <button
-                key={o.id} type="button" role="tab" aria-selected={scope === o.id} onClick={() => setScope(o.id)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${scope === o.id ? 'border-[#233B63] bg-[#233B63] text-white' : 'border-[#E3EAF0] bg-white text-muted-foreground hover:border-[#233B63]/40'}`}
-              >
-                {o.label}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-[#EEF2F6] pt-3">
+            <Button type="button" size="sm" onClick={() => openNewHabit()} className="bg-[#233B63] text-white hover:bg-[#17243D]"><Plus className="mr-1 h-3.5 w-3.5" /> Add habit</Button>
+            {unusedSuggestions.map(s => (
+              <button key={s.name} type="button" onClick={() => quickAdd(s)} className="inline-flex items-center gap-1.5 rounded-full border border-[#E3EAF0] bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-medium text-[#475569] hover:border-[#176B73]/40 hover:bg-[#DDF4F7]">
+                <span style={{ color: iconTone(s.icon).ink }}><HabitIcon iconKey={s.icon} className="h-3 w-3" /></span> {s.name}
               </button>
             ))}
           </div>
+        </section>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {/* Prayers Log */}
+        <section className="space-y-3" data-testid="prayers-card">
+          <div className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5">
+            <div className="flex items-center justify-between gap-2 border-b border-[#EEF2F6] pb-3">
+              <h3 className="flex items-center gap-2 font-heading text-base font-bold text-[#17243D]"><BookOpen className="h-5 w-5 text-[#176B73]" /> Prayers Log</h3>
+              <button type="button" onClick={() => setShowHistory(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-[#176B73] hover:underline">View All <ArrowRight className="h-3.5 w-3.5" /></button>
+            </div>
+            <div className="flex items-center gap-3 py-3">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${prayed > 0 ? 'bg-[#176B73] text-white' : 'bg-[#F1F5F9] text-[#AAB6C2]'}`}><Check className="h-4 w-4" /></span>
+              <p data-testid="text-prayed-count" className="font-heading text-lg font-bold text-[#17243D]">{prayed} {prayed === 1 ? 'time' : 'times'}</p>
+              <p className="ml-auto text-xs text-muted-foreground">{longDate(selectedDate)}</p>
+            </div>
+            <ul className="space-y-2">
+              {PRAYERS.map(p => (
+                <PrayerRow key={p.key} label={p.label} hint={p.hint} log={logFor(selectedDate, p.key)} onSet={(status, note) => set(p.key, status, note)} />
+              ))}
+            </ul>
+            {dayNote && (
+              <div className="mt-3 rounded-2xl bg-[#DDF4F7] p-3.5" data-testid="day-note">
+                <div className="mb-1 flex items-center justify-between">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-[#17243D]"><Pencil className="h-3.5 w-3.5 text-[#176B73]" /> Note</p>
+                  <span className="flex items-center gap-2 text-[11px] font-semibold">
+                    <button type="button" onClick={() => setQuickNote(dayNote)} className="text-[#176B73] hover:underline">Edit</button>
+                    <button type="button" onClick={() => set(NOTE_KEY, 'none', null)} className="text-[#D95757] hover:underline">Remove</button>
+                  </span>
+                </div>
+                <p className="break-words text-sm leading-6 text-[#17243D]">{dayNote}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-[#D9E3F0] p-4" style={{ background: 'linear-gradient(135deg, #EEF3FA, #E4F5F7)' }} data-testid="quick-note">
+            <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-[#17243D]"><Lightbulb className="h-4 w-4 text-[#B8860B]" /> Quick Note</p>
+            <form className="flex gap-2" onSubmit={e => { e.preventDefault(); saveQuickNote(); }}>
+              <Input value={quickNote} onChange={e => setQuickNote(e.target.value)} maxLength={500} placeholder="Add a note for this day…" aria-label="Note for this day" className="h-10 bg-white text-sm" />
+              <Button type="submit" disabled={!quickNote.trim()} className="h-10 shrink-0 text-white" style={{ background: 'linear-gradient(120deg, #233B63, #176B73)' }}><Send className="mr-1.5 h-4 w-4" /> Save</Button>
+            </form>
+          </div>
+        </section>
+
+        {/* Insights */}
+        <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habit-insights">
+          <h3 className="mb-3 flex items-center gap-2 border-b border-[#EEF2F6] pb-3 font-heading text-base font-bold text-[#17243D]"><BarChart3 className="h-5 w-5 text-[#176B73]" /> Insights</h3>
+          <ul className="space-y-4">
+            <li className="flex gap-3">
+              <TrendingUp className="mt-0.5 h-6 w-6 shrink-0 text-[#176B73]" />
+              <div><p className="text-sm font-semibold text-[#17243D]">Your streak is {streakNow} day{streakNow === 1 ? '' : 's'}!</p><p className="text-xs text-muted-foreground">{streakText}</p></div>
+            </li>
+            <li className="flex gap-3">
+              <Star className="mt-0.5 h-6 w-6 shrink-0 fill-[#F2C75C] text-[#F2C75C]" />
+              <div><p className="text-xs text-muted-foreground">Success Rate</p><p className="font-heading text-lg font-bold leading-tight text-[#17243D]">{insights.success === null ? '—' : `${insights.success}%`}</p><p className="text-xs text-muted-foreground">{successText}</p></div>
+            </li>
+            <li className="flex gap-3">
+              <Leaf className="mt-0.5 h-6 w-6 shrink-0 text-[#19C7B7]" />
+              <div>
+                <p className="text-xs text-muted-foreground">Top Habit</p>
+                <p className="text-sm font-bold leading-tight text-[#17243D]">{insights.top ? `${insights.top.name} (${insights.top.pct}%)` : '—'}</p>
+                <p className="text-xs text-muted-foreground">{insights.top ? (insights.top.pct >= 90 ? 'Well done!' : 'Keep it going!') : 'Your best habit shows up here.'}</p>
+              </div>
+            </li>
+          </ul>
+          <div className="mt-5 rounded-2xl bg-[#F2F0FF] px-4 py-3 text-center text-xs font-medium text-[#475569]">
+            <Heart className="mx-auto mb-1 h-4 w-4 text-[#7C6CFF]" />
+            A better you, one good habit at a time.
+          </div>
+        </section>
+      </div>
+
+      {/* add / edit habit */}
+      <Dialog open={habitDialog !== null} onOpenChange={open => { if (!open) setHabitDialog(null); }}>
+        <DialogContent className="max-h-[88vh] max-w-md overflow-y-auto">
+          <DialogHeader><DialogTitle className="text-base">{habitDialog !== null && habitDialog !== 'new' ? 'Edit habit' : 'Add a habit'}</DialogTitle></DialogHeader>
+          <form className="space-y-4" onSubmit={e => { e.preventDefault(); saveHabit(); }}>
+            <div className="space-y-1.5">
+              <Label htmlFor="gh-name">Habit name *</Label>
+              <Input id="gh-name" value={form.name} maxLength={60} autoComplete="off" placeholder="e.g. Reading Books" onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Icon</Label>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Icon">
+                {PICKABLE_ICONS.map(k => (
+                  <button key={k} type="button" role="radio" aria-checked={form.icon === k} aria-label={ICONS[k].label} onClick={() => setForm(f => ({ ...f, icon: k }))}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-colors ${form.icon === k ? 'border-[#176B73]' : 'border-transparent hover:border-[#E3EAF0]'}`}
+                    style={{ backgroundColor: ICONS[k].bg, color: ICONS[k].ink }}>
+                    <HabitIcon iconKey={k} className="h-5 w-5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gh-goal">Goal (optional)</Label>
+              <Input id="gh-goal" value={form.goal} maxLength={120} autoComplete="off" placeholder="e.g. At least 20 pages" onChange={e => setForm(f => ({ ...f, goal: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gh-min">Minutes each time (optional)</Label>
+              <Input id="gh-min" type="number" min={0} max={1440} value={form.minutes} placeholder="e.g. 30" onChange={e => setForm(f => ({ ...f, minutes: e.target.value }))} />
+              <p className="text-[11px] text-muted-foreground">Each time you finish it, these minutes are added to Total Time.</p>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={() => setHabitDialog(null)}>Cancel</Button>
+              <Button type="submit" disabled={!form.name.trim() || addHabit.isPending || updateHabit.isPending} className="bg-[#233B63] text-white hover:bg-[#17243D]">{habitDialog !== null && habitDialog !== 'new' ? 'Save changes' : 'Add habit'}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* streak details */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="max-h-[88vh] max-w-md overflow-y-auto">
+          <DialogHeader><DialogTitle className="text-base">Streak details</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-2.5">
             {[
-              { label: 'Best streak', value: `${streaks.best}`, unit: streaks.best === 1 ? 'day' : 'days', icon: Trophy, ink: '#B8860B', bg: '#FDF8EB' },
-              { label: 'Active days', value: `${streaks.activeDays}`, unit: 'logged', icon: Sparkles, ink: '#7C6CFF', bg: '#F2F0FF' },
-              { label: 'Perfect days', value: `${streaks.fullDays}`, unit: 'all done', icon: Check, ink: '#176B73', bg: '#DDF4F7' },
-              { label: 'Perfect streak', value: `${streaks.currentFull}`, unit: streaks.currentFull === 1 ? 'day' : 'days', icon: Flame, ink: '#D95757', bg: '#FBEEEE' },
+              { label: 'Current streak', value: `${streaks.current}`, unit: 'days' },
+              { label: 'Best streak', value: `${streaks.best}`, unit: 'days' },
+              { label: 'Active days', value: `${streaks.activeDays}`, unit: 'logged' },
+              { label: 'Perfect days', value: `${streaks.fullDays}`, unit: 'everything done' },
             ].map(s => (
               <div key={s.label} className="rounded-2xl border border-[#E3EAF0] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-medium text-muted-foreground">{s.label}</p>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor: s.bg, color: s.ink }}><s.icon className="h-3.5 w-3.5" /></span>
-                </div>
+                <p className="text-[11px] font-medium text-muted-foreground">{s.label}</p>
                 <p className="mt-1 font-heading text-xl font-bold text-[#17243D]">{s.value}<span className="ml-1 text-[11px] font-medium text-muted-foreground">{s.unit}</span></p>
               </div>
             ))}
           </div>
-
-          <div className="grid grid-cols-7 gap-1.5">
-            {flameDays.map(day => (
-              <button key={day.key} type="button" onClick={() => setSelectedDate(day.key)} className="flex flex-col items-center gap-1.5" aria-label={`Open ${day.key}`}>
-                <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${day.active ? 'bg-[#FDF8EB] text-[#B8860B]' : 'bg-[#F1F5F9] text-[#AAB6C2]'} ${day.key === selectedDate ? 'ring-2 ring-[#233B63]' : ''}`}>
-                  <Flame className={`h-4 w-4 ${day.active ? 'fill-current' : ''}`} />
-                </span>
-                <span className="text-[10px] font-medium text-muted-foreground">{day.label}</span>
-              </button>
-            ))}
-          </div>
-
+          <p className="text-xs text-muted-foreground">A day counts toward the streak when at least one habit is done. Perfect streak (everything done): <span className="font-semibold text-[#17243D]">{streaks.currentFull}</span> day{streaks.currentFull === 1 ? '' : 's'}.</p>
           <div>
-            <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-[#7C6CFF]" />
-              Activity heatmap
-              <span className="ml-auto font-medium normal-case tracking-normal">{streaks.activeDays} active days</span>
-            </div>
-            {isLoading ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>
-            ) : (
-              <HabitHeatmap stats={stats} total={scopeKeys.length} selectedDate={selectedDate} onSelect={setSelectedDate} />
-            )}
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Each habit (full days in a row)</p>
+            <ul className="divide-y divide-[#EEF2F6]">
+              {itemStreaks.map(({ it, current, best }) => (
+                <li key={it.key} className="flex items-center gap-3 py-2">
+                  <IconTile iconKey={it.icon} size="h-8 w-8" />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#17243D]">{it.name}{it.key === 'prayers' && <span className="ml-1 text-[11px] font-normal text-muted-foreground">(all 5)</span>}</span>
+                  <span className="text-xs text-muted-foreground">now <span className="font-bold text-[#17243D]">{current}</span> · best <span className="font-bold text-[#17243D]">{best}</span></span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      </section>
+        </DialogContent>
+      </Dialog>
 
-      {/* reasons */}
-      <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="missed-reasons">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FBEEEE] text-[#D95757]"><MessageSquareText className="h-4 w-4" /></span>
-          <div>
-            <h3 className="font-heading text-base font-bold text-[#17243D]">Why I missed</h3>
-            <p className="text-xs text-muted-foreground">Your most recent reasons. Spot the pattern, then plan around it.</p>
-          </div>
-        </div>
-        {recentReasons.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[#D9E3E9] py-6 text-center text-sm text-muted-foreground">No reasons written yet. When you mark something as missed, the reason shows up here.</p>
-        ) : (
-          <ul className="divide-y divide-[#EEF2F6]">
-            {recentReasons.map(l => (
-              <li key={`${l.date}|${l.habitKey}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5 text-sm">
-                <button type="button" onClick={() => setSelectedDate(l.date)} className="w-28 shrink-0 text-left text-xs font-semibold text-[#176B73] hover:underline">
-                  {parseDate(l.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                </button>
-                <span className="rounded-md bg-[#FBEEEE] px-1.5 py-0.5 text-[10px] font-bold text-[#D95757]">{nameFor(l.habitKey)}</span>
-                <span className="min-w-0 flex-1 break-words text-[#475569]">{l.note}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {missedNoReason > 0 && <p className="mt-2 text-[11px] text-muted-foreground">{missedNoReason} missed without a reason. Open the day and add one.</p>}
-      </section>
+      {/* history */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto">
+          <DialogHeader><DialogTitle className="text-base">History &amp; reasons</DialogTitle></DialogHeader>
+          {history.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[#D9E3E9] py-8 text-center text-sm text-muted-foreground">Nothing logged yet. Prayers, notes and reasons you add will show up here.</p>
+          ) : (
+            <ul className="divide-y divide-[#EEF2F6]">
+              {history.map(h => (
+                <li key={h.date} className="space-y-1.5 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <button type="button" onClick={() => { setSelectedDate(h.date); setShowHistory(false); }} className="text-sm font-semibold text-[#176B73] hover:underline">{longDate(h.date)}</button>
+                    {h.loggedPrayers > 0 && <span className="rounded-full bg-[#DDF4F7] px-2.5 py-0.5 text-xs font-bold text-[#176B73]">{h.prayed}/5 prayers</span>}
+                  </div>
+                  {h.missed.map((m, i) => (
+                    <p key={i} className="text-sm text-[#475569]"><span className="mr-2 rounded-md bg-[#FBEEEE] px-1.5 py-0.5 text-[10px] font-bold text-[#D95757]">{m.name} missed</span>{m.note || <span className="text-muted-foreground">No reason written</span>}</p>
+                  ))}
+                  {h.note && <p className="rounded-xl bg-[#DDF4F7] px-3 py-2 text-sm text-[#17243D]">{h.note}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

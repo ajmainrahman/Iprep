@@ -7,7 +7,7 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 // The tables are created on first use, so no separate "db push" step is needed.
-// They match lib/db/src/schema/good-habits.ts exactly.
+// They match lib/db/src/schema/good-habits.ts exactly (older installs get the newer columns added).
 let tablesReady: Promise<void> | null = null;
 function ensureTables(): Promise<void> {
   if (tablesReady) return tablesReady;
@@ -18,9 +18,14 @@ function ensureTables(): Promise<void> {
         user_id integer NOT NULL,
         name text NOT NULL,
         emoji text,
+        goal text,
+        minutes integer NOT NULL DEFAULT 0,
         created_at timestamptz NOT NULL DEFAULT now()
       )
     `);
+    // older installs: add the columns that were introduced later
+    await db.execute(sql`ALTER TABLE good_habits ADD COLUMN IF NOT EXISTS goal text`);
+    await db.execute(sql`ALTER TABLE good_habits ADD COLUMN IF NOT EXISTS minutes integer NOT NULL DEFAULT 0`);
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS habit_logs (
         id serial PRIMARY KEY,
@@ -57,7 +62,9 @@ router.use("/good-habits", requireAuth, async (_req, res, next): Promise<void> =
 /* ── your own habits ─────────────────────────────────────────────────────── */
 const habitSchema = z.object({
   name: z.string().trim().min(1).max(60),
-  emoji: z.string().trim().max(8).nullable().optional(),
+  emoji: z.string().trim().max(16).nullable().optional(),
+  goal: z.string().trim().max(120).nullable().optional(),
+  minutes: z.number().int().min(0).max(1440).optional(),
 });
 
 router.get("/good-habits/habits", async (req, res): Promise<void> => {
