@@ -175,6 +175,15 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   const { data: studySessions = [] } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
   const { data: scores = [] } = useQuery({ queryKey: ['scores'], queryFn: api.getScores });
   const { data: practiceLogs = [] } = useQuery({ queryKey: ['practice-logs'], queryFn: api.getPracticeLogs });
+  const { data: homeHabitLogs = [] } = useQuery({ queryKey: ['home-habit-logs'], queryFn: api.getHabitLogs });
+  const { data: homeAchItems = [] } = useQuery({ queryKey: ['home-achievements'], queryFn: api.getAchievements });
+  const homeToday = localDateStr(new Date());
+  const homeWeekStart = (() => { const d = new Date(); d.setDate(d.getDate() - 6); return localDateStr(d); })();
+  const homePrayerKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  const homePrayersToday = (homeHabitLogs as any[]).filter(l => l.date === homeToday && l.status === 'done' && homePrayerKeys.includes(l.habitKey)).length;
+  const homeHabitsWeek = (homeHabitLogs as any[]).filter(l => l.date >= homeWeekStart && l.status === 'done' && !String(l.habitKey).startsWith('_')).length;
+  const homeAchieved = (homeAchItems as any[]).filter(i => i.done).length;
+  const homeOpenGoals = (homeAchItems as any[]).filter(i => !i.done).length;
 
   const examDays = daysUntil((settings as any)?.examDate);
   const streak = calcStreak(studySessions as any[]);
@@ -415,24 +424,30 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
               <div className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#176B73]">Continue learning <ArrowUpRight className="h-3.5 w-3.5" /></div>
             </button>
 
-            <aside className="land-card flex flex-col rounded-[22px] bg-white p-5 sm:p-6">
-              <div className="flex items-center justify-between mb-4"><div><p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#176B73]">Keep momentum</p><h3 className="mt-1 text-[18px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>What’s next</h3></div><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DDF4F7] text-[#176B73]"><Compass className="h-4.5 w-4.5" /></span></div>
-              {shownItems.length === 0 ? (
-                <div className="flex flex-1 items-center gap-2 text-[12px] text-[#64748B] py-5"><CircleCheckBig className="h-4 w-4 text-[#176B73] shrink-0" /> All caught up.</div>
-              ) : (
-                <div className="flex-1 space-y-1">
-                  {shownItems.map((item, i) => {
-                    const Icon = item.icon;
-                    return <button key={i} onClick={item.onClick} className="w-full flex items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-[#F8FAFC]">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor: item.iconBg, color: item.iconColor }}><Icon className="h-4 w-4" /></span>
-                      <span className="min-w-0 flex-1"><span className="block text-[11px] font-semibold text-[#233B63] truncate">{item.label}</span><span className="block mt-0.5 text-[10px] text-[#64748B] truncate">{item.sub}</span></span>
-                      <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" />
-                    </button>;
-                  })}
+            <div className="flex flex-col gap-4 sm:gap-5">
+              <button onClick={() => setLocation('/fly/habits')} className="land-card land-link group relative flex-1 overflow-hidden rounded-[22px] bg-white p-5 text-left">
+                <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#42E6B8,#19C7B7)' }} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#E1FAF3] text-[#0F8F72]"><Leaf className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Daily</p><h3 className="mt-0.5 text-[16px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Good Habits</h3></div></div>
+                  <ArrowUpRight className="mt-1 h-4 w-4 text-[#0F8F72] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
-              )}
-              <button onClick={() => setLocation('/study/planning')} className="mt-4 w-full rounded-full py-3 text-[12px] font-semibold text-[#17243D] transition-transform hover:-translate-y-0.5" style={{ background: 'linear-gradient(100deg, #19C7B7, #7C6CFF)' }}>Open my planner <ArrowUpRight className="inline h-3.5 w-3.5 ml-1" /></button>
-            </aside>
+                <div className="mt-4 grid grid-cols-2 gap-2.5">
+                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homePrayersToday}<span className="text-[12px] font-semibold text-[#64748B]"> / 5</span></p><p className="mt-1.5 text-[10px] text-[#64748B]">Prayers today</p></div>
+                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeHabitsWeek}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Done this week</p></div>
+                </div>
+              </button>
+              <button onClick={() => setLocation('/fly/achievements')} className="land-card land-link group relative flex-1 overflow-hidden rounded-[22px] bg-white p-5 text-left">
+                <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#F2C75C,#7C6CFF)' }} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#FDF8EB] text-[#B8860B]"><Mountain className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Journey</p><h3 className="mt-0.5 text-[16px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Achievements &amp; Goals</h3></div></div>
+                  <ArrowUpRight className="mt-1 h-4 w-4 text-[#B8860B] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2.5">
+                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeAchieved}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Achieved</p></div>
+                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeOpenGoals}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Goals in progress</p></div>
+                </div>
+              </button>
+            </div>
           </div>
         </section>
 
