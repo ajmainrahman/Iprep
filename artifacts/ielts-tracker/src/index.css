@@ -247,6 +247,23 @@
   --sidebar-accent: 218 40% 20%;
 }
 
+/* ── GROW MODE (Aurora Green navigation for the personal-growth section) ── */
+.grow-mode {
+  --sidebar: 219 45% 16%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 218 48% 26%;
+  --sidebar-primary: 162 76% 52%;    /* Aurora Green — Grow's brand accent */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 218 48% 26%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 162 76% 52%;
+}
+.grow-mode.dark {
+  --sidebar: 219 50% 10%;
+  --sidebar-border: 218 40% 20%;
+  --sidebar-accent: 218 40% 20%;
+}
+
 /* ── SHARED DESIGN TOKENS (section 2) — spacing, shadow, transition scales.
    Centralised here so components reference tokens instead of ad-hoc values. */
 :root {

@@ -29,6 +29,11 @@ import {
   SpellCheck,
 } from 'lucide-react';
 import { Moon as JournalMoon, Brain as SelfBrain } from 'lucide-react';
+import { Sprout as GrowSprout } from 'lucide-react';
+import { GoodHabitsTab } from '@/pages/GoodHabits';
+import { AchievementsTab } from '@/pages/Achievements';
+import { NightJournalTab } from '@/pages/NightJournal';
+import { KnowMyselfTab } from '@/pages/KnowMyself';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
 const queryClient = new QueryClient({
@@ -45,6 +50,7 @@ const queryClient = new QueryClient({
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits' | 'achievements' | 'journal' | 'myself';
 type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
+type GrowTab  = 'habits' | 'achievements' | 'journal' | 'myself';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
 /** YYYY-MM-DD in LOCAL timezone — never use toISOString() for date comparisons */
@@ -191,6 +197,15 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   }
   const homeJournalTonight = new Date().getHours() >= 18 && !homeJournalDays.has(homeJournalToday);
   const showJournalBanner = homeJournalReady && (homeJournalMissed.length > 0 || homeJournalTonight);
+  const { data: homeSelfNotes = [] } = useQuery({ queryKey: ['self-notes'], queryFn: api.getSelfNotes });
+  const homeToWorkOn = (homeSelfNotes as any[]).filter(n => n.kind !== 'strength' && n.status !== 'resolved').length;
+  const homeNightStreak = (() => {
+    const d = new Date();
+    if (!homeJournalDays.has(localDateStr(d))) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (homeJournalDays.has(localDateStr(d))) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  })();
   const { data: homeHabitLogs = [] } = useQuery({ queryKey: ['home-habit-logs'], queryFn: api.getHabitLogs });
   const { data: homeAchItems = [] } = useQuery({ queryKey: ['home-achievements'], queryFn: api.getAchievements });
   const homeToday = localDateStr(new Date());
@@ -405,11 +420,11 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         <section className="max-w-[1360px] mx-auto pt-10 sm:pt-12 pb-8">
           <DailyReminder className="mb-6" />
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5 sm:mb-6">
-            <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#176B73] mb-2">Your workspace</p><h2 className="text-[23px] sm:text-[27px] font-bold tracking-[-.03em]" style={{ color: '#17243D', fontFamily: 'Manrope, sans-serif' }}>Two paths. One bright direction.</h2></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#176B73] mb-2">Your workspace</p><h2 className="text-[23px] sm:text-[27px] font-bold tracking-[-.03em]" style={{ color: '#17243D', fontFamily: 'Manrope, sans-serif' }}>Three paths. One bright direction.</h2></div>
             <p className="max-w-md text-[12px] leading-5" style={{ color: '#64748B' }}>Build your English confidence while making the practical pieces of studying abroad easier to see.</p>
           </div>
           {showJournalBanner && (
-            <button onClick={() => setLocation('/fly/journal')} className="land-card land-link mb-4 flex w-full items-center gap-3 rounded-[22px] border border-[#F2C75C]/60 bg-[#FDF8EB] px-4 py-3 text-left sm:px-5">
+            <button onClick={() => setLocation('/grow/journal')} className="land-card land-link mb-4 flex w-full items-center gap-3 rounded-[22px] border border-[#F2C75C]/60 bg-[#FDF8EB] px-4 py-3 text-left sm:px-5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#233B63]"><JournalMoon className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] font-bold text-[#17243D]">{homeJournalMissed.length > 0 ? `Your journal is missing ${homeJournalMissed.length} ${homeJournalMissed.length === 1 ? 'day' : 'days'}` : 'Tonight is still empty'}</span>
@@ -418,7 +433,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
               <span className="shrink-0 rounded-full bg-[#233B63] px-3.5 py-1.5 text-[11px] font-semibold text-white">Write now</span>
             </button>
           )}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_.82fr] gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             <button onClick={onFly} className="land-card land-link group relative overflow-hidden rounded-[22px] bg-white p-5 sm:p-6 text-left">
               <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#D95757,#F2C75C)' }} />
               <div className="flex items-start justify-between gap-3">
@@ -451,30 +466,24 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
               <div className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#176B73]">Continue learning <ArrowUpRight className="h-3.5 w-3.5" /></div>
             </button>
 
-            <div className="flex flex-col gap-4 sm:gap-5">
-              <button onClick={() => setLocation('/fly/habits')} className="land-card land-link group relative flex-1 overflow-hidden rounded-[22px] bg-white p-5 text-left">
-                <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#42E6B8,#19C7B7)' }} />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#E1FAF3] text-[#0F8F72]"><Leaf className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Daily</p><h3 className="mt-0.5 text-[16px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Good Habits</h3></div></div>
-                  <ArrowUpRight className="mt-1 h-4 w-4 text-[#0F8F72] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homePrayersToday}<span className="text-[12px] font-semibold text-[#64748B]"> / 5</span></p><p className="mt-1.5 text-[10px] text-[#64748B]">Prayers today</p></div>
-                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeHabitsWeek}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Done this week</p></div>
-                </div>
-              </button>
-              <button onClick={() => setLocation('/fly/achievements')} className="land-card land-link group relative flex-1 overflow-hidden rounded-[22px] bg-white p-5 text-left">
-                <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#F2C75C,#7C6CFF)' }} />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#FDF8EB] text-[#B8860B]"><Mountain className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Fly · Journey</p><h3 className="mt-0.5 text-[16px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Achievements &amp; Goals</h3></div></div>
-                  <ArrowUpRight className="mt-1 h-4 w-4 text-[#B8860B] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeAchieved}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Achieved</p></div>
-                  <div className="rounded-xl bg-[#F8FAFC] px-3 py-2.5"><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeOpenGoals}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Goals in progress</p></div>
-                </div>
-              </button>
-            </div>
+            <button onClick={() => setLocation('/grow/habits')} className="land-card land-link group relative overflow-hidden rounded-[22px] bg-white p-5 sm:p-6 text-left">
+              <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#42E6B8,#7C6CFF)' }} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#E1FAF3] text-[#0F8F72]"><GrowSprout className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#64748B]">Grow · Personal</p><h3 className="mt-0.5 text-[17px] font-bold tracking-tight text-[#17243D]" style={{ fontFamily: 'Manrope, sans-serif' }}>Become a little better every day</h3></div></div>
+                <ArrowUpRight className="mt-1 h-4 w-4 text-[#0F8F72] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </div>
+              <p className="mt-4 mb-5 max-w-lg text-[12px] leading-5 text-[#64748B]">Keep your habits, achievements, night journal and honest notes about yourself in one calm place.</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3"><Leaf className="mb-2 h-4 w-4 text-[#0F8F72]" /><p className="text-[19px] leading-none font-bold text-[#17243D]">{homePrayersToday}<span className="text-[12px] font-semibold text-[#64748B]"> / 5</span></p><p className="mt-1.5 text-[10px] text-[#64748B]">Prayers today</p></div>
+                <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3"><JournalMoon className="mb-2 h-4 w-4 text-[#233B63]" /><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeNightStreak}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Night streak</p></div>
+                <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3"><Mountain className="mb-2 h-4 w-4 text-[#B8860B]" /><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeAchieved}</p><p className="mt-1.5 text-[10px] text-[#64748B]">Achieved</p></div>
+                <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3"><SelfBrain className="mb-2 h-4 w-4 text-[#7C6CFF]" /><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeToWorkOn}</p><p className="mt-1.5 text-[10px] text-[#64748B]">To work on</p></div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {['Good Habits', 'Achievements', 'Night Journal', 'Know Myself'].map(x => <span key={x} className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-semibold text-[#475569]">{x}</span>)}
+              </div>
+              <div className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#176B73]">Continue growing <ArrowUpRight className="h-3.5 w-3.5" /></div>
+            </button>
           </div>
         </section>
 
@@ -518,11 +527,14 @@ const FLY_TABS: NavItem<FlyTab>[] = [
   { id: 'scholarships', label: 'Scholarships',  icon: Trophy },
   { id: 'documents',    label: 'Document Tracking', icon: ClipboardCheck },
   { id: 'templates',    label: 'Doc Templates', icon: FileText },
+  { id: 'notepad',      label: 'Notepad',       icon: NotebookPen },
+];
+
+const GROW_TABS: NavItem<GrowTab>[] = [
   { id: 'habits',       label: 'Good Habits',   icon: Leaf },
   { id: 'achievements', label: 'Achievements',  icon: Mountain },
   { id: 'journal',      label: 'Night Journal', icon: JournalMoon },
   { id: 'myself',       label: 'Know Myself',   icon: SelfBrain },
-  { id: 'notepad',      label: 'Notepad',       icon: NotebookPen },
 ];
 
 const STUDY_TABS: NavItem<StudyTab>[] = [
@@ -933,6 +945,76 @@ function StudyLayout() {
   );
 }
 
+/* ─── GROW LAYOUT (personal growth: habits, achievements, journal, self-notes) ─── */
+function GrowLayout() {
+  const params = useParams<{ tab?: string }>();
+  const [, setLocation] = useLocation();
+  const tab = (GROW_TABS.some(t => t.id === params.tab) ? params.tab : 'habits') as GrowTab;
+  function setTab(next: GrowTab) { setLocation(`/grow/${next}`); }
+  function onBack() { setLocation('/'); }
+
+  const [collapsed, toggleCollapsed] = useSidebarCollapsed();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const pageTitle = GROW_TABS.find(t => t.id === tab)?.label ?? 'Good Habits';
+
+  const bottomWidget = (
+    <div className="flex flex-col gap-2">
+      <div className="px-1 flex items-center justify-between gap-2 min-w-0">
+        <p className="text-[12px] text-sidebar-foreground/60 truncate">{user?.name}</p>
+        <button onClick={logout} aria-label="Sign out" title="Sign out" className="text-sidebar-foreground/45 hover:text-sidebar-foreground transition-colors shrink-0">
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="grow-mode h-screen overflow-hidden bg-background text-foreground font-sans flex">
+      <AppSidebar
+        tabs={GROW_TABS}
+        activeTab={tab}
+        onTab={(nextTab) => setTab(nextTab as GrowTab)}
+        onBack={onBack}
+        productName="Grow"
+        productSubtitle="Personal Growth"
+        productIcon={GrowSprout}
+        bottomWidget={bottomWidget}
+        collapsed={collapsed}
+        onToggleCollapsed={toggleCollapsed}
+      />
+      <MobileNavDrawer
+        open={mobileNavOpen}
+        onOpenChange={setMobileNavOpen}
+        tabs={GROW_TABS}
+        activeTab={tab}
+        onTab={(nextTab) => setTab(nextTab as GrowTab)}
+        onBack={onBack}
+        productName="Grow"
+        productSubtitle="Personal Growth"
+        productIcon={GrowSprout}
+        bottomWidget={bottomWidget}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <AppHeader
+          title={pageTitle}
+          subtitle="Personal growth · Within a Few Weeks"
+          onOpenMobileNav={() => setMobileNavOpen(true)}
+        />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-5xl mx-auto">
+            {tab === 'habits'       && <GoodHabitsTab />}
+            {tab === 'achievements' && <AchievementsTab />}
+            {tab === 'journal'      && <NightJournalTab />}
+            {tab === 'myself'       && <KnowMyselfTab />}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN APP — real URL routing so refresh/direct-links land on the exact
    page the user was viewing, instead of always resetting to Home. ────────── */
 function MainApp() {
@@ -943,6 +1025,12 @@ function MainApp() {
         <LandingPage onFly={() => setLocation('/fly/overview')} onStudy={() => setLocation('/study/dashboard')} />
       </Route>
       <Route path="/fly"><Redirect to="/fly/overview" /></Route>
+      <Route path="/fly/habits"><Redirect to="/grow/habits" /></Route>
+      <Route path="/fly/achievements"><Redirect to="/grow/achievements" /></Route>
+      <Route path="/fly/journal"><Redirect to="/grow/journal" /></Route>
+      <Route path="/fly/myself"><Redirect to="/grow/myself" /></Route>
+      <Route path="/grow"><Redirect to="/grow/habits" /></Route>
+      <Route path="/grow/:tab"><GrowLayout /></Route>
       <Route path="/fly/:tab/:id?"><FlyLayout /></Route>
       <Route path="/study"><Redirect to="/study/dashboard" /></Route>
       <Route path="/study/:tab"><StudyLayout /></Route>
