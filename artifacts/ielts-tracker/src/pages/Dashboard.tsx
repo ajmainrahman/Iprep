@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { DailyReminder } from '@/components/DailyReminder';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -909,6 +910,7 @@ export function Dashboard() {
 
   return (
     <div className="study-dashboard space-y-6 sm:space-y-8">
+      <DailyReminder />
       <style>{`
         .study-dashboard { color:#182238; }
         .study-dashboard .dashboard-card { border:1px solid #E3EAF0; background:#fff; box-shadow:0 8px 28px rgba(23,36,61,.045); }

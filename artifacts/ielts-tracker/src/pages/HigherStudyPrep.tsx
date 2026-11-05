@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { DailyReminder } from '@/components/DailyReminder';
 import { KnowMyselfTab } from '@/pages/KnowMyself';
 import { NightJournalTab } from '@/pages/NightJournal';
 import { AchievementsTab } from '@/pages/Achievements';
@@ -841,6 +842,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
 
   return (
     <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
+      <DailyReminder />
       <div className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-[0_16px_40px_rgba(35, 59, 99, 0.16)] sm:p-8" style={{ background: 'linear-gradient(115deg, #17243D 0%, #233B63 52%, #176B73 100%)' }}>
         <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#A9DCE8]/15 blur-3xl" />
         <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-[#F2C75C]/10 blur-3xl" />

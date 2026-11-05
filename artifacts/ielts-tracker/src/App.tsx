@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DailyReminder } from '@/components/DailyReminder';
 import { Dashboard } from '@/pages/Dashboard';
 import { ScoreTracker } from '@/pages/ScoreTracker';
 import { StudyLog } from '@/pages/StudyLog';
@@ -402,6 +403,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
         </section>
 
         <section className="max-w-[1360px] mx-auto pt-10 sm:pt-12 pb-8">
+          <DailyReminder className="mb-6" />
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5 sm:mb-6">
             <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#176B73] mb-2">Your workspace</p><h2 className="text-[23px] sm:text-[27px] font-bold tracking-[-.03em]" style={{ color: '#17243D', fontFamily: 'Manrope, sans-serif' }}>Two paths. One bright direction.</h2></div>
             <p className="max-w-md text-[12px] leading-5" style={{ color: '#64748B' }}>Build your English confidence while making the practical pieces of studying abroad easier to see.</p>

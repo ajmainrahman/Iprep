@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-"""Add a "Daily reminder" card with your six Quran / Hadith quotes.
-Shown on: the Home page (above "Your workspace"), the Study (IELTS) Dashboard, and the Fly Overview.
-It shows one quote per day (changes at midnight); the arrows let you read the others.
-Quote 6 is marked as Bengali so the right font is used.
-Safe to run twice.   Usage (project root):  python3 add_daily_reminder.py artifacts/ielts-tracker
-"""
-import os, re, sys
-APP = sys.argv[1] if len(sys.argv) > 1 else "artifacts/ielts-tracker"
-problems = []
-COMPONENT = r"""import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 
 interface Reminder { text: string; source: string; lang?: string }
@@ -54,56 +44,3 @@ export function DailyReminder({ className = '' }: { className?: string }) {
     </figure>
   );
 }
-"""
-def read(p):
-    with open(p, encoding="utf-8") as f: return f.read()
-def write(p, t):
-    with open(p, "w", encoding="utf-8") as f: f.write(t)
-if not os.path.exists(os.path.join(APP, "src/App.tsx")):
-    sys.exit("Run this from the project root:  python3 add_daily_reminder.py artifacts/ielts-tracker")
-cp = os.path.join(APP, "src/components/DailyReminder.tsx")
-if os.path.exists(cp) and read(cp) == COMPONENT: print("already: DailyReminder component")
-else: write(cp, COMPONENT); print("ok     : DailyReminder component")
-
-def edit(rel, label, marker, regex, add, after=True):
-    path = os.path.join(APP, rel)
-    s = read(path)
-    if marker in s: print("already:", label); return
-    ms = list(re.finditer(regex, s, re.M))
-    if len(ms) != 1:
-        problems.append(label + ": anchor not found exactly once"); print("MISSING:", label); return
-    m = ms[0]
-    i = m.end() if after else m.start()
-    s = s[:i] + add + s[i:]
-    write(path, s); print("ok     :", label)
-
-def import_line(rel, label, imp):
-    path = os.path.join(APP, rel)
-    s = read(path)
-    if "DailyReminder" in s and imp.strip() in s: print("already:", label); return
-    ms = list(re.finditer(r"^import React[^\n]*\n", s, re.M))
-    if len(ms) != 1:
-        problems.append(label + ": import anchor"); print("MISSING:", label); return
-    s = s[:ms[0].end()] + imp + s[ms[0].end():]
-    write(path, s); print("ok     :", label)
-
-IMP = "import { DailyReminder } from '@/components/DailyReminder';\n"
-# Home page
-import_line("src/App.tsx", "home import", IMP)
-edit("src/App.tsx", "home card", "<DailyReminder className=\"mb-6\" />",
-     r'^        <section className="max-w-\[1360px\] mx-auto pt-10 sm:pt-12 pb-8">\n',
-     '          <DailyReminder className="mb-6" />\n')
-# IELTS dashboard
-import_line("src/pages/Dashboard.tsx", "dashboard import", IMP)
-edit("src/pages/Dashboard.tsx", "dashboard card", "<DailyReminder />",
-     r'^    <div className="study-dashboard space-y-6 sm:space-y-8">\n', '      <DailyReminder />\n')
-# Fly overview
-import_line("src/pages/HigherStudyPrep.tsx", "fly import", IMP)
-edit("src/pages/HigherStudyPrep.tsx", "fly overview card", "<DailyReminder />",
-     r"^    <div className=\"space-y-5 pb-4\" style=\{\{ color: 'var\(--apps-text-primary\)' \}\}>\n", '      <DailyReminder />\n')
-print()
-if problems:
-    print("SOME EDITS COULD NOT BE APPLIED:")
-    for x in problems: print("  -", x)
-    sys.exit(1)
-print("All edits applied.")
