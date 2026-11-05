@@ -27,6 +27,7 @@ import {
   Rocket, ArrowUpRight, ListChecks, CircleCheckBig, ChevronDown, Zap, Linkedin, Youtube, Twitter, Leaf, Mountain,
   SpellCheck,
 } from 'lucide-react';
+import { Moon as JournalMoon, Brain as SelfBrain } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
 const queryClient = new QueryClient({
@@ -41,7 +42,7 @@ const queryClient = new QueryClient({
 });
 
 type AppMode  = 'home' | 'fly' | 'study';
-type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits' | 'achievements';
+type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits' | 'achievements' | 'journal' | 'myself';
 type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
@@ -175,6 +176,20 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
   const { data: studySessions = [] } = useQuery({ queryKey: ['study-sessions'], queryFn: api.getStudySessions });
   const { data: scores = [] } = useQuery({ queryKey: ['scores'], queryFn: api.getScores });
   const { data: practiceLogs = [] } = useQuery({ queryKey: ['practice-logs'], queryFn: api.getPracticeLogs });
+  const { data: homeJournal = [], isSuccess: homeJournalReady } = useQuery({ queryKey: ['journal-entries'], queryFn: api.getJournalEntries });
+  const homeJournalDays = new Set((homeJournal as any[]).filter(e => (e.content || '').trim() || e.inNotebook).map(e => e.date as string));
+  const homeJournalFirst = Array.from(homeJournalDays).sort()[0] ?? null;
+  const homeJournalToday = localDateStr(new Date());
+  const homeJournalMissed: string[] = [];
+  if (homeJournalFirst) {
+    for (let i = 7; i >= 1; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = localDateStr(d);
+      if (ds >= homeJournalFirst && !homeJournalDays.has(ds)) homeJournalMissed.push(ds);
+    }
+  }
+  const homeJournalTonight = new Date().getHours() >= 18 && !homeJournalDays.has(homeJournalToday);
+  const showJournalBanner = homeJournalReady && (homeJournalMissed.length > 0 || homeJournalTonight);
   const { data: homeHabitLogs = [] } = useQuery({ queryKey: ['home-habit-logs'], queryFn: api.getHabitLogs });
   const { data: homeAchItems = [] } = useQuery({ queryKey: ['home-achievements'], queryFn: api.getAchievements });
   const homeToday = localDateStr(new Date());
@@ -391,6 +406,16 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
             <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#176B73] mb-2">Your workspace</p><h2 className="text-[23px] sm:text-[27px] font-bold tracking-[-.03em]" style={{ color: '#17243D', fontFamily: 'Manrope, sans-serif' }}>Two paths. One bright direction.</h2></div>
             <p className="max-w-md text-[12px] leading-5" style={{ color: '#64748B' }}>Build your English confidence while making the practical pieces of studying abroad easier to see.</p>
           </div>
+          {showJournalBanner && (
+            <button onClick={() => setLocation('/fly/journal')} className="land-card land-link mb-4 flex w-full items-center gap-3 rounded-[22px] border border-[#F2C75C]/60 bg-[#FDF8EB] px-4 py-3 text-left sm:px-5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#233B63]"><JournalMoon className="h-5 w-5" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-bold text-[#17243D]">{homeJournalMissed.length > 0 ? `Your journal is missing ${homeJournalMissed.length} ${homeJournalMissed.length === 1 ? 'day' : 'days'}` : 'Tonight is still empty'}</span>
+                <span className="block text-[11px] text-[#64748B]">{homeJournalMissed.length > 0 ? 'Open the Night Journal and write them while you remember.' : 'Write your thoughts before you sleep.'}</span>
+              </span>
+              <span className="shrink-0 rounded-full bg-[#233B63] px-3.5 py-1.5 text-[11px] font-semibold text-white">Write now</span>
+            </button>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_.82fr] gap-4 sm:gap-5">
             <button onClick={onFly} className="land-card land-link group relative overflow-hidden rounded-[22px] bg-white p-5 sm:p-6 text-left">
               <div className="absolute top-0 left-0 h-1 w-full" style={{ background: 'linear-gradient(90deg,#D95757,#F2C75C)' }} />
@@ -493,6 +518,8 @@ const FLY_TABS: NavItem<FlyTab>[] = [
   { id: 'templates',    label: 'Doc Templates', icon: FileText },
   { id: 'habits',       label: 'Good Habits',   icon: Leaf },
   { id: 'achievements', label: 'Achievements',  icon: Mountain },
+  { id: 'journal',      label: 'Night Journal', icon: JournalMoon },
+  { id: 'myself',       label: 'Know Myself',   icon: SelfBrain },
   { id: 'notepad',      label: 'Notepad',       icon: NotebookPen },
 ];
 

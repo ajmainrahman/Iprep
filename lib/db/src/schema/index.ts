@@ -10,6 +10,8 @@ export * from "./other-test-scores";
 export * from "./scholarships";
 export * from "./checklist-templates";
 export * from "./planning-notes";
+export * from "./self-notes";
+export * from "./journal";
 export * from "./achievements";
 export * from "./good-habits";
 export * from "./document-tracking";

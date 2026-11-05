@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { KnowMyselfTab } from '@/pages/KnowMyself';
+import { NightJournalTab } from '@/pages/NightJournal';
 import { AchievementsTab } from '@/pages/Achievements';
 import { GoodHabitsTab } from '@/pages/GoodHabits';
 import { useParams, useLocation } from 'wouter';
@@ -430,6 +432,8 @@ export function HigherStudyPrep({ tab, onTabChange }: { tab: string; onTabChange
       {tab === 'documents'    && <DocumentTrackingTab />}
       {tab === 'habits'       && <GoodHabitsTab />}
       {tab === 'achievements' && <AchievementsTab />}
+      {tab === 'journal'      && <NightJournalTab />}
+      {tab === 'myself'       && <KnowMyselfTab />}
       {tab === 'templates'    && <ChecklistTemplates />}
     </>
   );
