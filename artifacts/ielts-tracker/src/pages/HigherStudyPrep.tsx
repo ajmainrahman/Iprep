@@ -34,7 +34,7 @@ import { FLY_PASTELS } from '@/lib/flyStyles';
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 type AppStatus =
-  | 'researching' | 'ready_to_apply' | 'applied' | 'interview'
+  | 'researching' | 'ongoing' | 'ready_to_apply' | 'applied' | 'interview'
   | 'offer' | 'waitlisted' | 'rejected' | 'withdrawn'; // withdrawn = "Not Applied"
 // Phase 2 status set. Legacy values ('planning', 'ready_to_apply') that already exist
 // in the database are safely mapped forward — see normalizeScholarshipStatus() — so
@@ -42,7 +42,7 @@ type AppStatus =
 // Stored keys are kept as they were: preparing = "Ready to Apply", awarded = "Offer Letter",
 // not_eligible = "Not Applied". Older values are mapped in normalizeScholarshipStatus().
 type ScholarshipStatus =
-  | 'researching' | 'preparing' | 'applied' | 'interview'
+  | 'researching' | 'ongoing' | 'preparing' | 'applied' | 'interview'
   | 'awarded' | 'waitlisted' | 'rejected' | 'not_eligible';
 type Priority = 'high' | 'medium' | 'low';
 type ReqCategory = 'requirement' | 'document' | 'application';
@@ -75,6 +75,7 @@ function daysOrNull(value: unknown): number | null {
 function isOngoingItem(item: Record<string, unknown> | undefined, closedStatuses: string[]): boolean {
   if (!item) return false;
   if (closedStatuses.includes(String(item.status || ''))) return false;
+  if (String(item.status || '') === 'ongoing') return !deadlinePassed(item);
   const untilStart = daysOrNull(item.startDate);
   if (untilStart === null) return false; // no start date set — cannot be "ongoing"
   if (untilStart > 0) return false; // start date is in the future — not open yet
@@ -108,6 +109,7 @@ function reqIsDone(status: DocStatus): boolean {
 
 const APP_STATUS_META: Record<AppStatus, { label: string; color: string; bg: string }> = {
   researching:    { label: 'Researching',    color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800' },
+  ongoing:        { label: 'Ongoing',        color: 'text-[#0F8F72]',   bg: 'bg-[#E1FAF3] dark:bg-[#42E6B8]/20' },
   ready_to_apply: { label: 'Ready to Apply', color: 'text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#42E6B8]/30' },
   applied:        { label: 'Applied',        color: 'text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#233B63]/30' },
   interview:      { label: 'Interview',      color: 'text-[#6A5CE0]',   bg: 'bg-[#F2F0FF] dark:bg-[#7C6CFF]/30' },
@@ -128,8 +130,24 @@ function normalizeAppStatus(raw: unknown): AppStatus {
   return LEGACY_APP_STATUS[value] ?? 'researching';
 }
 // Applied to every query result so the whole page only ever sees the current statuses.
-const normalizeAppRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: normalizeAppStatus(row?.status) }));
-const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: normalizeScholarshipStatus(row?.status) }));
+/* Automatic Ongoing: once the start date has arrived (and the deadline has not passed), an item that is
+   still Researching / Ready to Apply shows as Ongoing by itself. Nothing is rewritten in the database until
+   you save the item. If the deadline passes, Ongoing goes back to Researching. */
+function startReached(row: any): boolean {
+  const untilStart = daysOrNull(row?.startDate);
+  return untilStart !== null && untilStart <= 0;
+}
+function deadlinePassed(row: any): boolean {
+  const untilDeadline = daysOrNull(row?.deadline);
+  return untilDeadline !== null && untilDeadline < 0;
+}
+function autoOngoing(status: string, row: any, beforeApply: string[]): string {
+  if (status === 'ongoing') return deadlinePassed(row) ? 'researching' : 'ongoing';
+  if (beforeApply.includes(status) && startReached(row) && !deadlinePassed(row)) return 'ongoing';
+  return status;
+}
+const normalizeAppRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: autoOngoing(normalizeAppStatus(row?.status), row, ['researching', 'ready_to_apply']) }));
+const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: autoOngoing(normalizeScholarshipStatus(row?.status), row, ['researching', 'preparing']) }));
 
 /* Scholarship status colors now use pastel hex (matching @/lib/flyStyles'
    FLY_PASTELS, kept in sync manually) instead of Tailwind's built-in shade
@@ -142,6 +160,7 @@ const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : [
    APP_STATUS_META) keeps working with no changes. */
 const SCH_STATUS_META: Record<ScholarshipStatus, { label: string; color: string; bg: string }> = {
   researching:   { label: 'Researching',    color: 'text-[#182238] dark:text-[#182238]',   bg: 'bg-[#E3EAF0] dark:bg-[#E3EAF0]/20' },
+  ongoing:       { label: 'Ongoing',        color: 'text-[#0F8F72] dark:text-[#0F8F72]',   bg: 'bg-[#E1FAF3] dark:bg-[#E1FAF3]/20' },
   preparing:     { label: 'Ready to Apply', color: 'text-[#176B73] dark:text-[#176B73]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
   applied:       { label: 'Applied',        color: 'text-[#233B63] dark:text-[#233B63]',   bg: 'bg-[#DDF4F7] dark:bg-[#DDF4F7]/20' },
   interview:     { label: 'Interview',      color: 'text-[#6A5CE0] dark:text-[#6A5CE0]',   bg: 'bg-[#F2F0FF] dark:bg-[#F2F0FF]/20' },
@@ -307,6 +326,7 @@ function nextApplicationAction(app: TrackedRow): string {
   const openReqs = reqs.filter(item => !item.done).length;
   const days = daysUntil(String(app.deadline || ''));
   if (days !== null && days >= 0 && days <= 7) return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
+  if (app.status === 'ongoing') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Submit application';
   if (app.status === 'researching') return 'Review programme fit';
   if (app.status === 'ready_to_apply') return openReqs ? `Finish ${openReqs} document${openReqs === 1 ? '' : 's'}` : 'Submit application';
   if (app.status === 'applied') return 'Watch for updates';
@@ -325,6 +345,7 @@ function nextScholarshipAction(scholarship: TrackedRow): string {
   if (days !== null && days >= 0 && days <= 7 && !['awarded', 'waitlisted', 'rejected', 'not_eligible'].includes(status)) {
     return days === 0 ? 'Submit today' : `Deadline in ${days}d`;
   }
+  if (status === 'ongoing') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Submit application';
   if (status === 'researching') return 'Research eligibility criteria';
   if (status === 'preparing') return openReqs ? `Finish ${openReqs} requirement${openReqs === 1 ? '' : 's'}` : 'Submit application';
   if (status === 'applied') return 'Watch for updates';
@@ -375,7 +396,7 @@ function computeReadiness(app: TrackedRow): number {
   const reqs = safeParseReqs(app.requirementsJson as string);
   const docsPct = reqs.length ? (reqs.filter(r => r.done).length / reqs.length) * 100 : 0;
   const status = normalizeAppStatus(app.status);
-  const stageIdx = READINESS_STAGES.indexOf(status);
+  const stageIdx = status === 'ongoing' ? 0.5 : READINESS_STAGES.indexOf(status); // Ongoing sits between Researching and Ready to Apply
   // Rejected / withdrawn / waitlisted / deferred / missed_deadline: freeze at whatever the docs say.
   const stagePct = stageIdx >= 0 ? (stageIdx / (READINESS_STAGES.length - 1)) * 100 : docsPct;
   const score = reqs.length ? docsPct * 0.65 + stagePct * 0.35 : stagePct * 0.5;
@@ -2089,6 +2110,7 @@ function ApplicationsTab() {
                 const urgent = days !== null && days >= 0 && days <= 7;
                 const dotColor: Partial<Record<AppStatus, string>> = {
                   researching:    'bg-slate-400',
+                  ongoing:        'bg-[#0F8F72]',
                   ready_to_apply: 'bg-[#42E6B8]',
                   applied:        'bg-[#233B63]',
                   interview:      'bg-[#7C6CFF]',
@@ -2882,7 +2904,7 @@ function parseReqs(json: unknown): ReqItem[] {
 }
 
 const PIPELINE_STATUSES: ScholarshipStatus[] = [
-  'researching', 'preparing', 'applied', 'interview', 'awarded',
+  'researching', 'ongoing', 'preparing', 'applied', 'interview', 'awarded',
 ];
 const SCH_STATUS_ORDER: ScholarshipStatus[] = Object.keys(SCH_STATUS_META) as ScholarshipStatus[];
 const REQ_CATEGORY_META: Record<ReqCategory, { label: string; short: string }> = {
