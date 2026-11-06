@@ -146,8 +146,30 @@ function autoOngoing(status: string, row: any, beforeApply: string[]): string {
   if (beforeApply.includes(status) && startReached(row) && !deadlinePassed(row)) return 'ongoing';
   return status;
 }
-const normalizeAppRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: autoOngoing(normalizeAppStatus(row?.status), row, ['researching', 'ready_to_apply']) }));
-const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, status: autoOngoing(normalizeScholarshipStatus(row?.status), row, ['researching', 'preparing']) }));
+/* A status you chose yourself while the portal was open is saved with this suffix, so the automatic
+   Ongoing does not pull the item back. The suffix is never shown. */
+const MANUAL_SUFFIX = '_manual';
+function splitManual(raw: unknown): { base: string; manual: boolean } {
+  const v = String(raw || '');
+  return v.endsWith(MANUAL_SUFFIX) ? { base: v.slice(0, -MANUAL_SUFFIX.length), manual: true } : { base: v, manual: false };
+}
+function lockStatusForSave(data: Record<string, unknown>, existing: any, beforeApply: string[]): Record<string, unknown> {
+  if (data.status === undefined) return data;
+  const { base } = splitManual(data.status);
+  if (!beforeApply.includes(base)) return { ...data, status: base };
+  const merged = { ...(existing || {}), ...data };
+  return startReached(merged) && !deadlinePassed(merged) ? { ...data, status: base + MANUAL_SUFFIX } : { ...data, status: base };
+}
+const normalizeAppRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => {
+  const { base, manual } = splitManual(row?.status);
+  const st = normalizeAppStatus(base);
+  return { ...row, status: manual ? st : autoOngoing(st, row, ['researching', 'ready_to_apply']) };
+});
+const normalizeSchRows = (rows: any[]): any[] => (Array.isArray(rows) ? rows : []).map(row => {
+  const { base, manual } = splitManual(row?.status);
+  const st = normalizeScholarshipStatus(base);
+  return { ...row, status: manual ? st : autoOngoing(st, row, ['researching', 'preparing']) };
+});
 
 /* Scholarship status colors now use pastel hex (matching @/lib/flyStyles'
    FLY_PASTELS, kept in sync manually) instead of Tailwind's built-in shade
@@ -1362,7 +1384,7 @@ function ApplicationsTab() {
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateApplication(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateApplication(id, lockStatusForSave(data, (qc.getQueryData(['applications']) as any[] | undefined)?.find(r => r.id === id), ['researching', 'ready_to_apply'])),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['applications'] });
       setEditId(null);
@@ -2980,7 +3002,7 @@ function ScholarshipsTab() {
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateScholarship(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateScholarship(id, lockStatusForSave(data, (qc.getQueryData(['scholarships']) as any[] | undefined)?.find(r => r.id === id), ['researching', 'preparing'])),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scholarships'] });
       setEditId(null); setShowForm(false);
