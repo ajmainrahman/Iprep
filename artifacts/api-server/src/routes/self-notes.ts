@@ -46,12 +46,12 @@ router.use("/myself", requireAuth, async (_req, res, next): Promise<void> => {
 
 const long = z.string().trim().max(3000).nullable().optional();
 const noteSchema = z.object({
-  kind: z.enum(["strength", "weakness", "regret", "failure", "confusion"]),
+  kind: z.string().trim().min(1).max(80),
   title: z.string().trim().min(1).max(160),
   details: long,
   insight: long,
   action: long,
-  status: z.enum(["open", "working", "resolved"]).optional(),
+  status: z.enum(["none", "open", "working", "resolved"]).optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 

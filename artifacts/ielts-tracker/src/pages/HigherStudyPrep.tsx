@@ -597,6 +597,8 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
   const [collapsedCountries, setCollapsedCountries] = useState<Record<string, boolean>>({});
+  const [dueOpen, setDueOpen] = useState(false);
+  const [ongoingAll, setOngoingAll] = useState(false);
 
   type ApplicationRow = Record<string, unknown> & { id: number };
   type ScholarshipRow = Record<string, unknown> & { id: number };
@@ -711,7 +713,16 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
       return days !== null && days >= 0;
     })
     .sort((a, b) => (daysUntil(a.deadline || '') ?? 999) - (daysUntil(b.deadline || '') ?? 999));
-  const next30Days = upcomingDeadlines.filter(record => (daysUntil(record.deadline || '') ?? 999) <= 30);
+  // "Due" = still needs action: not Not Applied and not already submitted / finished.
+  const baseStatus = (value: unknown) => String(value || '').replace(/_manual$/, '');
+  const SUBMITTED_APP = ['applied', 'interview', 'offer', 'accepted', 'waitlisted', 'rejected', 'deferred', 'withdrawn', 'missed_deadline'];
+  const SUBMITTED_SCH = ['applied', 'interview', 'awarded', 'waitlisted', 'rejected', 'expired', 'not_eligible'];
+  const needsAction = (record: UnifiedRecord) => {
+    const appOpen = !!record.app && !SUBMITTED_APP.includes(normalizeAppStatus(baseStatus(record.app.status)));
+    const schOpen = !!record.scholarship && !SUBMITTED_SCH.includes(normalizeScholarshipStatus(baseStatus(record.scholarship.status)));
+    return appOpen || schOpen;
+  };
+  const next30Days = upcomingDeadlines.filter(record => (daysUntil(record.deadline || '') ?? 999) <= 30 && needsAction(record));
   const ongoingRecords = unifiedRecords
     .filter(record => isOngoingRecord(record))
     .sort((a, b) => (daysUntil(a.deadline || '') ?? 9999) - (daysUntil(b.deadline || '') ?? 9999));
@@ -732,30 +743,6 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
     if (record.app) return `${String(record.app.program || 'Program')} · ${String(record.app.degreeType || '')}`;
     return String(record.scholarship?.provider || record.scholarship?.fundingType || 'Funding opportunity');
   };
-  const priorityActions = unifiedRecords
-    .filter(record => {
-      const appStatus = String(record.app?.status || '');
-      const scholarshipStatus = String(record.scholarship?.status || '');
-      return !['accepted', 'rejected', 'withdrawn', 'missed_deadline'].includes(appStatus)
-        && !['awarded', 'rejected', 'expired', 'not_eligible'].includes(normalizeScholarshipStatus(scholarshipStatus));
-    })
-    .map(record => {
-      const requirements = requirementsFor(record);
-      const openRequirements = requirements.filter(item => !item.done).length;
-      const days = daysUntil(record.deadline || '');
-      const priorityWeight = record.priority === 'high' ? 45 : record.priority === 'medium' ? 25 : 10;
-      const deadlineWeight = days === null ? 0 : days < 0 ? 70 : Math.max(8, 70 - days);
-      const taskWeight = openRequirements ? 25 : 0;
-      return {
-        record,
-        task: record.app ? nextApplicationAction(record.app) : nextScholarshipAction(record.scholarship!),
-        score: priorityWeight + deadlineWeight + taskWeight,
-        openRequirements,
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 4);
-
   function TypeMark({ type }: { type: UnifiedRecord['type'] }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ borderColor: type === 'scholarship' ? '#F2C75C' : type === 'both' ? '#DAD6FF' : '#A9DCE8', color: type === 'scholarship' ? '#B8860B' : type === 'both' ? '#7C6CFF' : '#176B73', backgroundColor: type === 'scholarship' ? '#FDF8EB' : type === 'both' ? '#F2F0FF' : '#DDF4F7' }}>
@@ -881,7 +868,77 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
   const appliedApplicationCount = applicationRows.filter(app => APPLIED_APP_STAGES.includes(normalizeAppStatus(app.status))).length;
   const appliedScholarshipCount = scholarshipRows.filter(item => APPLIED_SCHOLARSHIP_STAGES.includes(normalizeScholarshipStatus(item.status))).length;
   const totalAppliedCount = appliedApplicationCount + appliedScholarshipCount;
-  const notYetAppliedCount = (applicationRows.length - appliedApplicationCount) + (scholarshipRows.length - appliedScholarshipCount);
+  // Not Applied items are left out of every overview total.
+  const activeApplicationCount = applicationRows.filter(app => !isAppNotApplied(app.status)).length;
+  const activeScholarshipCount = scholarshipRows.filter(item => !isSchNotApplied(item.status)).length;
+
+  // ---- Insights ----
+  const PIPE_STAGES = [
+    { key: 'researching', label: 'Researching' },
+    { key: 'ongoing', label: 'Ongoing' },
+    { key: 'ready', label: 'Ready to Apply' },
+    { key: 'applied', label: 'Applied' },
+    { key: 'interview', label: 'Interview' },
+    { key: 'offer', label: 'Offer / Awarded' },
+    { key: 'waitlisted', label: 'Waitlist' },
+    { key: 'rejected', label: 'Rejected' },
+  ] as const;
+  const pipeKeyApp = (value: unknown): string => {
+    const st = normalizeAppStatus(baseStatus(value));
+    return st === 'ready_to_apply' ? 'ready' : st;
+  };
+  const pipeKeySch = (value: unknown): string => {
+    const st = normalizeScholarshipStatus(baseStatus(value));
+    return st === 'preparing' ? 'ready' : st === 'awarded' ? 'offer' : st;
+  };
+  const pipeRows = PIPE_STAGES.map(stage => ({
+    ...stage,
+    apps: applicationRows.filter(app => pipeKeyApp(app.status) === stage.key).length,
+    schs: scholarshipRows.filter(item => pipeKeySch(item.status) === stage.key).length,
+  }));
+  const pipeMax = Math.max(1, ...pipeRows.map(row => row.apps + row.schs));
+
+  const monthBuckets = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(new Date().getFullYear(), new Date().getMonth() + i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return {
+      key,
+      label: d.toLocaleString('en', { month: 'short' }),
+      count: unifiedRecords.filter(record => needsAction(record) && (record.deadline || '').startsWith(key) && (daysUntil(record.deadline || '') ?? -1) >= 0).length,
+    };
+  });
+  const monthMax = Math.max(1, ...monthBuckets.map(m => m.count));
+  const pastDueCount = unifiedRecords.filter(record => needsAction(record) && (daysUntil(record.deadline || '') ?? 0) < 0).length;
+
+  const countryReadiness = Object.values(
+    unifiedRecords.reduce<Record<string, { country: string; done: number; total: number }>>((acc, record) => {
+      const reqs = activeRequirementsFor(record);
+      if (!reqs.length) return acc;
+      const row = acc[record.country] || (acc[record.country] = { country: record.country, done: 0, total: 0 });
+      row.total += reqs.length;
+      row.done += reqs.filter(item => item.done).length;
+      return acc;
+    }, {}),
+  ).sort((a, b) => b.total - a.total).slice(0, 6);
+
+  const respondedCount =
+    applicationRows.filter(app => ['interview', 'offer'].includes(pipeKeyApp(app.status))).length +
+    scholarshipRows.filter(item => ['interview', 'offer'].includes(pipeKeySch(item.status))).length;
+  const offerCount =
+    applicationRows.filter(app => pipeKeyApp(app.status) === 'offer').length +
+    scholarshipRows.filter(item => pipeKeySch(item.status) === 'offer').length;
+  const responsePercent = totalAppliedCount ? Math.round((respondedCount / totalAppliedCount) * 100) : 0;
+  const activeTargetCount = activeApplicationCount + activeScholarshipCount;
+  const appliedPercent = activeTargetCount ? Math.round((totalAppliedCount / activeTargetCount) * 100) : 0;
+  const fundingSecured = Object.entries(
+    scholarshipRows.filter(item => pipeKeySch(item.status) === 'offer' && Number(item.amount) > 0).reduce<Record<string, number>>((acc, item) => {
+      const cur = String(item.currency || '').trim() || '—';
+      acc[cur] = (acc[cur] || 0) + Number(item.amount);
+      return acc;
+    }, {}),
+  ).map(([cur, amount]) => `${amount.toLocaleString()} ${cur}`).join(' + ');
+  const activeRecordsForPriority = unifiedRecords.filter(record => !isDisabledRecord(record));
+  const priorityMix = (['high', 'medium', 'low'] as const).map(p => ({ p, n: activeRecordsForPriority.filter(record => record.priority === p).length }));
 
   return (
     <div className="space-y-5 pb-4" style={{ color: 'var(--apps-text-primary)' }}>
@@ -908,25 +965,33 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
             <div>
               <p data-testid="text-total-targets" className="font-heading text-3xl font-bold">{totalAppliedCount}</p>
               <p className="mt-1 text-[11px] font-semibold text-[#A9DCE8]">Total Applied</p>
-              <p className="mt-1 text-[10px] text-white/70">{appliedApplicationCount} application{appliedApplicationCount === 1 ? '' : 's'} · {appliedScholarshipCount} scholarship{appliedScholarshipCount === 1 ? '' : 's'}</p>
             </div>
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-[#A9DCE8]"><Target className="h-4 w-4" /></span>
           </div>
-          {notYetAppliedCount > 0 && <p className="mt-2 text-[10px] text-white/50">{notYetAppliedCount} not applied yet</p>}
         </div>
         {[
-          { label: 'Applications', value: applicationRows.length, icon: GraduationCap, tone: '#DDF4F7', ink: '#176B73', testId: 'total-applications' },
-          { label: 'Scholarships', value: scholarshipRows.length, icon: Trophy, tone: '#FDF8EB', ink: '#B8860B', testId: 'total-scholarships' },
+          { label: 'Applications', value: activeApplicationCount, icon: GraduationCap, tone: '#DDF4F7', ink: '#176B73', testId: 'total-applications' },
+          { label: 'Scholarships', value: activeScholarshipCount, icon: Trophy, tone: '#FDF8EB', ink: '#B8860B', testId: 'total-scholarships' },
           { label: 'Docs / requirements', value: `${completedRequirementItems}/${totalRequirementItems}`, icon: ClipboardList, tone: '#F2F0FF', ink: '#7C6CFF', testId: 'completed-requirements' },
-          { label: 'Due in 30 days', value: next30Days.length, icon: CalendarClock, tone: '#FBEEEE', ink: '#D95757', testId: 'upcoming-deadlines' },
-        ].map(stat => (
-          <div key={stat.label} data-testid={`unified-stat-${stat.testId}`} className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
+          { label: 'Due in 30 days', value: next30Days.length, icon: CalendarClock, tone: '#FBEEEE', ink: '#D95757', testId: 'upcoming-deadlines', onClick: () => setDueOpen(true), hint: 'Tap to see which' },
+        ].map(stat => {
+          const cls = 'rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]';
+          const body = (
             <div className="flex items-start justify-between gap-2">
-              <div><p className="font-heading text-2xl font-bold" style={{ color: 'var(--apps-text-primary)' }}>{stat.value}</p><p className="mt-1 text-[11px] font-medium text-muted-foreground">{stat.label}</p></div>
+              <div>
+                <p className="font-heading text-2xl font-bold" style={{ color: 'var(--apps-text-primary)' }}>{stat.value}</p>
+                <p className="mt-1 text-[11px] font-medium text-muted-foreground">{stat.label}</p>
+                {stat.hint && <p className="mt-0.5 text-[10px] font-semibold text-[#D95757]">{stat.hint}</p>}
+              </div>
               <span className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: stat.tone, color: stat.ink }}><stat.icon className="h-4 w-4" /></span>
             </div>
-          </div>
-        ))}
+          );
+          return stat.onClick ? (
+            <button key={stat.label} type="button" data-testid={`unified-stat-${stat.testId}`} onClick={stat.onClick} className={`${cls} min-h-[44px] cursor-pointer text-left transition-all hover:-translate-y-0.5 hover:shadow-md`} style={{ borderColor: 'var(--apps-border)' }}>{body}</button>
+          ) : (
+            <div key={stat.label} data-testid={`unified-stat-${stat.testId}`} className={cls} style={{ borderColor: 'var(--apps-border)' }}>{body}</div>
+          );
+        })}
       </div>
 
       <div data-testid="overview-ongoing-card" className="rounded-2xl border border-[#A9DCE8] bg-[#DDF4F7] p-4 shadow-[0_10px_28px_rgba(23, 107, 115, 0.08)] sm:p-5">
@@ -943,7 +1008,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
             </div>
           </div>
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {ongoingRecords.slice(0, 6).map(record => {
+            {(ongoingAll ? ongoingRecords : ongoingRecords.slice(0, 6)).map(record => {
               const days = daysUntil(record.deadline || '');
               return (
                 <button type="button" data-testid={`button-ongoing-${record.key}`} key={record.key} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="min-w-0 rounded-xl border border-[#A9DCE8] bg-white/80 p-3 text-left transition-colors hover:bg-white">
@@ -956,45 +1021,99 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
                 </button>
               );
             })}
-            {ongoingRecords.length > 6 && <p className="px-1 text-[11px] text-[#176B73] sm:col-span-3">+{ongoingRecords.length - 6} more ongoing. Open Applications or Scholarships to see them all.</p>}
+            {ongoingRecords.length > 6 && (
+              <button type="button" data-testid="button-ongoing-toggle" onClick={() => setOngoingAll(value => !value)} className="flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#176B73] bg-white/60 px-3 py-2 text-xs font-bold text-[#176B73] transition-colors hover:bg-white sm:col-span-2 xl:col-span-3">
+                {ongoingAll ? <><ChevronUp className="h-3.5 w-3.5" />Show fewer</> : <><ChevronDown className="h-3.5 w-3.5" />Show all {ongoingRecords.length} ongoing (+{ongoingRecords.length - 6} more)</>}
+              </button>
+            )}
             {ongoingRecords.length === 0 && <div className="flex items-center justify-center rounded-xl border border-dashed border-[#A9DCE8] p-4 text-xs text-[#176B73] sm:col-span-3">Nothing open right now.</div>}
           </div>
         </div>
       </div>
 
-      <div data-testid="overview-priority-actions" className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)] sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#D95757]">Next actions</p>
-            <h3 className="mt-1 text-xl font-bold tracking-tight">Priority actions</h3>
-            <p className="mt-1 text-xs text-muted-foreground">Deadline proximity, priority, status, and incomplete requirements decide what rises to the top.</p>
-          </div>
-          <span className="hidden rounded-full bg-[#FBEEEE] px-2.5 py-1 text-[10px] font-bold text-[#D95757] sm:block">{priorityActions.length} to review</span>
+      <div data-testid="overview-insights" className="space-y-3">
+        <div className="flex items-end justify-between gap-3 px-1">
+          <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#176B73]">Insights</p><h3 className="mt-1 text-xl font-bold tracking-tight">How your plan is shaping up</h3></div>
         </div>
-        {priorityActions.length === 0 ? (
-          <div data-testid="overview-priority-actions-empty" className="mt-4 rounded-xl border border-dashed border-border bg-[#DDF4F7] p-5 text-center text-xs text-muted-foreground">You’re all clear for now. Add a target or a deadline to keep your plan moving.</div>
-        ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {priorityActions.map(({ record, task, openRequirements }) => (
-              <div key={record.key} data-testid={`priority-action-${record.key}`} className="flex min-w-0 items-center gap-3 rounded-xl border bg-[#DDF4F7] p-3.5" style={{ borderColor: 'var(--apps-border)' }}>
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${record.priority === 'high' ? 'bg-[#D95757]' : record.priority === 'medium' ? 'bg-[#F2C75C]' : 'bg-slate-400'}`} title={`${PRIORITY_META[record.priority].label} priority`} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-bold text-foreground">{recordTitle(record)}</p>
-                    <TypeMark type={record.type} />
-                  </div>
-                  <p className="mt-1 truncate text-xs font-semibold text-[#7C6CFF]">{task}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                    <DeadlineCue deadline={record.deadline} />
-                    <span>{record.app ? statusLabel(record.app.status, 'application') : statusLabel(record.scholarship?.status, 'scholarship')}</span>
-                    {openRequirements > 0 && <span>{openRequirements} incomplete</span>}
-                  </div>
-                </div>
-                <Button type="button" size="sm" variant="outline" data-testid={`button-continue-priority-${record.key}`} onClick={() => onTabChange(record.app ? 'applications' : 'scholarships')} className="h-8 shrink-0 px-2.5 text-[11px]">Continue <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Button>
+        <div className="grid gap-4 md:grid-cols-2">
+          <section data-testid="insight-pipeline" className="min-w-0 rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-sm font-bold">Pipeline by status</h4>
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#176B73]" />Applications</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#F2C75C]" />Scholarships</span>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+            <div className="mt-4 space-y-2.5">
+              {pipeRows.map(row => (
+                <div key={row.key} data-testid={`pipeline-row-${row.key}`} className="grid grid-cols-[6.5rem_minmax(0,1fr)_1.5rem] items-center gap-2 text-xs">
+                  <span className="truncate text-muted-foreground">{row.label}</span>
+                  <div className="flex h-3 overflow-hidden rounded-full bg-[#EDF0F4]">
+                    <div className="h-full bg-[#176B73] transition-all" style={{ width: `${(row.apps / pipeMax) * 100}%` }} />
+                    <div className="h-full bg-[#F2C75C] transition-all" style={{ width: `${(row.schs / pipeMax) * 100}%` }} />
+                  </div>
+                  <strong className="text-right">{row.apps + row.schs}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[10px] text-muted-foreground">Not Applied items are not counted.</p>
+          </section>
+
+          <section data-testid="insight-deadlines" className="min-w-0 rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+            <div className="flex items-start justify-between gap-2">
+              <h4 className="text-sm font-bold">Deadlines by month</h4>
+              <span className="text-[10px] text-muted-foreground">next 6 months</span>
+            </div>
+            <div className="mt-4 grid h-32 grid-cols-6 items-end gap-2">
+              {monthBuckets.map(month => (
+                <div key={month.key} data-testid={`deadline-month-${month.key}`} className="flex h-full min-w-0 flex-col items-center justify-end gap-1">
+                  <span className="text-xs font-bold">{month.count}</span>
+                  <div className="w-full rounded-t-lg bg-[#176B73]" style={{ height: `${Math.max(month.count ? 8 : 3, (month.count / monthMax) * 80)}%`, opacity: month.count ? 1 : 0.2 }} />
+                  <span className="text-[10px] text-muted-foreground">{month.label}</span>
+                </div>
+              ))}
+            </div>
+            <p data-testid="text-past-due" className={`mt-3 text-[11px] ${pastDueCount ? 'font-semibold text-[#D95757]' : 'text-muted-foreground'}`}>
+              {pastDueCount ? `${pastDueCount} deadline${pastDueCount === 1 ? '' : 's'} already passed without applying` : 'No missed deadlines'}
+            </p>
+          </section>
+
+          <section data-testid="insight-readiness" className="min-w-0 rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+            <h4 className="text-sm font-bold">Document readiness by country</h4>
+            {countryReadiness.length === 0 ? (
+              <p className="mt-4 rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Add documents or requirements to your targets to see readiness here.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {countryReadiness.map(row => {
+                  const pct = Math.round((row.done / row.total) * 100);
+                  return (
+                    <div key={row.country} data-testid={`readiness-${row.country}`}>
+                      <div className="mb-1 flex items-center justify-between gap-2 text-xs"><span className="truncate font-semibold">{row.country}</span><span className="shrink-0 text-muted-foreground">{row.done}/{row.total} · {pct}%</span></div>
+                      <div className="h-2 overflow-hidden rounded-full bg-[#EDF0F4]"><div className="h-full rounded-full bg-[#7C6CFF] transition-all" style={{ width: `${pct}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <section data-testid="insight-numbers" className="min-w-0 rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
+            <h4 className="text-sm font-bold">Key numbers</h4>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-[#DDF4F7] p-3"><p data-testid="text-applied-percent" className="font-heading text-xl font-bold text-[#176B73]">{appliedPercent}%</p><p className="mt-0.5 text-[10px] text-[#176B73]">of targets applied ({totalAppliedCount}/{activeTargetCount})</p></div>
+              <div className="rounded-xl bg-[#F2F0FF] p-3"><p data-testid="text-response-rate" className="font-heading text-xl font-bold text-[#7C6CFF]">{responsePercent}%</p><p className="mt-0.5 text-[10px] text-[#7C6CFF]">response rate (interview or offer)</p></div>
+              <div className="rounded-xl bg-[#FDF8EB] p-3"><p data-testid="text-offer-count" className="font-heading text-xl font-bold text-[#B8860B]">{offerCount}</p><p className="mt-0.5 text-[10px] text-[#B8860B]">offers / awards</p></div>
+              <div className="rounded-xl bg-[#FBEEEE] p-3"><p data-testid="text-funding-secured" className="font-heading text-base font-bold leading-7 text-[#D95757]">{fundingSecured || '—'}</p><p className="mt-0.5 text-[10px] text-[#D95757]">funding secured</p></div>
+            </div>
+            <div className="mt-4">
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Priority mix</p>
+              <div className="flex h-2.5 overflow-hidden rounded-full bg-[#EDF0F4]">
+                {priorityMix.map(item => item.n > 0 && <div key={item.p} title={`${item.n} ${item.p}`} className={item.p === 'high' ? 'bg-[#D95757]' : item.p === 'medium' ? 'bg-[#F2C75C]' : 'bg-slate-400'} style={{ width: `${(item.n / Math.max(1, activeRecordsForPriority.length)) * 100}%` }} />)}
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-x-3 text-[10px] text-muted-foreground">{priorityMix.map(item => <span key={item.p}>{item.n} {item.p}</span>)}</div>
+            </div>
+          </section>
+        </div>
       </div>
 
       <div className="rounded-2xl border bg-white p-3 shadow-[0_1px_2px_rgba(35, 59, 99, 0.04)]" style={{ borderColor: 'var(--apps-border)' }}>
@@ -1025,7 +1144,7 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
         </div>
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.65fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.65fr)]">
         <div className="rounded-2xl border bg-[#DDF4F7] p-4 sm:p-5" style={{ borderColor: 'var(--apps-border)' }}>
           <div className="mb-5 flex items-end justify-between gap-3">
             <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#176B73]">Unified deadline stream</p><h3 className="mt-1 text-xl font-bold tracking-tight">Your targets, by region</h3></div>
@@ -1053,6 +1172,29 @@ function UnifiedOverviewTab({ onTabChange }: { onTabChange: (t: string) => void 
           </div>
         </aside>
       </div>
+      <Dialog open={dueOpen} onOpenChange={setDueOpen}>
+        <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-lg overflow-x-hidden overflow-y-auto" data-testid="dialog-due-30">
+          <DialogHeader><DialogTitle>Due in the next 30 days ({next30Days.length})</DialogTitle></DialogHeader>
+          <p className="-mt-2 min-w-0 text-xs text-muted-foreground">Soonest first. Only targets that still need action are listed; Not Applied and already submitted ones are left out.</p>
+          {next30Days.length === 0 ? (
+            <div data-testid="due-empty" className="rounded-xl border border-dashed p-6 text-center text-xs text-muted-foreground">Nothing is due in the next 30 days.</div>
+          ) : (
+            <div className="min-w-0 space-y-2">
+              {next30Days.map(record => (
+                <button type="button" key={record.key} data-testid={`due-item-${record.key}`} onClick={() => { setDueOpen(false); onTabChange(record.app ? 'applications' : 'scholarships'); }} className="flex w-full min-w-0 items-center gap-3 rounded-xl border bg-white p-3 text-left transition-colors hover:bg-[#DDF4F7]" style={{ borderColor: 'var(--apps-border)' }}>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2"><TypeMark type={record.type} /><span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{record.country}</span></div>
+                    <p className="mt-1.5 truncate text-sm font-bold">{recordTitle(record)}</p>
+                    <p className="truncate text-xs text-muted-foreground">{record.app ? statusLabel(record.app.status, 'application') : statusLabel(record.scholarship?.status, 'scholarship')} · {recordSubtitle(record)}</p>
+                    <div className="mt-1.5"><DeadlineLabel deadline={record.deadline} /></div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
