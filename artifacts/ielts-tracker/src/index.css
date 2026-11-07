@@ -324,3 +324,18 @@
 .gradient-hero-nordic {
   background: linear-gradient(120deg, #17243D, #233B63, #176B73);
 }
+
+/* mobile-tap-targets: comfortable tap size on phones. Desktop is unchanged. */
+@media (max-width: 767px) {
+  main button.p-1,
+  main button.p-1\.5,
+  main button.p-2 { min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+  main button.py-1\.5,
+  main [role="tab"].py-1\.5 { min-height: 36px; }
+  main button.py-1 { min-height: 34px; }
+  main button.h-6.w-6 { min-width: 32px; min-height: 32px; }
+  main button.hover\:underline { min-height: 32px; }
+  main button.w-full.text-left { min-height: 40px; }
+  main select { min-height: 36px; }
+  main a.hover\:underline, main a.underline { display: inline-block; padding-block: 8px; }
+}

@@ -205,7 +205,7 @@ export function PracticeTracker() {
       />
 
       {/* Top Tabs */}
-      <div className="flex overflow-x-auto gap-1.5 bg-[#F8FAFC] dark:bg-muted rounded-2xl p-1.5 w-fit">
+      <div className="flex overflow-x-auto gap-1.5 bg-[#F8FAFC] dark:bg-muted rounded-2xl p-1.5 w-fit max-w-full">
         {(['Reading', 'Listening', 'Writing', 'Speaking'] as const).map(tab => {
           const active = activeTab === tab;
           const s = MODULE_STYLES[tab];

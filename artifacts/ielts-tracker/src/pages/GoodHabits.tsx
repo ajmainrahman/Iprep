@@ -589,7 +589,7 @@ export function GoodHabitsTab() {
   return (
     <div className="space-y-5" data-testid="good-habits">
       {/* header + verse */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center">
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#DDF4F7] text-[#176B73] sm:h-20 sm:w-20">
             <Leaf className="h-8 w-8 fill-[#19C7B7]/30 sm:h-10 sm:w-10" />
@@ -620,8 +620,8 @@ export function GoodHabitsTab() {
       </div>
 
       {/* heatmap + streak */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habit-heatmap">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <section className="min-w-0 rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habit-heatmap">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="flex items-center gap-2 font-heading text-base font-bold text-[#17243D]"><BarChart3 className="h-5 w-5 text-[#176B73]" /> Activity Heatmap</h3>
             <select
@@ -655,7 +655,7 @@ export function GoodHabitsTab() {
       </div>
 
       {/* today's habits + prayers log + insights */}
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,.8fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,.8fr)]">
         {/* Today's Habits */}
         <section className="rounded-2xl border border-[#E3EAF0] bg-white p-4 shadow-[0_8px_30px_rgba(23,36,61,.045)] sm:p-5" data-testid="habits-card">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

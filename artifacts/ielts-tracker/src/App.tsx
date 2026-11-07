@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DailyReminder } from '@/components/DailyReminder';
 import { Dashboard } from '@/pages/Dashboard';
+import { IELTSAnalytics } from '@/pages/IELTSAnalytics';
 import { ScoreTracker } from '@/pages/ScoreTracker';
 import { StudyLog } from '@/pages/StudyLog';
 import { PracticeTracker } from '@/pages/PracticeTracker';
@@ -49,7 +50,7 @@ const queryClient = new QueryClient({
 
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits' | 'achievements' | 'journal' | 'myself';
-type StudyTab = 'dashboard' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
+type StudyTab = 'dashboard' | 'analytics' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
 type GrowTab  = 'habits' | 'achievements' | 'journal' | 'myself';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
@@ -539,6 +540,7 @@ const GROW_TABS: NavItem<GrowTab>[] = [
 
 const STUDY_TABS: NavItem<StudyTab>[] = [
   { id: 'dashboard', label: 'Dashboard',        icon: Home },
+  { id: 'analytics', label: 'Analytics',        icon: BarChart3 },
   { id: 'scores',    label: 'Mock Test',        icon: TrendingUp },
   { id: 'study',     label: 'Study Log',        icon: BookOpen },
   { id: 'practice',  label: 'Practice Tracker', icon: Target },
@@ -931,6 +933,7 @@ function StudyLayout() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-5xl mx-auto">
             {tab === 'dashboard' && <Dashboard />}
+            {tab === 'analytics' && <IELTSAnalytics />}
             {tab === 'scores'    && <ScoreTracker triggerConfetti={fireConfetti} />}
             {tab === 'study'     && <StudyLog />}
             {tab === 'practice'  && <PracticeTracker />}
