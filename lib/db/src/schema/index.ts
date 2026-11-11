@@ -11,6 +11,7 @@ export * from "./scholarships";
 export * from "./checklist-templates";
 export * from "./planning-notes";
 export * from "./self-notes";
+export * from "./reflection";
 export * from "./journal";
 export * from "./achievements";
 export * from "./good-habits";

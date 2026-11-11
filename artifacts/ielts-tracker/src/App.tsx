@@ -35,6 +35,8 @@ import { GoodHabitsTab } from '@/pages/GoodHabits';
 import { AchievementsTab } from '@/pages/Achievements';
 import { NightJournalTab } from '@/pages/NightJournal';
 import { KnowMyselfTab } from '@/pages/KnowMyself';
+import { DeepReflectionTab } from '@/pages/DeepReflection';
+import { Sparkles as ReflectSparkles } from 'lucide-react';
 import { Switch, Route, Redirect, useLocation, useParams } from 'wouter';
 
 const queryClient = new QueryClient({
@@ -51,7 +53,7 @@ const queryClient = new QueryClient({
 type AppMode  = 'home' | 'fly' | 'study';
 type FlyTab   = 'overview' | 'applications' | 'tests' | 'scholarships' | 'documents' | 'templates' | 'notepad' | 'habits' | 'achievements' | 'journal' | 'myself';
 type StudyTab = 'dashboard' | 'analytics' | 'scores' | 'study' | 'practice' | 'vocab' | 'spelling' | 'planning' | 'journey';
-type GrowTab  = 'habits' | 'achievements' | 'journal' | 'myself';
+type GrowTab  = 'habits' | 'achievements' | 'journal' | 'myself' | 'reflection';
 
 /* ─── DATE / STREAK HELPERS ─────────────────────────────────────────────── */
 /** YYYY-MM-DD in LOCAL timezone — never use toISOString() for date comparisons */
@@ -481,7 +483,7 @@ function LandingPage({ onFly, onStudy }: { onFly: () => void; onStudy: () => voi
                 <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3"><SelfBrain className="mb-2 h-4 w-4 text-[#7C6CFF]" /><p className="text-[19px] leading-none font-bold text-[#17243D]">{homeToWorkOn}</p><p className="mt-1.5 text-[10px] text-[#64748B]">To work on</p></div>
               </div>
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {['Good Habits', 'Achievements', 'Night Journal', 'Know Myself'].map(x => <span key={x} className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-semibold text-[#475569]">{x}</span>)}
+                {['Good Habits', 'Achievements', 'Night Journal', 'Know Myself', 'Deep Reflection'].map(x => <span key={x} className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-semibold text-[#475569]">{x}</span>)}
               </div>
               <div className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-[#176B73]">Continue growing <ArrowUpRight className="h-3.5 w-3.5" /></div>
             </button>
@@ -536,6 +538,7 @@ const GROW_TABS: NavItem<GrowTab>[] = [
   { id: 'achievements', label: 'Achievements',  icon: Mountain },
   { id: 'journal',      label: 'Night Journal', icon: JournalMoon },
   { id: 'myself',       label: 'Know Myself',   icon: SelfBrain },
+  { id: 'reflection',   label: 'Deep Reflection', icon: ReflectSparkles },
 ];
 
 const STUDY_TABS: NavItem<StudyTab>[] = [
@@ -1011,6 +1014,7 @@ function GrowLayout() {
             {tab === 'achievements' && <AchievementsTab />}
             {tab === 'journal'      && <NightJournalTab />}
             {tab === 'myself'       && <KnowMyselfTab />}
+            {tab === 'reflection'   && <DeepReflectionTab />}
           </div>
         </main>
       </div>
